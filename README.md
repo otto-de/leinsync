@@ -1,5 +1,6 @@
 # sync
 
+[![Build Status](https://travis-ci.org/otto-de/leinsync.svg?branch=master)](https://travis-ci.org/otto-de/leinsync)
 [![Clojars Project](https://img.shields.io/clojars/v/sync.svg)](https://clojars.org/sync)
 
 `sync` is a Leiningen plugin to synchronize the shared codebase between different clojure Leiningen projects.
