@@ -34,13 +34,13 @@
 
 ## Usage
 
-put `:sync ["namespace.to.be.sync.1" "namespace.to.be.sync.2"]` in your project.clj.
+put `:ns-sync ["namespace.to.be.sync.1" "namespace.to.be.sync.2"]` in your project.clj.
 
 In order to synchronize namespaces between projects, run in the current source project:
 
     $ cd big-repository/project1
     $ lein sync "project2,project3,project4"
 
-alternatively, you can define the namespaces explicitly:
+Alternatively, you can define the namespaces explicitly:
 
     $ lein sync "project2,project3,project4" "namespace.to.be.sync.1,namespace.to.be.sync.2"
