@@ -66,6 +66,19 @@
       (m/info "===> Some Tests of" project "are FAILED!!!"))
     (u/change-dir-to original-dir)))
 
+(defn reset-project! [project]
+  (let [original-dir (System/getProperty "user.dir")
+        project-dir (str original-dir "/../" project)]
+    (u/change-dir-to (.getCanonicalPath (new File project-dir)))
+    (m/info "\n... Reset changes of" project "on" (u/output-of (sh/sh "pwd")))
+    (if (u/is-success? (sh/sh "git" "checkout" "."))
+      (m/info "===> Reset all changes")
+      (m/info "===> Could NOT reset changes on" project))
+    (u/change-dir-to original-dir)))
+
+(defn reset-all! [projects]
+  (doall (map reset-project! projects)))
+
 (defn update-ns-of-projects! [projects namespaces]
   (doseq [[namespace project] (cartesian-product namespaces projects)]
     (update-name-space! namespace project)))
@@ -74,7 +87,7 @@
   (update-ns-of-projects! projects namespaces)
   (doall (map run-tests projects)))
 
-(defn run [action & args]
+(defn run! [action & args]
   (try
     (apply action args)
     (catch Exception e (m/info "Error : " (.getMessage e)))))
