@@ -1,4 +1,5 @@
 (ns leiningen.namespaces
+  (:refer-clojure :exclude [run!])
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [leiningen.constant :as c]
