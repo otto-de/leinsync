@@ -8,7 +8,9 @@
                    :unit    :unit
                    :focused :focused}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/math.combinatorics "0.1.1"]]
+                 [org.clojure/math.combinatorics "0.1.1"]
+                 [com.sun.jna/jna "3.0.9"]
+                 [com.github.jnr/jnr-posix "3.0.29"]]
   :profiles {:uberjar {:aot :all}
              :test    {:resource-paths ["test-resources"]}
              :dev     {:dependencies [[pjstadig/humane-test-output "0.7.0"]]
