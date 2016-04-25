@@ -10,9 +10,10 @@
 (defn split [input] (str/split input #","))
 
 (defn do-update [projects ns {no-test? :notest reset? :reset}]
-  (if no-test?
-    (ns/run ns/update-ns-of-projects! projects ns)
-    (ns/run ns/update-ns-of-projects-and-test! projects ns)))
+  (cond
+    (true? reset?) (ns/run! ns/reset-all! projects)
+    (true? no-test?) (ns/run! ns/update-ns-of-projects! projects ns)
+    :else (ns/run! ns/update-ns-of-projects-and-test! projects ns)))
 
 (defn one-arg-program [project-description projects options]
   (do-update (split projects) (c/sync-spec-seletor project-description) options))
