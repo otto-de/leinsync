@@ -37,6 +37,16 @@
 
 put `:ns-sync ["namespace.to.be.sync.1" "namespace.to.be.sync.2"]` in your project.clj.
 
+* lein [options] sync "project-1,project-2,project-3"
+
+* lein [options] sync "project-1,project-2" "namespace.to.sync.1,namespace.to.sync.2"
+
+Options:
+   + --notest :  Synchronize shared code base without executing tests on target projects
+   + --reset  :   Reset all the uncommited changes in all target projects
+
+
+## Example
 In order to synchronize namespaces between projects, run in the current source project:
 
     $ cd big-repository/project1
