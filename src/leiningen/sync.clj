@@ -3,19 +3,47 @@
   (:require [leiningen.core.main :as main]
             [leiningen.constant :as c]
             [clojure.string :as str]
-            [leiningen.namespaces :as ns]))
+            [leiningen.namespaces :as ns]
+            [clojure.tools.cli :refer [parse-opts]]
+            [clojure.string :as str]))
 
 (defn split [input] (str/split input #","))
 
-(defn one-arg-program [project-description projects]
-  (ns/update-ns-of-projects! (split projects) (c/sync-spec-seletor project-description)))
+(defn do-update [projects ns {no-test? :notest reset? :reset}]
+  (if no-test?
+    (ns/run ns/update-ns-of-projects! projects ns)
+    (ns/run ns/update-ns-of-projects-and-test! projects ns)))
 
-(defn two-args-program [projects namespaces]
-  (ns/update-ns-of-projects! (split projects) (split namespaces)))
+(defn one-arg-program [project-description projects options]
+  (do-update (split projects) (c/sync-spec-seletor project-description) options))
+
+(defn two-args-program [projects namespaces options]
+  (do-update (split projects) (split namespaces) options))
+
+(def cli-options
+  [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
+   [nil "--reset" "Reset all the uncommited changes in all target projects"]])
+
+(defn usage [options-summary]
+  (->> ["sync is a Leiningen plugin to synchronize same codebase between different clojure projects"
+        ""
+        "Usage:"
+        ""
+        "  *  lein [options] sync \"project-1,project-2,project-3\""
+        ""
+        "  *  lein [options] sync \"project-1,project-2\" \"namespace.to.sync.1,namespace.to.sync.2\""
+        ""
+        "Options:"
+        options-summary
+        ""
+        "To specify the namespaces to be shared, you must define them in project.clj. i.e"
+        ":ns-sync [\"namespace.to.be-sync.1\" test:\"namespace.to.be-sync.2\""]
+       (str/join \newline)))
 
 (defn sync [project-desc & args]
-  (cond
-    (= 1 (count args)) (one-arg-program project-desc (first args))
-    (= 2 (count args)) (two-args-program (first args) (second args))
-    :else (main/abort c/usage-msg))
-  (main/exit))
+  (let [{:keys [options arguments summary]} (parse-opts args cli-options)]
+    (cond
+      (= 1 (count arguments)) (one-arg-program project-desc (first arguments) options)
+      (= 2 (count arguments)) (two-args-program (first arguments) (second arguments) options)
+      :else (main/abort (usage summary)))
+    (main/exit)))
