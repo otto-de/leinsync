@@ -1,4 +1,5 @@
 (ns leiningen.sync
+  (:refer-clojure :exclude [sync])
   (:require [leiningen.core.main :as main]
             [leiningen.constant :as c]
             [clojure.string :as str]
