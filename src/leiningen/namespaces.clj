@@ -67,8 +67,14 @@
     (u/change-dir-to original-dir)))
 
 (defn update-ns-of-projects! [projects namespaces]
+  (doseq [[namespace project] (cartesian-product namespaces projects)]
+    (update-name-space! namespace project)))
+
+(defn update-ns-of-projects-and-test! [projects namespaces]
+  (update-ns-of-projects! projects namespaces)
+  (doall (map run-tests projects)))
+
+(defn run [action & args]
   (try
-    (doseq [[namespace project] (cartesian-product namespaces projects)]
-      (update-name-space! namespace project))
-    (doall (map run-tests projects))
+    (apply action args)
     (catch Exception e (m/info "Error : " (.getMessage e)))))
