@@ -1,4 +1,5 @@
 (ns leiningen.utils
+  (:require [clojure.string :as str])
   (:import (jnr.posix POSIXFactory)))
 
 (defn change-dir-to [path]
@@ -10,3 +11,5 @@
 
 (defn output-of [result]
   (:out result))
+
+(defn split [input] (str/split input #","))

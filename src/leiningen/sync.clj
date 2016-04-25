@@ -4,10 +4,10 @@
             [leiningen.constant :as c]
             [clojure.string :as str]
             [leiningen.namespaces :as ns]
+            [leiningen.utils :as u]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :as str]))
 
-(defn split [input] (str/split input #","))
 
 (defn do-update [projects ns {no-test? :notest reset? :reset}]
   (cond
@@ -16,10 +16,10 @@
     :else (ns/run! ns/update-ns-of-projects-and-test! projects ns)))
 
 (defn one-arg-program [project-description projects options]
-  (do-update (split projects) (c/sync-spec-seletor project-description) options))
+  (do-update (u/split projects) (c/sync-spec-seletor project-description) options))
 
 (defn two-args-program [projects namespaces options]
-  (do-update (split projects) (split namespaces) options))
+  (do-update (u/split projects) (u/split namespaces) options))
 
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
