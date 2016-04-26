@@ -9,7 +9,7 @@ By doing in this way, we gained a greater flexibility to adjust/change our micro
 At the beginning, we synchronized those shared code by hand, which was of course not very comfortable. So we wrote `sync`to make this task automatically.
 
 # Sync Plugin
-`sync` is a Leiningen plugin to synchronize shared codebase between between clojure projects. `sync` makes a strong assumption about the file structure of  the shared projects, created by Leiningen, like this:
+`sync` is a Leiningen plugin to synchronize shared codebase between clojure projects. `sync` makes a strong assumption about the file structure of  the shared projects, created by Leiningen, like this:
 
 ``` ruby
 container-folder/
@@ -63,8 +63,10 @@ In order to synchronize namespaces between projects, run in the current source p
     $ lein sync "project-2,project-3,project-4"
 
 `sync` will update the namespaces from project-1 to project-2 project-3 and project-4.
-Afterwards `sync` will execute tests on project-2 project-3 and project-4, to make sure that the update did not break anything
+It updates only the namespace, which has been defined in both source project and target project.
+If a namespace is  only defined in the source or target project, it will be ignored.
+Afterwards `sync` will execute tests on project-2 project-3 and project-4, to make sure that the update did not break anything.
 
 Alternatively, you can define the namespaces explicitly:
 
-    $ lein sync "project-2,project-3,project-4" "namespace.to.be.sync.1,namespace.to.be.sync.2"
+    $ lein sync "project-2,project-3,project-4" "name.space.1,namespace.1"
