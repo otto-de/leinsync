@@ -26,7 +26,8 @@
    [nil "--reset" "Reset all the uncommited changes in all target projects"]])
 
 (defn usage [options-summary]
-  (->> ["sync is a Leiningen plugin to synchronize same codebase between different clojure projects"
+  (->> [""
+        "sync is a Leiningen plugin to synchronize same codebase between different clojure projects"
         ""
         "Usage:"
         ""
@@ -38,7 +39,8 @@
         options-summary
         ""
         "To specify the namespaces to be shared, you must define them in project.clj. i.e"
-        ":ns-sync [\"namespace.to.be-sync.1\" test:\"namespace.to.be-sync.2\""]
+        ":ns-sync [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
+        ""]
        (str/join \newline)))
 
 (defn sync [project-desc & args]

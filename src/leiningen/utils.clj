@@ -1,10 +1,12 @@
 (ns leiningen.utils
   (:require [clojure.string :as str])
-  (:import (jnr.posix POSIXFactory)))
+  (:import (jnr.posix POSIXFactory)
+           (java.io File)))
 
-(defn change-dir-to [path]
-  (.chdir (POSIXFactory/getPOSIX) path)
-  (System/setProperty "user.dir" path))
+(defn change-dir-to [relative-path]
+  (let [absolute-path (.getCanonicalPath (new File relative-path))]
+    (.chdir (POSIXFactory/getPOSIX) absolute-path)
+    (System/setProperty "user.dir" absolute-path)))
 
 (defn is-success? [result]
   (= (:exit result) 0))
