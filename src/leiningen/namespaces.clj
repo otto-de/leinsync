@@ -72,12 +72,24 @@
     (m/info "===> Reset all changes")
     (m/info "===> Could NOT reset changes on" project)))
 
+(defn get-changed-files []
+  (->> (sh/sh "git" "diff" "--name-only")
+       (u/output-of)))
+
 (defn show-changes [project]
-  (let [changes (->> (sh/sh "git" "diff" "--name-only")
-                     (u/output-of))]
+  (let [changes (get-changed-files)]
     (if (empty? changes)
-      (m/info "* No update has been applied on the project" project)
+      (m/info "* No update has been applied on the project" project "\n")
       (m/info "* Changes on project" project "\n\n" changes))))
+
+(defn commit-project! [project]
+  (if (not (empty? (get-changed-files)))
+    (let [commit-result (->> (str "\nPlease enter the commit message for " project)
+                             (u/ask-user)
+                             (sh/sh "git" "commit" "-am"))]
+      (if (not (u/is-success? commit-result))
+        (m/info "===> Could not commit because:" commit-result)))
+    (m/info "\n* No change to be committed on" project)))
 
 (defn test-all [projects]
   (doseq [p projects]
@@ -86,6 +98,10 @@
 (defn reset-all! [projects]
   (doseq [p projects]
     (u/run-command-on p reset-project! p)))
+
+(defn commit-all! [projects]
+  (doseq [p projects]
+    (u/run-command-on p commit-project! p)))
 
 (defn show-all-changes [projects]
   (doseq [p projects]

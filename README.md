@@ -52,9 +52,10 @@ Define `:ns-sync ["name.space.1" "name.space.2"]` in the project.clj of each.
 * lein [options] sync "project-1,project-2" "name.space.1,name.space.2"
 
 Options:
-   + --notest :  Synchronize shared code base without executing tests on target projects.
-   + --reset  :  Reset all uncommitted changes in all target projects.
-   + --show   :  Show changes on target projects
+   + --notest  :  Synchronize shared code base without executing tests on target projects.
+   + --reset   :  Reset all uncommitted changes in all target projects.
+   + --show    :  Show changes on target projects
+   + --commit  :  Commit change on target projects
 
 ## Example
 In order to synchronize namespaces between projects, run in the current source project:
