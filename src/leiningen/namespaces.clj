@@ -60,48 +60,37 @@
   (combo/cartesian-product c1 c2))
 
 (defn lein-test [project]
-  (let [original-dir (System/getProperty "user.dir")]
-    (u/change-dir-to (str original-dir "/../" project))
-    (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
-    (if (and (u/is-success? (sh/sh "./lein.sh" "clean"))
-             (u/is-success? (sh/sh "./lein.sh" "test")))
-      (m/info "===> All Tests of" project "are passed")
-      (m/info "===> Some Tests of" project "are FAILED!!!"))
-    (u/change-dir-to original-dir)))
+  (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
+  (if (and (u/is-success? (sh/sh "./lein.sh" "clean"))
+           (u/is-success? (sh/sh "./lein.sh" "test")))
+    (m/info "===> All Tests of" project "are passed")
+    (m/info "===> Some Tests of" project "are FAILED!!!")))
+
+(defn reset-project! [project]
+  (m/info "\n... Reset changes of" project "on" (u/output-of (sh/sh "pwd")))
+  (if (u/is-success? (sh/sh "git" "checkout" "."))
+    (m/info "===> Reset all changes")
+    (m/info "===> Could NOT reset changes on" project)))
+
+(defn show-changes [project]
+  (let [changes (->> (sh/sh "git" "diff" "--name-only")
+                     (u/output-of))]
+    (if (empty? changes)
+      (m/info "* No update has been applied on the project" project)
+      (m/info "* Changes on project" project "\n\n" changes))))
 
 (defn test-all [projects]
   (doseq [p projects]
-    (lein-test p)))
-
-(defn reset-project! [project]
-  (let [original-dir (System/getProperty "user.dir")]
-    (u/change-dir-to (str original-dir "/../" project))
-    (m/info "\n... Reset changes of" project "on" (u/output-of (sh/sh "pwd")))
-    (if (u/is-success? (sh/sh "git" "checkout" "."))
-      (m/info "===> Reset all changes")
-      (m/info "===> Could NOT reset changes on" project))
-    (u/change-dir-to original-dir)))
+    (u/run-command-on p lein-test p)))
 
 (defn reset-all! [projects]
   (doseq [p projects]
-    (reset-project! p)))
+    (u/run-command-on p reset-project! p)))
 
-(defn show-changes [projects]
+(defn show-all-changes [projects]
   (doseq [p projects]
-    (let [original-dir (System/getProperty "user.dir")
-          _ (u/change-dir-to (str original-dir "/../" p))
-          changes (->> (sh/sh "git" "diff" "--name-only")
-                       (u/output-of))]
-      (if (empty? changes)
-        (m/info "* No update has been applied on the project" p)
-        (m/info "* Changes on project" p "\n\n" changes))
-      (u/change-dir-to original-dir))))
+    (u/run-command-on p show-changes p)))
 
 (defn update-ns-of-projects! [projects namespaces]
   (doseq [[namespace project] (cartesian-product namespaces projects)]
     (update-name-space! namespace project)))
-
-(defn run! [action & args]
-  (try
-    (apply action args)
-    (catch Exception e (m/info "Error : " (.getMessage e)))))
