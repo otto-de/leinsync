@@ -88,8 +88,15 @@
                              (u/ask-user)
                              (sh/sh "git" "commit" "-am"))]
       (if (not (u/is-success? commit-result))
-        (m/info "===> Could not commit because:" commit-result)))
+        (m/info "===> Could not commit because:" (u/error-of commit-result))))
     (m/info "\n* No change to be committed on" project)))
+
+(defn pull-rebase! [project]
+  (m/info "\n* Pull on" project)
+  (let [pull-result (sh/sh "git" "pull" "-r")]
+    (if (not (u/is-success? pull-result))
+      (m/info "===> Could not commit because:" (u/error-of pull-result))
+      (m/info (u/output-of pull-result)))))
 
 (defn test-all [projects]
   (doseq [p projects]
@@ -102,6 +109,10 @@
 (defn commit-all! [projects]
   (doseq [p projects]
     (u/run-command-on p commit-project! p)))
+
+(defn pull-rebase-all! [projects]
+  (doseq [p projects]
+    (u/run-command-on p pull-rebase! p)))
 
 (defn show-all-changes [projects]
   (doseq [p projects]

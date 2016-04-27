@@ -16,6 +16,9 @@
 (defn output-of [result]
   (:out result))
 
+(defn error-of [result]
+  (:err result))
+
 (defn split [input] (str/split input #","))
 
 (defn run! [action & args]
