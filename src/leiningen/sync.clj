@@ -10,8 +10,10 @@
 (defn do-update [projects ns {no-test? :notest
                               reset?   :reset
                               show?    :show
+                              pull?    :pull
                               commit?  :commit}]
   (cond
+    (true? pull?) (u/run! ns/pull-rebase-all! projects)
     (true? commit?) (u/run! ns/commit-all! projects)
     (true? show?) (u/run! ns/show-all-changes projects)
     (true? reset?) (u/run! ns/reset-all! projects)
@@ -29,6 +31,7 @@
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
    [nil "--show" "Show changes on target projects"]
    [nil "--commit" "Commit change on target projects"]
+   [nil "--pull" "pull rebase on target projects"]
    [nil "--reset" "Reset all the uncommited changes in all target projects"]])
 
 (defn usage [options-summary]
