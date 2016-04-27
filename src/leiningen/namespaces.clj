@@ -59,7 +59,7 @@
 (defn cartesian-product [c1 c2]
   (combo/cartesian-product c1 c2))
 
-(defn run-tests [project]
+(defn lein-test [project]
   (let [original-dir (System/getProperty "user.dir")]
     (u/change-dir-to (str original-dir "/../" project))
     (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
@@ -68,6 +68,10 @@
       (m/info "===> All Tests of" project "are passed")
       (m/info "===> Some Tests of" project "are FAILED!!!"))
     (u/change-dir-to original-dir)))
+
+(defn test-all [projects]
+  (doseq [p projects]
+    (lein-test p)))
 
 (defn reset-project! [project]
   (let [original-dir (System/getProperty "user.dir")]
@@ -79,15 +83,23 @@
     (u/change-dir-to original-dir)))
 
 (defn reset-all! [projects]
-  (doall (map reset-project! projects)))
+  (doseq [p projects]
+    (reset-project! p)))
+
+(defn show-changes [projects]
+  (doseq [p projects]
+    (let [original-dir (System/getProperty "user.dir")
+          _ (u/change-dir-to (str original-dir "/../" p))
+          changes (->> (sh/sh "git" "diff" "--name-only")
+                       (u/output-of))]
+      (if (empty? changes)
+        (m/info "* No update has been applied on the project" p)
+        (m/info "* Changes on project" p "\n\n" changes))
+      (u/change-dir-to original-dir))))
 
 (defn update-ns-of-projects! [projects namespaces]
   (doseq [[namespace project] (cartesian-product namespaces projects)]
     (update-name-space! namespace project)))
-
-(defn update-ns-of-projects-and-test! [projects namespaces]
-  (update-ns-of-projects! projects namespaces)
-  (doall (map run-tests projects)))
 
 (defn run! [action & args]
   (try
