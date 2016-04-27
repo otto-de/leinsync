@@ -9,11 +9,11 @@
 
 (defn do-update [projects ns {no-test? :notest reset? :reset show? :show}]
   (cond
-    (true? show?) (ns/run! ns/show-changes projects)
-    (true? reset?) (ns/run! ns/reset-all! projects)
-    (true? no-test?) (ns/run! ns/update-ns-of-projects! projects ns)
-    :else (do (ns/run! ns/update-ns-of-projects! projects ns)
-              (ns/run! ns/test-all projects))))
+    (true? show?) (u/run! ns/show-all-changes projects)
+    (true? reset?) (u/run! ns/reset-all! projects)
+    (true? no-test?) (u/run! ns/update-ns-of-projects! projects ns)
+    :else (do (u/run! ns/update-ns-of-projects! projects ns)
+              (u/run! ns/test-all projects))))
 
 (defn one-arg-program [project-description projects options]
   (do-update (u/split projects) (ns/spec-selector project-description) options))
