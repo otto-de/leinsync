@@ -28,3 +28,17 @@
     (change-dir-to (str original-dir "/../" project))
     (apply command args)
     (change-dir-to original-dir)))
+
+(defn get-input [prompt]
+  (m/info prompt)
+  (read-line))
+
+(defn ask-user
+  ([question] (ask-user question (fn [_] true)))
+  ([question validate-fn]
+   (loop [input (get-input question)]
+     (if (validate-fn input)
+       input
+       (do
+         (m/info "the input was not correct")
+         (recur (get-input question)))))))

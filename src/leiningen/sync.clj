@@ -7,8 +7,12 @@
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :as str]))
 
-(defn do-update [projects ns {no-test? :notest reset? :reset show? :show}]
+(defn do-update [projects ns {no-test? :notest
+                              reset?   :reset
+                              show?    :show
+                              commit?  :commit}]
   (cond
+    (true? commit?) (u/run! ns/commit-all! projects)
     (true? show?) (u/run! ns/show-all-changes projects)
     (true? reset?) (u/run! ns/reset-all! projects)
     (true? no-test?) (u/run! ns/update-ns-of-projects! projects ns)
@@ -24,6 +28,7 @@
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
    [nil "--show" "Show changes on target projects"]
+   [nil "--commit" "Commit change on target projects"]
    [nil "--reset" "Reset all the uncommited changes in all target projects"]])
 
 (defn usage [options-summary]
