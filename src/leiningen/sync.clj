@@ -1,7 +1,6 @@
 (ns leiningen.sync
   (:refer-clojure :exclude [sync])
   (:require [leiningen.core.main :as main]
-            [leiningen.constant :as c]
             [clojure.string :as str]
             [leiningen.namespaces :as ns]
             [leiningen.utils :as u]
@@ -16,7 +15,7 @@
     :else (ns/run! ns/update-ns-of-projects-and-test! projects ns)))
 
 (defn one-arg-program [project-description projects options]
-  (do-update (u/split projects) (c/sync-spec-seletor project-description) options))
+  (do-update (u/split projects) (ns/spec-selector project-description) options))
 
 (defn two-args-program [projects namespaces options]
   (do-update (u/split projects) (u/split namespaces) options))

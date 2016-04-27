@@ -2,13 +2,14 @@
   (:refer-clojure :exclude [run!])
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
-            [leiningen.constant :as c]
             [leiningen.core.main :as m]
             [clojure.math.combinatorics :as combo]
             [clojure.java.shell :as sh]
             [leiningen.utils :as u]
             [leiningen.core.project :as p])
   (:import (java.io FileNotFoundException)))
+
+(def spec-selector :ns-sync)
 
 (defn test-or-source-ns [ns]
   (if (or (.endsWith ns "-test") (.contains ns "test")) "test" "src"))
@@ -18,7 +19,7 @@
    :name-space  (-> path
                     (str/replace #"-" "_")
                     (str/replace #"\." "/")
-                    (str c/clojure-file-ending))})
+                    (str ".clj"))})
 
 (defn ns->target-path [path project]
   (let [{path :src-or-test ns :name-space} (split-path path)]
@@ -29,12 +30,12 @@
     (str path "/" ns)))
 
 (defn update-files! [from-file to-file]
-  (m/info "UPDATE" to-file)
   (try
     (io/make-parents (io/file to-file))
     (spit (io/file to-file) (slurp (io/file from-file)))
+    (m/info "UPDATE" to-file)
     (catch FileNotFoundException e
-      (m/info c/warning (.getMessage e)))))
+      (m/info "COULD NOT UPDATE" to-file "because: " (.getMessage e)))))
 
 (defn get-project-sync-ns [project-file-path selector]
   (let [project-clj (p/read-raw project-file-path)
@@ -45,7 +46,7 @@
 
 (defn should-update-ns? [ns target-project]
   (let [project-sync-ns (-> (str "../" target-project "/project.clj")
-                            (get-project-sync-ns c/sync-spec-seletor)
+                            (get-project-sync-ns spec-selector)
                             (set))]
     (contains? project-sync-ns ns)))
 

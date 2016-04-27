@@ -41,3 +41,19 @@
 (deftest ^:unit get-sync-ns
   (is (= ["cool.ns.1" "cool.ns.2" "cool.ns.3"]
          (ns/get-project-sync-ns "test-resources/project_test.clj" :sync))))
+
+(deftest ^:unit flap-map-1
+  (is (= '([:a :1] [:a :2] [:a :3] [:b :1] [:b :2] [:b :3] [:c :1] [:c :2] [:c :3])
+         (ns/cartesian-product '(:a :b :c) '(:1 :2 :3)))))
+
+(deftest ^:unit flap-map-2
+  (is (= nil
+         (ns/cartesian-product '(:a :b :c) '()))))
+
+(deftest ^:unit flap-map-3
+  (is (= nil
+         (ns/cartesian-product '() '(:1 :2 :3)))))
+
+(deftest ^:unit flap-map-4
+  (is (= '([:a :1])
+         (ns/cartesian-product '(:a) '(:1)))))
