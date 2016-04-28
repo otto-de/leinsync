@@ -8,7 +8,7 @@
   :target-path "target/%s"
 
   ;define here the namespaces which will be updated by leinsync
-  :ns-sync ["pk.to.ns.namespace-1"
-            "pk.to.ns.namespace-1"]
+  :ns-sync ["ns.namespace-1"
+            "ns.namespace-1"]
   :profiles {:uberjar {:aot :all}
              :dev     {:plugins [[sync "0.9.3"]]}})
