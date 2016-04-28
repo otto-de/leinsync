@@ -57,6 +57,7 @@ Options:
    + --show    :  Show changes on target projects
    + --commit  :  Commit change on target projects
    + --pull    :  pull rebase on target projects
+   + --push    :  push on target projects
 
 ## Example
 In order to synchronize namespaces between projects, run in the current source project:
