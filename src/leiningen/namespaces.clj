@@ -102,7 +102,7 @@
   (or (= input "yes") (= input "no")))
 
 (defn push! [project]
-  (let [answer (->> (str "\n*Are you sure to push on" project "?")
+  (let [answer (-> (str "\n*Are you sure to push on " project "?")
                     (u/ask-user yes-or-no))]
     (if (= answer "yes")
       (let [push-result (sh/sh "git" "push" "origin")]
