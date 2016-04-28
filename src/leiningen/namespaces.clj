@@ -101,15 +101,22 @@
 (defn yes-or-no [input]
   (or (= input "yes") (= input "no")))
 
-(defn push! [project]
-  (let [answer (-> (str "\n*Are you sure to push on " project "?")
-                   (u/ask-user yes-or-no))]
-    (if (= answer "yes")
-      (let [push-result (sh/sh "git" "push" "origin")]
-        (if (not (u/is-success? push-result))
-          (m/info "===> Could not push because" (u/error-of push-result))
-          (m/info (u/output-of push-result)))))))
+(defn unpushed-commit []
+  (-> (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")
+      (u/output-of)))
 
+(defn push! [p]
+  (let [push-result (sh/sh "git" "push" "origin")]
+    (if (not (u/is-success? push-result))
+      (m/info "===> Could not push on" p "because" (u/error-of push-result))
+      (m/info (u/output-of push-result)))))
+
+(defn check-and-push! [project]
+  (if (empty? (unpushed-commit))
+    (m/info "\n ===> Nothing to push on" project)
+    (if (= "yes" (-> (str "\n*Are you sure to push on " project "?")
+                     (u/ask-user yes-or-no)))
+      (push! project))))
 
 (defn status [project]
   (m/info "\n * Status of" project)
@@ -136,7 +143,7 @@
 
 (defn push-all! [projects]
   (doseq [p projects]
-    (u/run-command-on p push! p)))
+    (u/run-command-on p check-and-push! p)))
 
 (defn status_all [projects]
   (doseq [p projects]
