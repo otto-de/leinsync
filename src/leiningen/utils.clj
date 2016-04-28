@@ -26,7 +26,18 @@
     (apply action args)
     (catch Exception e (m/info "Error : " (.getMessage e)))))
 
+(defn format-str [input max-length]
+  (let [input-length (count input)
+        diff (- max-length input-length)]
+    (cond
+      (pos? diff) (str (str/upper-case input) (str/join "" (repeat diff " ")))
+      (neg? diff) (subs (str/upper-case input) 0 max-length)
+      :else (str/upper-case input))))
+
 (defn run-command-on [project command & args]
+  (m/info "|===================================|"
+          (format-str project 7)
+          "|===================================|")
   (let [original-dir (System/getProperty "user.dir")]
     (change-dir-to (str original-dir "/../" project))
     (apply command args)

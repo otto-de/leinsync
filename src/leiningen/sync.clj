@@ -12,8 +12,10 @@
                               show?    :show
                               pull?    :pull
                               push?    :push
+                              status?  :status
                               commit?  :commit}]
   (cond
+    (true? status?) (u/run! ns/status_all projects)
     (true? push?) (u/run! ns/push-all! projects)
     (true? pull?) (u/run! ns/pull-rebase-all! projects)
     (true? commit?) (u/run! ns/commit-all! projects)
@@ -35,6 +37,7 @@
    [nil "--commit" "Commit change on target projects"]
    [nil "--pull" "pull rebase on target projects"]
    [nil "--push" "push on target projects"]
+   [nil "--status" "check status on target projects"]
    [nil "--reset" "Reset all the uncommited changes in all target projects"]])
 
 (defn usage [options-summary]

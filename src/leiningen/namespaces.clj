@@ -103,12 +103,20 @@
 
 (defn push! [project]
   (let [answer (-> (str "\n*Are you sure to push on " project "?")
-                    (u/ask-user yes-or-no))]
+                   (u/ask-user yes-or-no))]
     (if (= answer "yes")
       (let [push-result (sh/sh "git" "push" "origin")]
         (if (not (u/is-success? push-result))
           (m/info "===> Could not push because" (u/error-of push-result))
           (m/info (u/output-of push-result)))))))
+
+
+(defn status [project]
+  (m/info "\n * Status of" project)
+  (let [status_result (sh/sh "git" "status")]
+    (if (not (u/is-success? status_result))
+      (m/info "===> Could not get status because" (u/error-of status_result))
+      (m/info (u/output-of status_result)))))
 
 (defn test-all [projects]
   (doseq [p projects]
@@ -129,6 +137,10 @@
 (defn push-all! [projects]
   (doseq [p projects]
     (u/run-command-on p push! p)))
+
+(defn status_all [projects]
+  (doseq [p projects]
+    (u/run-command-on p status p)))
 
 (defn show-all-changes [projects]
   (doseq [p projects]
