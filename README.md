@@ -54,7 +54,7 @@ Define `:ns-sync ["name.space.1" "name.space.2"]` in the project.clj of each.
 Options:
    + --notest  :  Synchronize shared code base without executing tests on target projects.
    + --reset   :  Reset all uncommitted changes in all target projects.
-   + --show    :  Show changes on target projects
+   + --diff    :  Show changes on target projects
    + --commit  :  Commit change on target projects
    + --pull    :  pull rebase on target projects
    + --status  :  check status on target projects

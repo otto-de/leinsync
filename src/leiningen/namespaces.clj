@@ -76,7 +76,7 @@
   (->> (sh/sh "git" "diff" "--name-only")
        (u/output-of)))
 
-(defn show-changes [project]
+(defn diff [project]
   (let [changes (get-changed-files)]
     (if (empty? changes)
       (m/info "* No update has been applied on the project" project "\n")
@@ -142,9 +142,9 @@
   (doseq [p projects]
     (u/run-command-on p status p)))
 
-(defn show-all-changes [projects]
+(defn show-all-diff [projects]
   (doseq [p projects]
-    (u/run-command-on p show-changes p)))
+    (u/run-command-on p diff p)))
 
 (defn update-ns-of-projects! [projects namespaces]
   (doseq [[namespace project] (cartesian-product namespaces projects)]

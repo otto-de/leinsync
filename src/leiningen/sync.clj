@@ -9,7 +9,7 @@
 
 (defn do-update [projects ns {no-test? :notest
                               reset?   :reset
-                              show?    :show
+                              diff?    :diff
                               pull?    :pull
                               push?    :push
                               status?  :status
@@ -19,7 +19,7 @@
     (true? push?) (u/run! ns/push-all! projects)
     (true? pull?) (u/run! ns/pull-rebase-all! projects)
     (true? commit?) (u/run! ns/commit-all! projects)
-    (true? show?) (u/run! ns/show-all-changes projects)
+    (true? diff?) (u/run! ns/show-all-diff projects)
     (true? reset?) (u/run! ns/reset-all! projects)
     (true? no-test?) (u/run! ns/update-ns-of-projects! projects ns)
     :else (do (u/run! ns/update-ns-of-projects! projects ns)
@@ -33,7 +33,7 @@
 
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
-   [nil "--show" "Show changes on target projects"]
+   [nil "--diff" "Show changes on target projects"]
    [nil "--commit" "Commit change on target projects"]
    [nil "--pull" "pull rebase on target projects"]
    [nil "--push" "push on target projects"]
