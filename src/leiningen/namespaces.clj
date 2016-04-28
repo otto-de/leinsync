@@ -98,12 +98,17 @@
       (m/info "===> Could not commit because" (u/error-of pull-result))
       (m/info (u/output-of pull-result)))))
 
+(defn yes-or-no [input]
+  (or (= input "yes") (= input "no")))
+
 (defn push! [project]
-  (m/info "\n* Push on" project)
-  (let [push-result (sh/sh "git" "push" "origin")]
-    (if (not (u/is-success? push-result))
-      (m/info "===> Could not push because" (u/error-of push-result))
-      (m/info (u/output-of push-result)))))
+  (let [answer (->> (str "\n*Are you sure to push on" project "?")
+                    (u/ask-user yes-or-no))]
+    (if (= answer "yes")
+      (let [push-result (sh/sh "git" "push" "origin")]
+        (if (not (u/is-success? push-result))
+          (m/info "===> Could not push because" (u/error-of push-result))
+          (m/info (u/output-of push-result)))))))
 
 (defn test-all [projects]
   (doseq [p projects]
