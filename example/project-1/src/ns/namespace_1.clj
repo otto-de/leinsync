@@ -1,3 +1,3 @@
-(ns pk.to.ns.namespace-1)
+(ns ns.namespace-1)
 
-(defn another-fn [x] x)
+(defn fnc-1 [y] y)
