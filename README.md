@@ -20,6 +20,7 @@ container-folder/
     +-- test
     ¦   +-- name.space-test.1
     ¦   +-- name.space-test.2
+    +-- project.clj
 +-- project-2
     +-- src
     ¦   +-- name.space.1
@@ -27,6 +28,7 @@ container-folder/
     +-- test
     ¦   +-- name.space-test.1
     ¦   +-- name.space-test.2
+    +-- project.clj
 +-- project-3
     +-- src
     ¦   +-- name.space.1
@@ -34,6 +36,7 @@ container-folder/
     +-- test
     ¦   +-- name.space-test.1
     ¦   +-- name.space-test.2
+    +-- project.clj
 +-- project-4
     +-- src
     ¦   +-- name.space.1
@@ -41,6 +44,7 @@ container-folder/
     +-- test
     ¦   +-- name.space-test.1
     ¦   +-- name.space-test.2
+    +-- project.clj
 ```
 
 ## Usage
