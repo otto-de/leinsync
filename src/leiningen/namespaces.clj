@@ -66,8 +66,8 @@
   (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
   (if (and (u/is-success? (sh/sh "./lein.sh" "clean"))
            (u/is-success? (sh/sh "./lein.sh" "test")))
-    (m/info "===> All Tests of" project "are passed")
-    (m/info "===> Some Tests of" project "are FAILED!!!")))
+    (m/info "===> All Tests of" project "are passed\n")
+    (m/info "===> Some Tests of" project "are FAILED!!!\n")))
 
 (defn reset-project! [project]
   (m/info "\n... Reset changes of" project "on" (u/output-of (sh/sh "pwd")))
