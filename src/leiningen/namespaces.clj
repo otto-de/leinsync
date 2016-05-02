@@ -14,6 +14,9 @@
 (defn test-or-source-ns [ns]
   (if (or (.endsWith ns "-test") (.contains ns "test")) "test" "src"))
 
+(defn to-target-project [project-name]
+  (str "../" project-name))
+
 (defn split-path [path]
   {:src-or-test (test-or-source-ns path)
    :name-space  (-> path
@@ -23,7 +26,7 @@
 
 (defn ns->target-path [path project]
   (let [{path :src-or-test ns :name-space} (split-path path)]
-    (str "../" project "/" path "/" ns)))
+    (str (to-target-project project) "/" path "/" ns)))
 
 (defn ns->source-path [path]
   (let [{path :src-or-test ns :name-space} (split-path path)]
@@ -45,7 +48,7 @@
       sync-ns)))
 
 (defn should-update-ns? [ns target-project]
-  (let [project-sync-ns (-> (str "../" target-project "/project.clj")
+  (let [project-sync-ns (-> (str (to-target-project target-project) "/project.clj")
                             (get-project-sync-ns spec-selector)
                             (set))]
     (contains? project-sync-ns ns)))
@@ -127,31 +130,31 @@
 
 (defn test-all [projects]
   (doseq [p projects]
-    (u/run-command-on p lein-test p)))
+    (u/run-command-on (to-target-project p) lein-test p)))
 
 (defn reset-all! [projects]
   (doseq [p projects]
-    (u/run-command-on p reset-project! p)))
+    (u/run-command-on (to-target-project p) reset-project! p)))
 
 (defn commit-all! [projects]
   (doseq [p projects]
-    (u/run-command-on p commit-project! p)))
+    (u/run-command-on (to-target-project p) commit-project! p)))
 
 (defn pull-rebase-all! [projects]
   (doseq [p projects]
-    (u/run-command-on p pull-rebase! p)))
+    (u/run-command-on (to-target-project p) pull-rebase! p)))
 
 (defn push-all! [projects]
   (doseq [p projects]
-    (u/run-command-on p check-and-push! p)))
+    (u/run-command-on (to-target-project p) check-and-push! p)))
 
 (defn status_all [projects]
   (doseq [p projects]
-    (u/run-command-on p status p)))
+    (u/run-command-on (to-target-project p) status p)))
 
 (defn show-all-diff [projects]
   (doseq [p projects]
-    (u/run-command-on p diff p)))
+    (u/run-command-on (to-target-project p) diff p)))
 
 (defn update-ns-of-projects! [projects namespaces]
   (doseq [[namespace project] (cartesian-product namespaces projects)]
