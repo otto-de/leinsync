@@ -8,7 +8,7 @@
                    :unit    :unit
                    :focused :focused}
 
-  :aliases {"test" ["do" ["cljfmt" "fix"] "test"]}
+  ;:aliases {"test" ["do" ["cljfmt" "fix"] "test"]}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/math.combinatorics "0.1.1"]
