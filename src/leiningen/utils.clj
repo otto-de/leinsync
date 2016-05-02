@@ -39,7 +39,7 @@
           (format-str project 7)
           "|===================================|")
   (let [original-dir (System/getProperty "user.dir")]
-    (change-dir-to (str original-dir "/../" project))
+    (change-dir-to (str original-dir "/" project))
     (apply command args)
     (change-dir-to original-dir)))
 
