@@ -7,6 +7,9 @@
   :test-selectors {:default (constantly true)
                    :unit    :unit
                    :focused :focused}
+
+  :aliases {"test"         ["do" ["cljfmt" "fix"] "test"]}
+
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/math.combinatorics "0.1.1"]
                  [com.sun.jna/jna "3.0.9"]
@@ -15,4 +18,4 @@
   :profiles {:uberjar {:aot :all}
              :test    {:resource-paths ["test-resources"]}
              :dev     {:dependencies [[pjstadig/humane-test-output "0.7.0"]]
-                       :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]]}})
+                       :plugins      [[lein-cljfmt "0.5.3"]]}})

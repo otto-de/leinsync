@@ -56,8 +56,8 @@
 (defn update-name-space! [name-space target-project]
   (if (should-update-ns? name-space target-project)
     (update-files!
-      (ns->source-path name-space)
-      (ns->target-path name-space target-project))))
+     (ns->source-path name-space)
+     (ns->target-path name-space target-project))))
 
 (defn cartesian-product [c1 c2]
   (combo/cartesian-product c1 c2))
