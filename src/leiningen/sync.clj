@@ -8,11 +8,14 @@
             [clojure.string :as str]))
 
 (defn update-and-test! [projects namespaces]
-  (do (u/run! ns/update-ns-of-projects! projects namespaces)
-      (u/run! ns/test-all projects)
-      (main/info "lein sync" (str/join "," projects) "--diff" "to see changes")
-      (main/info "lein sync" (str/join "," projects) "--commit" "to commit changes")
-      (main/info "lein sync" (str/join "," projects) "--push" "to push unpushed commit")))
+  (u/run! ns/update-ns-of-projects! projects namespaces)
+  (let [passed-project (->> (u/run! ns/test-all projects)
+                            (filter #(= :passed (:result %)))
+                            (map :project))]
+    (main/info "* Tests on projects:" (str/join " - " passed-project) "are passed\n")
+    (main/info "lein sync" (str/join "," passed-project) "--diff" "to see changes")
+    (main/info "lein sync" (str/join "," passed-project) "--commit" "to commit changes")
+    (main/info "lein sync" (str/join "," passed-project) "--push" "to push unpushed commit")))
 
 (defn do-update [projects namespaces {no-test? :notest
                                       reset?   :reset

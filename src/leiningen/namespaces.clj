@@ -66,8 +66,12 @@
   (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
   (if (and (u/is-success? (sh/sh "./lein.sh" "clean"))
            (u/is-success? (sh/sh "./lein.sh" "test")))
-    (m/info "===> All Tests of" project "are passed\n")
-    (m/info "===> Some Tests of" project "are FAILED!!!\n")))
+    (do
+      (m/info "===> All Tests of" project "are passed\n")
+      {:project project :result :passed})
+    (do
+      (m/info "===> Some Tests of" project "are FAILED!!!\n")
+      {:project project :result :failed})))
 
 (defn reset-project! [project]
   (m/info "\n... Reset changes of" project "on" (u/output-of (sh/sh "pwd")))
@@ -117,7 +121,7 @@
 (defn check-and-push! [project]
   (if (empty? (unpushed-commit))
     (m/info "\n ===> Nothing to push on" project)
-    (if (= "yes" (-> (str "\n*Are you sure to push on " project "?")
+    (if (= "yes" (-> (str "\n*Are you sure to push on " project "? (yes/no)")
                      (u/ask-user yes-or-no)))
       (push! project))))
 
@@ -129,8 +133,10 @@
       (m/info (u/output-of status_result)))))
 
 (defn test-all [projects]
-  (doseq [p projects]
-    (u/run-command-on (to-target-project p) lein-test p)))
+  (doall
+   (map
+    #(u/run-command-on (to-target-project %) lein-test %)
+    projects)))
 
 (defn reset-all! [projects]
   (doseq [p projects]
