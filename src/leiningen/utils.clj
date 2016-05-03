@@ -27,21 +27,21 @@
     (catch Exception e (m/info "Error : " (.getMessage e)))))
 
 (defn format-str [input max-length]
-  (let [input-length (count input)
-        diff (- max-length input-length)]
+  (let [diff (- max-length (count input))]
     (cond
-      (pos? diff) (str (str/upper-case input) (str/join "" (repeat diff " ")))
-      (neg? diff) (subs (str/upper-case input) 0 max-length)
-      :else (str/upper-case input))))
+      (pos? diff) (str input (str/join "" (repeat diff " ")))
+      (neg? diff) (subs input 0 max-length)
+      :else input)))
 
 (defn run-command-on [project command & args]
   (m/info "|===================================|"
-          (format-str project 7)
+          (format-str project 10)
           "|===================================|")
-  (let [original-dir (System/getProperty "user.dir")]
-    (change-dir-to (str original-dir "/" project))
-    (apply command args)
-    (change-dir-to original-dir)))
+  (let [original-dir (System/getProperty "user.dir")
+        _ (change-dir-to (str original-dir "/" project))
+        return (apply command args)
+        _ (change-dir-to original-dir)]
+    return))
 
 (defn get-input [prompt]
   (m/info prompt)
