@@ -2,11 +2,11 @@
   (:refer-clojure :exclude [run!])
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
-            [leiningen.core.main :as m]
             [clojure.math.combinatorics :as combo]
             [clojure.java.shell :as sh]
             [leiningen.utils :as u]
-            [leiningen.core.project :as p])
+            [leiningen.core.project :as p]
+            [leiningen.core.main :as m])
   (:import (java.io FileNotFoundException)))
 
 (def spec-selector :ns-sync)
@@ -56,8 +56,8 @@
 (defn update-name-space! [name-space target-project]
   (if (should-update-ns? name-space target-project)
     (update-files!
-     (ns->source-path name-space)
-     (ns->target-path name-space target-project))))
+      (ns->source-path name-space)
+      (ns->target-path name-space target-project))))
 
 (defn cartesian-product [c1 c2]
   (combo/cartesian-product c1 c2))
@@ -134,9 +134,9 @@
 
 (defn test-all [projects]
   (doall
-   (map
-    #(u/run-command-on (to-target-project %) lein-test %)
-    projects)))
+    (map
+      #(u/run-command-on (to-target-project %) lein-test %)
+      projects)))
 
 (defn reset-all! [projects _]
   (doseq [p projects]
