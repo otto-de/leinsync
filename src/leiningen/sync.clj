@@ -1,11 +1,10 @@
 (ns leiningen.sync
   (:refer-clojure :exclude [sync])
   (:require [leiningen.core.main :as main]
-            [clojure.string :as str]
-            [leiningen.namespaces :as ns]
             [leiningen.utils :as u]
-            [clojure.tools.cli :refer [parse-opts]]
-            [clojure.string :as str]))
+            [leiningen.namespaces :as ns]
+            [clojure.string :as str]
+            [clojure.tools.cli :refer [parse-opts]]))
 
 (def sync-commands {:default ns/update-and-test!
                     :notest  ns/update-ns-of-projects!
