@@ -138,30 +138,40 @@
     #(u/run-command-on (to-target-project %) lein-test %)
     projects)))
 
-(defn reset-all! [projects]
+(defn reset-all! [projects _]
   (doseq [p projects]
     (u/run-command-on (to-target-project p) reset-project! p)))
 
-(defn commit-all! [projects]
+(defn commit-all! [projects _]
   (doseq [p projects]
     (u/run-command-on (to-target-project p) commit-project! p)))
 
-(defn pull-rebase-all! [projects]
+(defn pull-rebase-all! [projects _]
   (doseq [p projects]
     (u/run-command-on (to-target-project p) pull-rebase! p)))
 
-(defn push-all! [projects]
+(defn push-all! [projects _]
   (doseq [p projects]
     (u/run-command-on (to-target-project p) check-and-push! p)))
 
-(defn status_all [projects]
+(defn status_all [projects _]
   (doseq [p projects]
     (u/run-command-on (to-target-project p) status p)))
 
-(defn show-all-diff [projects]
+(defn show-all-diff [projects _]
   (doseq [p projects]
     (u/run-command-on (to-target-project p) diff p)))
 
 (defn update-ns-of-projects! [projects namespaces]
   (doseq [[namespace project] (cartesian-product namespaces projects)]
     (update-name-space! namespace project)))
+
+(defn update-and-test! [projects namespaces]
+  (update-ns-of-projects! projects namespaces)
+  (let [passed-project (->> (test-all projects)
+                            (filter #(= :passed (:result %)))
+                            (map :project))]
+    (m/info "* Tests are passed on projects:" (str/join " + " passed-project) "\n")
+    (m/info "To see changes : lein sync" (str/join "," passed-project) "--diff")
+    (m/info "To commit      : lein sync" (str/join "," passed-project) "--commit")
+    (m/info "To push        : lein sync" (str/join "," passed-project) "--push")))

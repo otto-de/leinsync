@@ -7,38 +7,37 @@
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :as str]))
 
-(defn update-and-test! [projects namespaces]
-  (u/run! ns/update-ns-of-projects! projects namespaces)
-  (let [passed-project (->> (u/run! ns/test-all projects)
-                            (filter #(= :passed (:result %)))
-                            (map :project))]
-    (main/info "* Tests on projects:" (str/join " - " passed-project) "are passed\n")
-    (main/info "lein sync" (str/join "," passed-project) "--diff" "to see changes")
-    (main/info "lein sync" (str/join "," passed-project) "--commit" "to commit changes")
-    (main/info "lein sync" (str/join "," passed-project) "--push" "to push unpushed commit")))
+(def sync-commands {:default ns/update-and-test!
+                    :notest  ns/update-ns-of-projects!
+                    :reset   ns/reset-all!
+                    :diff    ns/show-all-diff
+                    :pull    ns/pull-rebase-all!
+                    :push    ns/push-all!
+                    :status  ns/status_all
+                    :commit  ns/commit-all!})
 
-(defn do-update [projects namespaces {no-test? :notest
-                                      reset?   :reset
-                                      diff?    :diff
-                                      pull?    :pull
-                                      push?    :push
-                                      status?  :status
-                                      commit?  :commit}]
-  (cond
-    (true? status?) (u/run! ns/status_all projects)
-    (true? push?) (u/run! ns/push-all! projects)
-    (true? pull?) (u/run! ns/pull-rebase-all! projects)
-    (true? commit?) (u/run! ns/commit-all! projects)
-    (true? diff?) (u/run! ns/show-all-diff projects)
-    (true? reset?) (u/run! ns/reset-all! projects)
-    (true? no-test?) (u/run! ns/update-ns-of-projects! projects namespaces)
-    :else (update-and-test! projects namespaces)))
+(defn ->commands [options]
+  (let [commands (->> options
+                      (keys)
+                      (select-keys sync-commands)
+                      (reduce-kv (fn [m _ f] (conj m (partial u/run! f))) []))]
+    (if (empty? commands)
+      [(partial u/run! (:default sync-commands))]
+      commands)))
+
+(defn execute-program [projects namespaces options]
+  (doseq [command (->commands options)]
+    (command projects namespaces)))
 
 (defn one-arg-program [project-description projects options]
-  (do-update (u/split projects) (ns/spec-selector project-description) options))
+  (execute-program
+   (u/split projects)
+   (ns/spec-selector project-description) options))
 
 (defn two-args-program [projects namespaces options]
-  (do-update (u/split projects) (u/split namespaces) options))
+  (execute-program
+   (u/split projects)
+   (u/split namespaces) options))
 
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
