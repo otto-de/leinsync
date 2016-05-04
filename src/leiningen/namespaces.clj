@@ -170,8 +170,9 @@
   (update-ns-of-projects! projects namespaces)
   (let [passed-project (->> (test-all projects)
                             (filter #(= :passed (:result %)))
-                            (map :project))]
-    (m/info "* Tests are passed on projects:" (str/join " + " passed-project) "\n")
-    (m/info "To see changes : lein sync" (str/join "," passed-project) "--diff")
-    (m/info "To commit      : lein sync" (str/join "," passed-project) "--commit")
-    (m/info "To push        : lein sync" (str/join "," passed-project) "--push")))
+                            (map :project)
+                            (str/join ","))]
+    (m/info "* Tests are passed on projects:" passed-project "\n")
+    (m/info "To see changes : lein sync" passed-project "--diff")
+    (m/info "To commit      : lein sync" passed-project "--commit")
+    (m/info "To push        : lein sync" passed-project "--push")))
