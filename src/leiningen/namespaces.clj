@@ -9,12 +9,12 @@
             [leiningen.core.main :as m])
   (:import (java.io FileNotFoundException)))
 
-(def spec-selector :ns-sync)
+(def sync-def-selector :ns-sync)
 
 (defn test-or-source-ns [ns]
   (if (or (.endsWith ns "-test") (.contains ns "test")) "test" "src"))
 
-(defn to-target-project [project-name]
+(defn ->target-project-path [project-name]
   (str "../" project-name))
 
 (defn split-path [path]
@@ -26,7 +26,7 @@
 
 (defn ns->target-path [path project]
   (let [{path :src-or-test ns :name-space} (split-path path)]
-    (str (to-target-project project) "/" path "/" ns)))
+    (str (->target-project-path project) "/" path "/" ns)))
 
 (defn ns->source-path [path]
   (let [{path :src-or-test ns :name-space} (split-path path)]
@@ -38,20 +38,20 @@
     (spit (io/file to-file) (slurp (io/file from-file)))
     (m/info "UPDATE" to-file)
     (catch FileNotFoundException e
-      (m/info "COULD NOT UPDATE" to-file "because: " (.getMessage e)))))
+      (m/info "* Could not synchronize" to-file "because: " (.getMessage e)))))
 
-(defn get-project-sync-ns [project-file-path selector]
-  (let [project-clj (p/read-raw project-file-path)
-        sync-ns (selector project-clj)]
-    (if (nil? sync-ns)
-      (throw (RuntimeException. "Sync Namespace is not defined"))
-      sync-ns)))
+(defn read-project-clj [target-project]
+  (-> target-project
+      (->target-project-path)
+      (str "/project.clj")
+      (p/read-raw)))
 
-(defn should-update-ns? [ns target-project]
-  (let [project-sync-ns (-> (str (to-target-project target-project) "/project.clj")
-                            (get-project-sync-ns spec-selector)
-                            (set))]
-    (contains? project-sync-ns ns)))
+(defn should-update-ns? [namespace target-project]
+  (let [project-sync-def (-> target-project
+                             (read-project-clj)
+                             (sync-def-selector)
+                             (set))]
+    (contains? project-sync-def namespace)))
 
 (defn update-name-space! [name-space target-project]
   (if (should-update-ns? name-space target-project)
@@ -135,32 +135,32 @@
 (defn test-all [projects]
   (doall
     (map
-      #(u/run-command-on (to-target-project %) lein-test %)
+      #(u/run-command-on (->target-project-path %) lein-test %)
       projects)))
 
 (defn reset-all! [projects _]
   (doseq [p projects]
-    (u/run-command-on (to-target-project p) reset-project! p)))
+    (u/run-command-on (->target-project-path p) reset-project! p)))
 
 (defn commit-all! [projects _]
   (doseq [p projects]
-    (u/run-command-on (to-target-project p) commit-project! p)))
+    (u/run-command-on (->target-project-path p) commit-project! p)))
 
 (defn pull-rebase-all! [projects _]
   (doseq [p projects]
-    (u/run-command-on (to-target-project p) pull-rebase! p)))
+    (u/run-command-on (->target-project-path p) pull-rebase! p)))
 
 (defn push-all! [projects _]
   (doseq [p projects]
-    (u/run-command-on (to-target-project p) check-and-push! p)))
+    (u/run-command-on (->target-project-path p) check-and-push! p)))
 
 (defn status_all [projects _]
   (doseq [p projects]
-    (u/run-command-on (to-target-project p) status p)))
+    (u/run-command-on (->target-project-path p) status p)))
 
 (defn show-all-diff [projects _]
   (doseq [p projects]
-    (u/run-command-on (to-target-project p) diff p)))
+    (u/run-command-on (->target-project-path p) diff p)))
 
 (defn update-ns-of-projects! [projects namespaces]
   (doseq [[namespace project] (cartesian-product namespaces projects)]
@@ -168,11 +168,12 @@
 
 (defn update-and-test! [projects namespaces]
   (update-ns-of-projects! projects namespaces)
-  (let [passed-project (->> (test-all projects)
-                            (filter #(= :passed (:result %)))
-                            (map :project)
-                            (str/join ","))]
-    (m/info "* Tests are passed on projects:" passed-project "\n")
-    (m/info "To see changes : lein sync" passed-project "--diff")
-    (m/info "To commit      : lein sync" passed-project "--commit")
-    (m/info "To push        : lein sync" passed-project "--push")))
+  (let [passed-projects (->> (test-all projects)
+                             (filter #(= (:result %) :passed))
+                             (map :project)
+                             (str/join ","))]
+    (when (not (empty? passed-projects))
+      (m/info "* Tests are passed on projects:" passed-projects "\n")
+      (m/info "To see changes : lein sync" passed-projects "--diff")
+      (m/info "To commit      : lein sync" passed-projects "--commit")
+      (m/info "To push        : lein sync" passed-projects "--push"))))

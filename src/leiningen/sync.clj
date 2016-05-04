@@ -30,8 +30,8 @@
 
 (defn one-arg-program [project-description projects options]
   (execute-program
-   (u/split projects)
-   (ns/spec-selector project-description) options))
+    (u/split projects)
+    (ns/sync-def-selector project-description) options))
 
 (defn two-args-program [projects namespaces options]
   (execute-program
