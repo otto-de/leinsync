@@ -21,6 +21,9 @@
                    :all       (constantly true)}
   :aliases {}
 
+  :source-paths ["folder1" "folder2"]
+  :test-paths   ["testfolder1" "testfolder2"]
+
   :profiles {:uberjar {:aot :all}
              :dev     {:dependencies [[org.clojure/test.check "0.9.0"]]
                        :plugins      []}

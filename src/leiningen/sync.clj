@@ -24,19 +24,23 @@
       [(partial u/run! (:default sync-commands))]
       commands)))
 
-(defn execute-program [projects namespaces options]
+(defn execute-program [projects namespaces project-desc options]
   (doseq [command (->commands options)]
-    (command projects namespaces)))
+    (command projects namespaces project-desc)))
 
-(defn one-arg-program [project-description projects options]
+(defn one-arg-program [project-desc projects options]
   (execute-program
     (u/split projects)
-    (ns/sync-def-selector project-description) options))
+    (ns/sync-def-selector project-desc)
+    project-desc
+    options))
 
-(defn two-args-program [projects namespaces options]
+(defn two-args-program [projects namespaces project-desc options]
   (execute-program
-   (u/split projects)
-   (u/split namespaces) options))
+    (u/split projects)
+    (u/split namespaces)
+    project-desc
+    options))
 
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
@@ -69,6 +73,6 @@
   (let [{:keys [options arguments summary]} (cli/parse-opts args cli-options)]
     (cond
       (= 1 (count arguments)) (one-arg-program project-desc (first arguments) options)
-      (= 2 (count arguments)) (two-args-program (first arguments) (second arguments) options)
+      (= 2 (count arguments)) (two-args-program (first arguments) (second arguments) project-desc options)
       :else (main/abort (usage summary)))
     (main/exit)))
