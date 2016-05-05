@@ -24,23 +24,26 @@
       [(partial u/run! (:default sync-commands))]
       commands)))
 
-(defn execute-program [projects namespaces project-desc options]
+(defn execute-program [target-projects namespaces source-project-desc options]
   (doseq [command (->commands options)]
-    (command projects namespaces project-desc)))
+    (command
+     target-projects
+     namespaces
+     source-project-desc)))
 
-(defn one-arg-program [project-desc projects options]
+(defn one-arg-program [source-project-desc target-projects options]
   (execute-program
-    (u/split projects)
-    (ns/sync-def-selector project-desc)
-    project-desc
-    options))
+   (u/split target-projects)
+   (ns/sync-def-selector source-project-desc)
+   source-project-desc
+   options))
 
 (defn two-args-program [projects namespaces project-desc options]
   (execute-program
-    (u/split projects)
-    (u/split namespaces)
-    project-desc
-    options))
+   (u/split projects)
+   (u/split namespaces)
+   project-desc
+   options))
 
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]

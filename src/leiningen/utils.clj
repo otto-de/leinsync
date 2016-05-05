@@ -24,7 +24,7 @@
 (defn run! [action & args]
   (try
     (apply action args)
-    (catch Exception e (m/info "Error " (.getMessage e)))))
+    (catch Exception e (m/info "Error " (.getMessage e) e))))
 
 (defn format-str [input max-length]
   (let [diff (- max-length (count input))]
@@ -43,16 +43,23 @@
         _ (change-dir-to original-dir)]
     return))
 
-(defn get-input [prompt]
+(defn capture-input [prompt]
   (m/info prompt)
   (read-line))
+
+(defn yes-or-no [input]
+  (or (= input "yes") (= input "no")))
+
+(defn is-number [limit input]
+  (let [n (read-string input)]
+    (and (number? n) (< n limit))))
 
 (defn ask-user
   ([question] (ask-user question (fn [_] true)))
   ([question validate-fn]
-   (loop [input (get-input question)]
+   (loop [input (capture-input question)]
      (if (validate-fn input)
        input
        (do
          (m/info "the input was not correct")
-         (recur (get-input question)))))))
+         (recur (capture-input question)))))))
