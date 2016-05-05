@@ -60,27 +60,53 @@
       (m/info "* Could not synchronize" to-file "because: " (.getMessage e)))))
 
 (defn should-update-ns? [namespace target-project]
-  (let [sync-def (-> target-project
-                     (->target-project-path)
-                     (read-project-clj)
-                     (sync-def-selector)
-                     (set))]
-    (contains? sync-def namespace)))
+  (-> target-project
+      (->target-project-path)
+      (read-project-clj)
+      (sync-def-selector)
+      (set)
+      (contains? namespace)))
 
-(defn update-name-space! [name-space target-project project-desc]
+(defn localtion-question-with
+  ([ns project [first & rest]]
+   (let [initial-question (str "The location of " ns " on " project
+                               " couldn't determined.  Please choose one of options:")]
+     (localtion-question-with initial-question 0 first rest)))
+  ([question index first [ffirst rrest]]
+   (if (nil? first)
+     question
+     (recur (str question "\n* " index " ==> " first) (inc index) ffirst rrest))))
+
+(defn ask-for-localtion-and-update! [namespace project source-path target-paths]
+  (update-files!
+   source-path
+   (nth target-paths
+        (-> namespace
+            (localtion-question-with project target-paths)
+            (u/ask-user (partial u/is-number (count target-paths)))
+            (read-string)))))
+
+(defn update-name-space! [name-space target-project source-project-desc]
   (if (should-update-ns? name-space target-project)
-    (let [existing-source-paths (filter ns-exists? (ns->source-path name-space project-desc))
+    (let [existing-source-paths (filter ns-exists? (ns->source-path name-space source-project-desc))
           target-paths (ns->target-path name-space target-project read-target-project-clj)
           existing-target-paths (filter ns-exists? target-paths)]
       (cond
+        ;source and target namespaces exist and unique
         (and (= 1 (count existing-source-paths))
              (= 1 (count existing-target-paths)))
         (update-files! (first existing-source-paths) (first existing-target-paths))
-        
+        ;source namespace  exists, target namespace doen't exist but its location is unique
         (and (= 1 (count existing-source-paths))
-             (= 0 (count existing-target-paths)))
-        (m/info "To be done soon")
-
+             (= 0 (count existing-target-paths))
+             (= 1 (count target-paths)))
+        (update-files! (first existing-source-paths) (first target-paths))
+        ;source namespace  exists, target namespace doen't exist and its location is unique, so ask user
+        (and (= 1 (count existing-source-paths))
+             (= 0 (count existing-target-paths))
+             (< 1 (count target-paths)))
+        (ask-for-localtion-and-update! name-space target-project (first existing-source-paths) target-paths)
+        ;default: do nothing
         :else (m/info "Could not find strategy to update" name-space "on project" target-project)))))
 
 (defn cartesian-product [c1 c2]
@@ -129,9 +155,6 @@
       (m/info "===> Could not commit because" (u/error-of pull-result))
       (m/info (u/output-of pull-result)))))
 
-(defn yes-or-no [input]
-  (or (= input "yes") (= input "no")))
-
 (defn unpushed-commit []
   (-> (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")
       (u/output-of)))
@@ -146,7 +169,7 @@
   (if (empty? (unpushed-commit))
     (m/info "\n ===> Nothing to push on" project)
     (if (= "yes" (-> (str "\n*Are you sure to push on " project "? (yes/no)")
-                     (u/ask-user yes-or-no)))
+                     (u/ask-user u/yes-or-no)))
       (push! project))))
 
 (defn status [project]
@@ -158,9 +181,9 @@
 
 (defn test-all [projects]
   (doall
-    (map
-      #(u/run-command-on (->target-project-path %) lein-test %)
-      projects)))
+   (map
+    #(u/run-command-on (->target-project-path %) lein-test %)
+    projects)))
 
 (defn reset-all! [projects _ _]
   (doseq [p projects]
@@ -186,13 +209,13 @@
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) diff p)))
 
-(defn update-ns-of-projects! [projects namespaces project-desc]
-  (doseq [[namespace project] (cartesian-product namespaces projects)]
-    (update-name-space! namespace project project-desc)))
+(defn update-ns-of-projects! [target-projects namespaces source-project-desc]
+  (doseq [[namespace project] (cartesian-product namespaces target-projects)]
+    (update-name-space! namespace project source-project-desc)))
 
-(defn update-and-test! [projects namespaces project-desc]
-  (update-ns-of-projects! projects namespaces project-desc)
-  (let [passed-projects (->> (test-all projects)
+(defn update-and-test! [target-projects namespaces src-project-desc]
+  (update-ns-of-projects! target-projects namespaces src-project-desc)
+  (let [passed-projects (->> (test-all target-projects)
                              (filter #(= (:result %) :passed))
                              (map :project)
                              (str/join ","))]
