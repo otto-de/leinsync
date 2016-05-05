@@ -10,27 +10,46 @@
   (:import (java.io FileNotFoundException)))
 
 (def sync-def-selector :ns-sync)
+(def source-path-selector :source-paths)
+(def test-path-selector :test-paths)
 
-(defn test-or-source-ns [ns]
-  (if (or (.endsWith ns "-test") (.contains ns "test")) "test" "src"))
+(defn ns-exists? [path]
+  (-> path
+      (io/as-file)
+      (.exists)))
 
 (defn ->target-project-path [project-name]
   (str "../" project-name))
 
-(defn split-path [path]
-  {:src-or-test (test-or-source-ns path)
-   :name-space  (-> path
-                    (str/replace #"-" "_")
-                    (str/replace #"\." "/")
-                    (str ".clj"))})
+(defn read-project-clj [project-path]
+  (-> project-path
+      (str "/project.clj")
+      (p/read-raw)))
 
-(defn ns->target-path [path project]
-  (let [{path :src-or-test ns :name-space} (split-path path)]
-    (str (->target-project-path project) "/" path "/" ns)))
+(defn test-or-source-ns [namespace project-clj]
+  (if (or (.endsWith namespace "-test")
+          (.contains namespace "test"))
+    (get-in project-clj [test-path-selector] ["test"])
+    (get-in project-clj [source-path-selector] ["src"])))
 
-(defn ns->source-path [path]
-  (let [{path :src-or-test ns :name-space} (split-path path)]
-    (str path "/" ns)))
+(defn split-path [path project-desc]
+  {:src-or-test    (test-or-source-ns path project-desc)
+   :namespace-path (-> path
+                       (str/replace #"-" "_")
+                       (str/replace #"\." "/")
+                       (str ".clj"))})
+
+(defn read-target-project-clj [p]
+  (read-project-clj (->target-project-path p)))
+
+(defn ns->target-path [namespace project read-fn]
+  (let [project-desc (read-fn project)
+        {folders :src-or-test ns-path :namespace-path} (split-path namespace project-desc)]
+    (map #(str (->target-project-path project) "/" % "/" ns-path) folders)))
+
+(defn ns->source-path [namespace project-desc]
+  (let [{folders :src-or-test ns-path :namespace-path} (split-path namespace project-desc)]
+    (map #(str % "/" ns-path) folders)))
 
 (defn update-files! [from-file to-file]
   (try
@@ -40,24 +59,29 @@
     (catch FileNotFoundException e
       (m/info "* Could not synchronize" to-file "because: " (.getMessage e)))))
 
-(defn read-project-clj [target-project]
-  (-> target-project
-      (->target-project-path)
-      (str "/project.clj")
-      (p/read-raw)))
-
 (defn should-update-ns? [namespace target-project]
-  (let [project-sync-def (-> target-project
-                             (read-project-clj)
-                             (sync-def-selector)
-                             (set))]
-    (contains? project-sync-def namespace)))
+  (let [sync-def (-> target-project
+                     (->target-project-path)
+                     (read-project-clj)
+                     (sync-def-selector)
+                     (set))]
+    (contains? sync-def namespace)))
 
-(defn update-name-space! [name-space target-project]
+(defn update-name-space! [name-space target-project project-desc]
   (if (should-update-ns? name-space target-project)
-    (update-files!
-      (ns->source-path name-space)
-      (ns->target-path name-space target-project))))
+    (let [existing-source-paths (filter ns-exists? (ns->source-path name-space project-desc))
+          target-paths (ns->target-path name-space target-project read-target-project-clj)
+          existing-target-paths (filter ns-exists? target-paths)]
+      (cond
+        (and (= 1 (count existing-source-paths))
+             (= 1 (count existing-target-paths)))
+        (update-files! (first existing-source-paths) (first existing-target-paths))
+        
+        (and (= 1 (count existing-source-paths))
+             (= 0 (count existing-target-paths)))
+        (m/info "To be done soon")
+
+        :else (m/info "Could not find strategy to update" name-space "on project" target-project)))))
 
 (defn cartesian-product [c1 c2]
   (combo/cartesian-product c1 c2))
@@ -127,10 +151,10 @@
 
 (defn status [project]
   (m/info "\n * Status of" project)
-  (let [status_result (sh/sh "git" "status")]
-    (if (not (u/is-success? status_result))
-      (m/info "===> Could not get status because" (u/error-of status_result))
-      (m/info (u/output-of status_result)))))
+  (let [status-result (sh/sh "git" "status")]
+    (if (not (u/is-success? status-result))
+      (m/info "===> Could not get status because" (u/error-of status-result))
+      (m/info (u/output-of status-result)))))
 
 (defn test-all [projects]
   (doall
@@ -138,36 +162,36 @@
       #(u/run-command-on (->target-project-path %) lein-test %)
       projects)))
 
-(defn reset-all! [projects _]
+(defn reset-all! [projects _ _]
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) reset-project! p)))
 
-(defn commit-all! [projects _]
+(defn commit-all! [projects _ _]
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) commit-project! p)))
 
-(defn pull-rebase-all! [projects _]
+(defn pull-rebase-all! [projects _ _]
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) pull-rebase! p)))
 
-(defn push-all! [projects _]
+(defn push-all! [projects _ _]
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) check-and-push! p)))
 
-(defn status_all [projects _]
+(defn status_all [projects _ _]
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) status p)))
 
-(defn show-all-diff [projects _]
+(defn show-all-diff [projects _ _]
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) diff p)))
 
-(defn update-ns-of-projects! [projects namespaces]
+(defn update-ns-of-projects! [projects namespaces project-desc]
   (doseq [[namespace project] (cartesian-product namespaces projects)]
-    (update-name-space! namespace project)))
+    (update-name-space! namespace project project-desc)))
 
-(defn update-and-test! [projects namespaces]
-  (update-ns-of-projects! projects namespaces)
+(defn update-and-test! [projects namespaces project-desc]
+  (update-ns-of-projects! projects namespaces project-desc)
   (let [passed-projects (->> (test-all projects)
                              (filter #(= (:result %) :passed))
                              (map :project)

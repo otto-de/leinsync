@@ -1,42 +1,55 @@
 (ns leiningen.namespaces-test
   (:require [clojure.test :refer :all]
-            [leiningen.namespaces :as ns]))
+            [leiningen.namespaces :as ns]
+            [leiningen.core.project :as p]))
+
+(defn- read-fn [_]
+  (p/read-raw "test-resources/project_test.clj"))
 
 (deftest ^:unit convert-namespace->des-path-of-src
-  (is (= "../project/src/de/otto/one/cool/ns.clj"
-         (ns/ns->target-path "de.otto.one.cool.ns" "project"))))
+  (is (= ["../project/folder1/de/otto/one/cool/ns.clj"
+          "../project/folder2/de/otto/one/cool/ns.clj"]
+         (ns/ns->target-path "de.otto.one.cool.ns" "project" read-fn))))
 
 (deftest ^:unit convert-namespace->des-path-of-test
-  (is (= "../project/test/de/otto/one/cool/ns_test.clj"
-         (ns/ns->target-path "de.otto.one.cool.ns-test" "project"))))
+  (is (= ["../project/testfolder1/de/otto/one/cool/ns_test.clj"
+          "../project/testfolder2/de/otto/one/cool/ns_test.clj"]
+         (ns/ns->target-path "de.otto.one.cool.ns-test" "project" read-fn))))
+
+(def project-clj {:source-paths ["folder1" "folder2"]
+                  :test-paths   ["testfolder1" "testfolder2"]})
 
 (deftest ^:unit convert-namespace->src-path-of-src
-  (is (= "src/de/otto/one/cool/ns.clj"
-         (ns/ns->source-path "de.otto.one.cool.ns"))))
+  (is (= ["folder1/de/otto/one/cool/ns.clj"
+          "folder2/de/otto/one/cool/ns.clj"]
+         (ns/ns->source-path "de.otto.one.cool.ns" project-clj))))
 
 (deftest ^:unit convert-namespace->src-path-of-test
-  (is (= "test/de/otto/one/cool/ns_test.clj"
-         (ns/ns->source-path "de.otto.one.cool.ns-test"))))
+  (is (= ["testfolder1/de/otto/one/cool/ns_test.clj"
+          "testfolder2/de/otto/one/cool/ns_test.clj"]
+         (ns/ns->source-path "de.otto.one.cool.ns-test" project-clj))))
 
 (deftest ^:unit split-test-path
-  (is (= {:src-or-test "test" :name-space "de/otto/one/cool/ns_test.clj"}
-         (ns/split-path "de.otto.one.cool.ns-test"))))
+  (is (= {:src-or-test    ["testfolder1" "testfolder2"]
+          :namespace-path "de/otto/one/cool/ns_test.clj"}
+         (ns/split-path "de.otto.one.cool.ns-test" project-clj))))
 
 (deftest ^:unit split-src-path
-  (is (= {:src-or-test "src" :name-space "de/otto/one/cool/ns.clj"}
-         (ns/split-path "de.otto.one.cool.ns"))))
+  (is (= {:src-or-test    ["folder1" "folder2"]
+          :namespace-path "de/otto/one/cool/ns.clj"}
+         (ns/split-path "de.otto.one.cool.ns" project-clj))))
 
 (deftest ^:unit is-a-test-ns
-  (is (= "test"
-         (ns/test-or-source-ns "de.otto.one.cool.ns-test"))))
+  (is (= ["testfolder1" "testfolder2"]
+         (ns/test-or-source-ns "de.otto.one.cool.ns-test" project-clj))))
 
 (deftest ^:unit is-not-a-test-ns
-  (is (= "src"
-         (ns/test-or-source-ns "de.otto.one.cool.ns"))))
+  (is (= ["folder1" "folder2"]
+         (ns/test-or-source-ns "de.otto.one.cool.ns" project-clj))))
 
 (deftest ^:unit is-not-a-test-ns
-  (is (= "test"
-         (ns/test-or-source-ns "test-utils-ns"))))
+  (is (= ["testfolder1" "testfolder2"]
+         (ns/test-or-source-ns "test-utils-ns" project-clj))))
 
 (deftest ^:unit flap-map-1
   (is (= '([:a :1] [:a :2] [:a :3] [:b :1] [:b :2] [:b :3] [:c :1] [:c :2] [:c :3])
@@ -53,3 +66,7 @@
 (deftest ^:unit flap-map-4
   (is (= '([:a :1])
          (ns/cartesian-product '(:a) '(:1)))))
+
+(deftest ^:unit flap-map-4
+  (is (true? (ns/ns-exists? "test-resources/project_test.clj")))
+  (is (false? (ns/ns-exists? "test-resources/project_test_not-exists.clj"))))
