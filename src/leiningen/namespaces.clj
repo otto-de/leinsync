@@ -55,7 +55,7 @@
   (try
     (io/make-parents (io/file to-file))
     (spit (io/file to-file) (slurp (io/file from-file)))
-    (m/info "UPDATE" to-file)
+    (m/info "* Update" to-file)
     (catch FileNotFoundException e
       (m/info "* Could not synchronize" to-file "because: " (.getMessage e)))))
 
@@ -67,15 +67,20 @@
       (set)
       (contains? namespace)))
 
+(defn initial-question [namespace project]
+  (str "The location of " namespace " on " project
+       " couldn't determined.  Please choose one of options:"))
+
 (defn localtion-question-with
   ([ns project [first & rest]]
-   (let [initial-question (str "The location of " ns " on " project
-                               " couldn't determined.  Please choose one of options:")]
-     (localtion-question-with initial-question 0 first rest)))
+   (localtion-question-with (initial-question ns project) 0 first rest))
   ([question index first [ffirst rrest]]
    (if (nil? first)
      question
-     (recur (str question "\n* " index " ==> " first) (inc index) ffirst rrest))))
+     (recur (str question "\n* " index " ==> " first)
+            (inc index)
+            ffirst
+            rrest))))
 
 (defn ask-for-localtion-and-update! [namespace project source-path target-paths]
   (update-files!

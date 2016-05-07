@@ -30,12 +30,12 @@
   (let [diff (- max-length (count input))]
     (cond
       (pos? diff) (str input (str/join "" (repeat diff " ")))
-      (neg? diff) (subs input 0 max-length)
+      (neg? diff) (str (subs input 0 (- max-length 2)) "..")
       :else input)))
 
 (defn run-command-on [project command & args]
   (m/info "|===================================|"
-          (format-str project 10)
+          (format-str project 12)
           "|===================================|")
   (let [original-dir (System/getProperty "user.dir")
         _ (change-dir-to (str original-dir "/" project))
