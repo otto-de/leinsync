@@ -144,13 +144,12 @@
       (m/info "* No update has been applied on the project" project "\n")
       (m/info "* Changes on project" project "\n\n" changes))))
 
-(defn commit-project! [project]
+(defn commit-project! [project commit-msg]
   (if (not (empty? (get-changed-files)))
-    (let [commit-result (->> (str "\nPlease enter the commit message for " project)
-                             (u/ask-user)
-                             (sh/sh "git" "commit" "-am"))]
+    (let [commit-result (sh/sh "git" "commit" "-am" commit-msg)]
       (if (not (u/is-success? commit-result))
-        (m/info "===> Could not commit because" (u/error-of commit-result))))
+        (m/info "===> Could not commit because" (u/error-of commit-result))
+        (m/info "Commited")))
     (m/info "\n* No change to be committed on" project)))
 
 (defn pull-rebase! [project]
@@ -195,8 +194,12 @@
     (u/run-command-on (->target-project-path p) reset-project! p)))
 
 (defn commit-all! [projects _ _]
-  (doseq [p projects]
-    (u/run-command-on (->target-project-path p) commit-project! p)))
+  (let [commit-msg (->> projects
+                        (str/join ",")
+                        (str "\nPlease enter the commit message for projects: ")
+                        (u/ask-user))]
+    (doseq [p projects]
+      (u/run-command-on (->target-project-path p) commit-project! p commit-msg))))
 
 (defn pull-rebase-all! [projects _ _]
   (doseq [p projects]
