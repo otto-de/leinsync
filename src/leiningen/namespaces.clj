@@ -173,18 +173,18 @@
       {:result :failed :cmd (str/join " " cmd)})))
 
 (defn lein-test [project]
-  (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")) "\n")
+  (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
   (let [failed-cmd (->> project
                         (test-cmd)
                         (map run-cmd)
-                        (filter #(= (:result %) :failed))
-                        (first))]
+                        (filter #(= (:result %) :failed)))]
     (if (empty? failed-cmd)
       (do
         (m/info "===> All tests of" project "are passed\n")
         {:project project :result :passed})
       (do
-        (m/info "===> Some tests when running" (:cmd failed-cmd) project "are FAILED!!!\n")
+        (m/info "===> On" project "some tests are FAILED when executing"
+                (str/join " and " (map :cmd failed-cmd)) "\n")
         {:project project :result :failed}))))
 
 (defn reset-project! [project]
