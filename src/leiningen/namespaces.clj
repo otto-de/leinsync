@@ -94,7 +94,7 @@
 
 (defn initial-question [namespace project]
   (str "The location of " namespace " on " project
-       " couldn't determined.  Please choose one of options:"))
+       " could not be determined.  Please choose one of options:"))
 
 (defn localtion-question-with
   ([ns project [first & rest]]
@@ -107,14 +107,21 @@
             ffirst
             rrest))))
 
-(defn ask-for-localtion-and-update! [namespace project source-path target-paths]
+(defn ask-for-localtion [namespace project paths]
+  (nth paths
+       (-> namespace
+           (localtion-question-with project paths)
+           (u/ask-user (partial u/is-number (count paths)))
+           (read-string))))
+
+(defn ask-for-localtion-and-update! [namespace project source-paths target-paths]
   (update-files!
-   source-path
-   (nth target-paths
-        (-> namespace
-            (localtion-question-with project target-paths)
-            (u/ask-user (partial u/is-number (count target-paths)))
-            (read-string)))))
+   (if (= 1 (count source-paths))
+     (first source-paths)
+     (ask-for-localtion namespace project source-paths))
+   (if (= 1 (count target-paths))
+     (first target-paths)
+     (ask-for-localtion namespace project target-paths))))
 
 (defn update-file-if-exists! [name target-project source-paths target-paths]
   (let [existing-source-paths (filter ns-exists? source-paths)
@@ -130,12 +137,11 @@
            (= 1 (count target-paths)))
       (update-files! (first existing-source-paths) (first target-paths))
       ;source  exists, target  doen't exist and its location is unique, so ask user
-      (and (= 1 (count existing-source-paths))
-           (= 0 (count existing-target-paths))
-           (< 1 (count target-paths)))
-      (ask-for-localtion-and-update! name target-project (first existing-source-paths) target-paths)
+      (<= 1 (count existing-source-paths))
+      (ask-for-localtion-and-update! name target-project existing-source-paths target-paths)
       ;default: do nothing
-      :else (m/info "Could not find strategy to update" name "on project" target-project))))
+      :else (m/info "WARNING: Could not find strategy to update" name "on project" target-project
+                    "\n    ==>" name "may not exist on the source project"))))
 
 (defn update-name-space! [name-space target-project source-project-desc]
   (if (should-update? sync-ns-def name-space target-project)
