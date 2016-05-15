@@ -16,6 +16,18 @@
           "../project/testfolder2/de/otto/one/cool/ns_test.clj"]
          (ns/namespace->target-path "de.otto.one.cool.ns-test" "project" read-fn))))
 
+(deftest ^:unit resource->target-path-test
+  (is (= ["../target-project/folder1/resource.edn"
+          "../target-project/folder2/resource.edn"]
+         (ns/resource->target-path "resource.edn"
+                                   "target-project"
+                                   (fn [_] {:resource-paths ["folder1" "folder2"]})))))
+
+(deftest ^:unit resource->source-path-test
+  (is (= ["folder1/resource.edn"
+          "folder2/resource.edn"]
+         (ns/resource->source-path "resource.edn" {:resource-paths ["folder1" "folder2"]}))))
+
 (def project-clj {:source-paths ["folder1" "folder2"]
                   :test-paths   ["testfolder1" "testfolder2"]})
 
