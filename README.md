@@ -49,11 +49,7 @@ container-folder/
 
 ## Usage
 
-Define `:ns-sync ["name.space.1" "name.space.2"]` in the project.clj of each.
-
 * lein [options] sync "project-1,project-2,project-3"
-
-* lein [options] sync "project-1,project-2" "name.space.1,name.space.2"
 
 Options:
    + --notest  :  Synchronize shared code base without executing tests on target projects.
@@ -64,27 +60,63 @@ Options:
    + --status  :  check status on target projects
    + --push    :  push on target projects
 
+Define `:ns-sync` configuration in the project.clj of each target project. It has the following options:
+
+  + `:test-cmd` specifies which leiningen tasks will be executed to test target projects.
+  + `:namespaces` specifies the namespaces to be synchronized.
+  + `:resources`specifies the resources to be synchronized.
+
 ## Example
-In order to synchronize namespaces between projects, run in the current source project:
+The `:ns-sync` configuration can be specified like that:
+
+```json
+:ns-sync { :test-cmd [["./lein.sh" "profile-1" "test"] ["./lein.sh" "profile-1"  "test"]]
+           :namespaces ["name.space.1" "name.space.2"]
+           :resources ["resources.1" "resources.2"]]}
+```
+
+In order to synchronize namespaces and resources between projects, run in the current source project:
 
     $ cd container-folder/project-1
-    $ lein sync "project-2,project-3,project-4"
-    UPDATE ../container-folder/project-2/name/space/1.clj
-    UPDATE ../container-folder/project-3/name/space/1.clj
-    UPDATE ../container-folder/project-4/name/space/1.clj
-    ... Executing tests of project-2 on ../container-folder/project-2/
-    ===> All Tests of project-2 are passed
-    ... Executing tests of project-3 on ../container-folder/project-3/
-    ===> All Tests of project-3 are passed
-    ... Executing tests of project-4 on ../container-folder/project-4/
-    ===> All Tests of project-4 are passed
+    $ lein sync "project-2,project-3"
+    *********************** UPDATE NAMESPACES ***********************
+    *
+    * Update name.space.1 to the project project-2
+    * Update name.space.1 to the project project-3
+    *
+
+    *********************** UPDATE RESOURCES ***********************
+    *
+    * Update "resources.1 to the project project-2
+    * Update "resources.1 to the project project-3
+    *
+
+
+    |****************************| ../project-2   |****************************|
+    ... Executing tests of project-2
+
+    ... Executing  ./lein.sh profile-1 test
+    ... Executing  ./lein.sh profile-2 test
+    ===> All tests of project-2 are passed
+
+
+    ****************************| ../project-3   |****************************|
+    ... Executing tests of project-2
+
+    ... Executing  ./lein.sh profile-1 test
+    ... Executing  ./lein.sh profile-2 test
+    ===> All tests of project-3 are passed
+
+
+    * Tests are passed on projects: project-2,project-3
+
+
+    To see changes : lein sync project-2,project-3 --diff
+    To commit      : lein sync project-2,project-3 --commit
+    To push        : lein sync project-2,project-4 --push
 
 
 `sync` will update the namespaces from project-1 to project-2 project-3 and project-4.
 It updates only the namespace, which has been defined in both source project and target project.
 If a namespace is  only defined in the source or target project, it will be ignored.
 Afterwards `sync` will execute tests on project-2 project-3 and project-4, to make sure that the update did not break anything.
-
-Alternatively, you can define the namespaces explicitly:
-
-    $ lein sync "project-2,project-3,project-4" "name.space.1"
