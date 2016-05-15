@@ -80,9 +80,8 @@
   (try
     (io/make-parents (io/file to-file))
     (spit (io/file to-file) (slurp (io/file from-file)))
-    (m/info "* " to-file)
     (catch FileNotFoundException e
-      (m/info "* Could not synchronize" to-file "because: " (.getMessage e)))))
+      (m/info "* Could not update" to-file "because: " (.getMessage e)))))
 
 (defn should-update? [entry-definition entry target-project]
   (-> target-project
@@ -93,8 +92,9 @@
       (contains? entry)))
 
 (defn initial-question [namespace project]
-  (str "The location of " namespace " on " project
-       " could not be determined.  Please choose one of options:"))
+  (str "* ==> The location of " namespace " on " (str/upper-case project)
+       " could not be determined.\n"
+       "      Please choose one of options (a number):"))
 
 (defn localtion-question-with
   ([ns project [first & rest]]
@@ -102,7 +102,7 @@
   ([question index first [ffirst rrest]]
    (if (nil? first)
      question
-     (recur (str question "\n* " index " ==> " first)
+     (recur (str question "\n         + " index " -> " first)
             (inc index)
             ffirst
             rrest))))
@@ -118,7 +118,7 @@
   (update-files!
    (if (= 1 (count source-paths))
      (first source-paths)
-     (ask-for-localtion namespace project source-paths))
+     (ask-for-localtion namespace "This Project" source-paths))
    (if (= 1 (count target-paths))
      (first target-paths)
      (ask-for-localtion namespace project target-paths))))
@@ -126,6 +126,7 @@
 (defn update-file-if-exists! [name target-project source-paths target-paths]
   (let [existing-source-paths (filter ns-exists? source-paths)
         existing-target-paths (filter ns-exists? target-paths)]
+    (m/info "* Update" name "to the project" (str/upper-case target-project))
     (cond
       ;source and target exist and unique
       (and (= 1 (count existing-source-paths))
@@ -139,7 +140,7 @@
       ;source  exists, target  doen't exist and its location is unique, so ask user
       (<= 1 (count existing-source-paths))
       (ask-for-localtion-and-update! name target-project existing-source-paths target-paths)
-      ;default: do nothing
+
       :else (m/info "WARNING: Could not find strategy to update" name "on project" target-project
                     "\n    ==>" name "may not exist on the source project"))))
 
@@ -160,16 +161,16 @@
      (resource->target-path resource target-project read-target-project-clj))))
 
 (defn update-namespaces! [namspaces source-project-desc]
-  (m/info "\n****************** UPDATE NAMESPACE ******************\n*")
+  (m/info "\n*********************** UPDATE NAMESPACES ***********************\n*")
   (doseq [[namespace project] namspaces]
     (update-name-space! namespace project source-project-desc))
-  (m/info "*\n******************************************************\n"))
+  (m/info "*\n****************************************************************\n"))
 
 (defn update-resouces! [resources source-project-desc]
-  (m/info "\n****************** UPDATE RESOURCES ******************\n*")
+  (m/info "\n*********************** UPDATE RESOURCES ***********************\n*")
   (doseq [[resource project] resources]
     (update-resource! resource project source-project-desc))
-  (m/info "*\n******************************************************\n"))
+  (m/info "*\n****************************************************************\n"))
 
 (defn run-cmd [cmd]
   (m/info "... Executing " (str/join " " cmd))
