@@ -170,7 +170,7 @@
   (let [result (apply sh/sh cmd)]
     (if (u/is-success? result)
       {:result :passed}
-      {:result :failed :cmd cmd})))
+      {:result :failed :cmd (str/join " " cmd)})))
 
 (defn lein-test [project]
   (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")) "\n")
@@ -181,10 +181,10 @@
                         (first))]
     (if (empty? failed-cmd)
       (do
-        (m/info "===> All Tests of" project "are passed\n")
+        (m/info "===> All tests of" project "are passed\n")
         {:project project :result :passed})
       (do
-        (m/info "===> Some Tests of" project "are FAILED!!!\n")
+        (m/info "===> Some tests when running" (:cmd failed-cmd) project "are FAILED!!!\n")
         {:project project :result :failed}))))
 
 (defn reset-project! [project]
