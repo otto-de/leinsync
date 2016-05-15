@@ -165,15 +165,27 @@
     (update-resource! resource project source-project-desc))
   (m/info "*\n******************************************************\n"))
 
+(defn run-cmd [cmd]
+  (m/info "... Executing " (str/join " " cmd))
+  (let [result (apply sh/sh cmd)]
+    (if (u/is-success? result)
+      {:result :passed}
+      {:result :failed :cmd cmd})))
+
 (defn lein-test [project]
   (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")) "\n")
-  (doseq [cmd (test-cmd project)]
-    (m/info "... Executing " (str/join " " cmd))
-    (if (not (u/is-success? (apply sh/sh cmd)))
-      {:project project
-       :result  :failed}))
-  {:project project
-   :result  :passed})
+  (let [failed-cmd (->> project
+                        (test-cmd)
+                        (map run-cmd)
+                        (filter #(= (:result %) :failed))
+                        (first))]
+    (if (empty? failed-cmd)
+      (do
+        (m/info "===> All Tests of" project "are passed\n")
+        {:project project :result :passed})
+      (do
+        (m/info "===> Some Tests of" project "are FAILED!!!\n")
+        {:project project :result :failed}))))
 
 (defn reset-project! [project]
   (m/info "\n... Reset changes of" project "on" (u/output-of (sh/sh "pwd")))
