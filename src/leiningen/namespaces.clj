@@ -97,12 +97,12 @@
 
 (defn ask-for-localtion-and-update! [namespace project source-path target-paths]
   (update-files!
-    source-path
-    (nth target-paths
-         (-> namespace
-             (localtion-question-with project target-paths)
-             (u/ask-user (partial u/is-number (count target-paths)))
-             (read-string)))))
+   source-path
+   (nth target-paths
+        (-> namespace
+            (localtion-question-with project target-paths)
+            (u/ask-user (partial u/is-number (count target-paths)))
+            (read-string)))))
 
 (defn update-file-if-exists! [name target-project source-paths target-paths]
   (let [existing-source-paths (filter ns-exists? source-paths)
@@ -220,9 +220,9 @@
 
 (defn test-all [projects]
   (doall
-    (map
-      #(u/run-command-on (->target-project-path %) lein-test %)
-      projects)))
+   (map
+    #(u/run-command-on (->target-project-path %) lein-test %)
+    projects)))
 
 (defn reset-all! [projects _]
   (doseq [p projects]

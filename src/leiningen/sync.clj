@@ -27,14 +27,14 @@
 (defn execute-program [target-projects source-project-desc options]
   (doseq [command (->commands options)]
     (command
-      target-projects
-      source-project-desc)))
+     target-projects
+     source-project-desc)))
 
 (defn one-arg-program [source-project-desc target-projects options]
   (execute-program
-    (u/split target-projects)
-    source-project-desc
-    options))
+   (u/split target-projects)
+   source-project-desc
+   options))
 
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
