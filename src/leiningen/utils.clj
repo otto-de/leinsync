@@ -34,9 +34,9 @@
       :else input)))
 
 (defn run-command-on [project command & args]
-  (m/info "|===================================|"
+  (m/info "|****************************|"
           (format-str project 12)
-          "|===================================|")
+          "|****************************|")
   (let [original-dir (System/getProperty "user.dir")
         _ (change-dir-to (str original-dir "/" project))
         return (apply command args)

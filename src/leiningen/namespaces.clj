@@ -9,12 +9,15 @@
             [leiningen.core.main :as m])
   (:import (java.io FileNotFoundException)))
 
-(def namespaces-definition [:ns-sync :namespaces])
-(def resources-definition [:ns-sync :resources])
-(def test-command-definition [:ns-sync :test-cmd])
-(def sources-path-definition [:source-paths])
-(def tests-path-definition [:test-paths])
-(def resources-path-definition [:resource-paths])
+(def sync-ns-def [:ns-sync :namespaces])
+(def resource-def [:ns-sync :resources])
+(def test-cmd-def [:ns-sync :test-cmd])
+(def src-path-def [:source-paths])
+(def test-path-def [:test-paths])
+(def resource-path-def [:resource-paths])
+
+(defn cartesian-product [c1 c2]
+  (combo/cartesian-product c1 c2))
 
 (defn ns-exists? [path]
   (-> path
@@ -29,11 +32,20 @@
       (str "/project.clj")
       (p/read-raw)))
 
+(defn test-cmd [target-project]
+  (let [cmd (-> target-project
+                (->target-project-path)
+                (read-project-clj)
+                (get-in test-cmd-def))]
+    (if (empty? cmd)
+      [["./lein.sh" "clean"] ["./lein.sh" "test"]]
+      cmd)))
+
 (defn test-or-source-namespace [namespace project-clj]
   (if (or (.endsWith namespace "-test")
           (.contains namespace "test"))
-    (get-in project-clj tests-path-definition ["test"])
-    (get-in project-clj sources-path-definition ["src"])))
+    (get-in project-clj test-path-def ["test"])
+    (get-in project-clj src-path-def ["src"])))
 
 (defn split-path [path project-desc]
   {:src-or-test    (test-or-source-namespace path project-desc)
@@ -48,12 +60,12 @@
 (defn resource->target-path [resource target-project read-project-clj]
   (let [resource-folders (-> target-project
                              (read-project-clj)
-                             (get-in resources-path-definition))]
+                             (get-in resource-path-def))]
     (map #(str (->target-project-path target-project) "/" % "/" resource) resource-folders)))
 
 (defn resource->source-path [resource source-project-desc]
   (map #(str % "/" resource)
-       (get-in source-project-desc resources-path-definition)))
+       (get-in source-project-desc resource-path-def)))
 
 (defn namespace->target-path [namespace target-project read-project-clj]
   (let [project-desc (read-project-clj target-project)
@@ -126,42 +138,42 @@
       :else (m/info "Could not find strategy to update" name "on project" target-project))))
 
 (defn update-name-space! [name-space target-project source-project-desc]
-  (if (should-update? namespaces-definition name-space target-project)
-    (update-file-if-exists! name-space
-                            target-project
-                            (namespace->source-path name-space source-project-desc)
-                            (namespace->target-path name-space target-project read-target-project-clj))))
+  (if (should-update? sync-ns-def name-space target-project)
+    (update-file-if-exists!
+     name-space
+     target-project
+     (namespace->source-path name-space source-project-desc)
+     (namespace->target-path name-space target-project read-target-project-clj))))
 
 (defn update-resource! [resource target-project source-project-desc]
-  (if (should-update? resources-definition resource target-project)
-    (update-file-if-exists! resource
-                            target-project
-                            (resource->source-path resource source-project-desc)
-                            (resource->target-path resource target-project read-target-project-clj))))
+  (if (should-update? resource-def resource target-project)
+    (update-file-if-exists!
+     resource
+     target-project
+     (resource->source-path resource source-project-desc)
+     (resource->target-path resource target-project read-target-project-clj))))
 
 (defn update-namespaces! [namspaces source-project-desc]
-  (m/info "\n******** UPDATE NAMESPACE ********\n*")
+  (m/info "\n****************** UPDATE NAMESPACE ******************\n*")
   (doseq [[namespace project] namspaces]
-    (update-name-space! namespace project source-project-desc)))
+    (update-name-space! namespace project source-project-desc))
+  (m/info "*\n******************************************************\n"))
 
 (defn update-resouces! [resources source-project-desc]
-  (m/info "\n******** UPDATE RESOURCES ********\n*")
+  (m/info "\n****************** UPDATE RESOURCES ******************\n*")
   (doseq [[resource project] resources]
-    (update-resource! resource project source-project-desc)))
-
-(defn cartesian-product [c1 c2]
-  (combo/cartesian-product c1 c2))
+    (update-resource! resource project source-project-desc))
+  (m/info "*\n******************************************************\n"))
 
 (defn lein-test [project]
-  (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
-  (if (and (u/is-success? (sh/sh "./lein.sh" "clean"))
-           (u/is-success? (sh/sh "./lein.sh" "test")))
-    (do
-      (m/info "===> All Tests of" project "are passed\n")
-      {:project project :result :passed})
-    (do
-      (m/info "===> Some Tests of" project "are FAILED!!!\n")
-      {:project project :result :failed})))
+  (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")) "\n")
+  (doseq [cmd (test-cmd project)]
+    (m/info "... Executing " (str/join " " cmd))
+    (if (not (u/is-success? (apply sh/sh cmd)))
+      {:project project
+       :result  :failed}))
+  {:project project
+   :result  :passed})
 
 (defn reset-project! [project]
   (m/info "\n... Reset changes of" project "on" (u/output-of (sh/sh "pwd")))
@@ -253,14 +265,10 @@
     (u/run-command-on (->target-project-path p) diff p)))
 
 (defn update-projects! [target-projects source-project-desc]
-  (let [namspaces (cartesian-product (get-in source-project-desc namespaces-definition)
-                                     target-projects)
-        resouces (cartesian-product (get-in source-project-desc resources-definition)
-                                    target-projects)]
-    (if (not (empty? namspaces))
-      (update-namespaces! namspaces source-project-desc))
-    (if (not (empty? resouces))
-      (update-resouces! resouces source-project-desc))))
+  (let [namespaces (cartesian-product (get-in source-project-desc sync-ns-def) target-projects)
+        resources (cartesian-product (get-in source-project-desc resource-def) target-projects)]
+    (if (not (empty? namespaces)) (update-namespaces! namespaces source-project-desc))
+    (if (not (empty? resources)) (update-resouces! resources source-project-desc))))
 
 (defn update-and-test! [target-projects src-project-desc]
   (update-projects! target-projects src-project-desc)
