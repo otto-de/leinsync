@@ -72,7 +72,7 @@ The `:ns-sync` configuration can be specified like that:
 ```json
 :ns-sync { :test-cmd [["./lein.sh" "profile-1" "test"] ["./lein.sh" "profile-1"  "test"]]
            :namespaces ["name.space.1" "name.space.2"]
-           :resources ["resources.1" "resources.2"]]}
+           :resources ["resources.1" "resources.2"]}
 ```
 
 In order to synchronize namespaces and resources between projects, run in the current source project:
@@ -113,10 +113,10 @@ In order to synchronize namespaces and resources between projects, run in the cu
 
     To see changes : lein sync project-2,project-3 --diff
     To commit      : lein sync project-2,project-3 --commit
-    To push        : lein sync project-2,project-4 --push
+    To push        : lein sync project-2,project-3 --push
 
 
-`sync` will update the namespaces from project-1 to project-2 project-3 and project-4.
+`sync` will update the namespaces from project-1 to project-2 and project-3.
 It updates only the namespace, which has been defined in both source project and target project.
 If a namespace is  only defined in the source or target project, it will be ignored.
 Afterwards `sync` will execute tests on project-2 project-3 and project-4, to make sure that the update did not break anything.
