@@ -7,7 +7,7 @@
             [clojure.tools.cli :as cli]))
 
 (def sync-commands {:default ns/update-and-test!
-                    :notest  ns/update-ns-of-projects!
+                    :notest  ns/update-projects!
                     :reset   ns/reset-all!
                     :diff    ns/show-all-diff
                     :pull    ns/pull-rebase-all!
@@ -24,26 +24,17 @@
       [(partial u/run! (:default sync-commands))]
       commands)))
 
-(defn execute-program [target-projects namespaces source-project-desc options]
+(defn execute-program [target-projects source-project-desc options]
   (doseq [command (->commands options)]
     (command
-     target-projects
-     namespaces
-     source-project-desc)))
+      target-projects
+      source-project-desc)))
 
 (defn one-arg-program [source-project-desc target-projects options]
   (execute-program
-   (u/split target-projects)
-   (ns/sync-def-selector source-project-desc)
-   source-project-desc
-   options))
-
-(defn two-args-program [projects namespaces project-desc options]
-  (execute-program
-   (u/split projects)
-   (u/split namespaces)
-   project-desc
-   options))
+    (u/split target-projects)
+    source-project-desc
+    options))
 
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
@@ -62,13 +53,12 @@
         ""
         "  *  lein [options] sync \"project-1,project-2,project-3\""
         ""
-        "  *  lein [options] sync \"project-1,project-2\" \"namespace.to.sync.1,namespace.to.sync.2\""
-        ""
         "Options:"
         options-summary
         ""
-        "To specify the namespaces to be shared, you must define them in project.clj. i.e"
-        ":ns-sync [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
+        "To specify the namespaces and resources to be shared, you must define them in project.clj. i.e"
+        ":ns-sync {:namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
+        "          :resources   [\"resource.to.be.sync.1\"  \"resource.to.be.sync.2\"]}"
         ""]
        (str/join \newline)))
 
@@ -76,6 +66,5 @@
   (let [{:keys [options arguments summary]} (cli/parse-opts args cli-options)]
     (cond
       (= 1 (count arguments)) (one-arg-program project-desc (first arguments) options)
-      (= 2 (count arguments)) (two-args-program (first arguments) (second arguments) project-desc options)
       :else (main/abort (usage summary)))
     (main/exit)))
