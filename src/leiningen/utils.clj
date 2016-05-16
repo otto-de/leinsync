@@ -1,7 +1,10 @@
 (ns leiningen.utils
   (:refer-clojure :exclude [run!])
   (:require [clojure.string :as str]
-            [leiningen.core.main :as m])
+            [leiningen.core.main :as m]
+            [clojure.java.io :as io]
+            [clojure.math.combinatorics :as combo]
+            [clojure.java.shell :as sh])
   (:import (jnr.posix POSIXFactory)
            (java.io File)))
 
@@ -63,3 +66,19 @@
        (do
          (m/info "the input was not correct")
          (recur (capture-input question)))))))
+
+(defn path-exists? [path]
+  (-> path
+      (io/as-file)
+      (.exists)))
+
+(defn cartesian-product [c1 c2]
+  (combo/cartesian-product c1 c2))
+
+(defn run-cmd [cmd]
+  (m/info "... Executing " (str/join " " cmd))
+  (let [result (apply sh/sh cmd)]
+    (if (is-success? result)
+      {:result :passed}
+      {:result :failed
+       :cmd    (str/join " " cmd)})))

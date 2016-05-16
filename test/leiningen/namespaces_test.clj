@@ -1,7 +1,8 @@
 (ns leiningen.namespaces-test
   (:require [clojure.test :refer :all]
             [leiningen.namespaces :as ns]
-            [leiningen.core.project :as p]))
+            [leiningen.core.project :as p]
+            [leiningen.utils :as u]))
 
 (defn- read-fn [_]
   (p/read-raw "test-resources/project_test.clj"))
@@ -65,20 +66,20 @@
 
 (deftest ^:unit flap-map-1
   (is (= '([:a :1] [:a :2] [:a :3] [:b :1] [:b :2] [:b :3] [:c :1] [:c :2] [:c :3])
-         (ns/cartesian-product '(:a :b :c) '(:1 :2 :3)))))
+         (u/cartesian-product '(:a :b :c) '(:1 :2 :3)))))
 
 (deftest ^:unit flap-map-2
   (is (= nil
-         (ns/cartesian-product '(:a :b :c) '()))))
+         (u/cartesian-product '(:a :b :c) '()))))
 
 (deftest ^:unit flap-map-3
   (is (= nil
-         (ns/cartesian-product '() '(:1 :2 :3)))))
+         (u/cartesian-product '() '(:1 :2 :3)))))
 
 (deftest ^:unit flap-map-4
   (is (= '([:a :1])
-         (ns/cartesian-product '(:a) '(:1)))))
+         (u/cartesian-product '(:a) '(:1)))))
 
 (deftest ^:unit flap-map-4
-  (is (true? (ns/ns-exists? "test-resources/project_test.clj")))
-  (is (false? (ns/ns-exists? "test-resources/project_test_not-exists.clj"))))
+  (is (true? (u/path-exists? "test-resources/project_test.clj")))
+  (is (false? (u/path-exists? "test-resources/project_test_not-exists.clj"))))
