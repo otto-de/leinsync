@@ -67,7 +67,7 @@
          (m/info "the input was not correct")
          (recur (capture-input question)))))))
 
-(defn path-exists? [path]
+(defn exists? [path]
   (-> path
       (io/as-file)
       (.exists)))

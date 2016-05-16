@@ -81,5 +81,5 @@
          (u/cartesian-product '(:a) '(:1)))))
 
 (deftest ^:unit flap-map-4
-  (is (true? (u/path-exists? "test-resources/project_test.clj")))
-  (is (false? (u/path-exists? "test-resources/project_test_not-exists.clj"))))
+  (is (true? (u/exists? "test-resources/project_test.clj")))
+  (is (false? (u/exists? "test-resources/project_test_not-exists.clj"))))
