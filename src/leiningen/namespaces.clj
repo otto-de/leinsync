@@ -24,13 +24,13 @@
       (p/read-raw)))
 
 (defn test-cmd [target-project]
-  (let [cmd (-> target-project
-                (->target-project-path)
-                (read-project-clj)
-                (get-in test-cmd-def))]
-    (if (empty? cmd)
+  (let [cmds (-> target-project
+                 (->target-project-path)
+                 (read-project-clj)
+                 (get-in test-cmd-def))]
+    (if (empty? cmds)
       [["./lein.sh" "clean"] ["./lein.sh" "test"]]
-      cmd)))
+      cmds)))
 
 (defn test-or-source-namespace [namespace project-clj]
   (if (or (.endsWith namespace "-test")
@@ -52,11 +52,14 @@
   (let [resource-folders (-> target-project
                              (read-project-clj)
                              (get-in resource-path-def))]
-    (map #(str (->target-project-path target-project) "/" % "/" resource) resource-folders)))
+    (map
+     #(str (->target-project-path target-project) "/" % "/" resource)
+     resource-folders)))
 
 (defn resource->source-path [resource source-project-desc]
-  (map #(str % "/" resource)
-       (get-in source-project-desc resource-path-def)))
+  (map
+   #(str % "/" resource)
+   (get-in source-project-desc resource-path-def)))
 
 (defn namespace->target-path [namespace target-project read-project-clj]
   (let [{folders :src-or-test
@@ -102,25 +105,27 @@
             ffirst
             rrest))))
 
-(defn ask-for-localtion [namespace project paths]
-  (nth paths
-       (-> namespace
-           (localtion-question-with project paths)
-           (u/ask-user (partial u/is-number (count paths)))
-           (read-string))))
+(defn ask-for-localtion
+  ([namespace paths] (ask-for-localtion namespace "source project" paths))
+  ([namespace project paths]
+   (nth paths
+        (-> namespace
+            (localtion-question-with project paths)
+            (u/ask-user (partial u/is-number (count paths)))
+            (read-string)))))
 
-(defn ask-for-localtion-and-update! [namespace project source-paths target-paths]
+(defn ask-for-localtion-and-update! [name target-project existing-source-paths target-paths]
   (update-files!
-   (if (= 1 (count source-paths))
-     (first source-paths)
-     (ask-for-localtion namespace "This Project" source-paths))
+   (if (= 1 (count existing-source-paths))
+     (first existing-source-paths)
+     (ask-for-localtion name existing-source-paths))
    (if (= 1 (count target-paths))
      (first target-paths)
-     (ask-for-localtion namespace project target-paths))))
+     (ask-for-localtion name target-project target-paths))))
 
-(defn update-file-if-exists! [name target-project source-paths target-paths]
-  (let [existing-source-paths (filter u/path-exists? source-paths)
-        existing-target-paths (filter u/path-exists? target-paths)]
+(defn safe-update! [name target-project source-paths target-paths]
+  (let [existing-source-paths (filter u/exists? source-paths)
+        existing-target-paths (filter u/exists? target-paths)]
     (m/info "* Update" name "to the project" (str/upper-case target-project))
     (cond
       ;source and target exist and unique
@@ -132,16 +137,16 @@
            (= 0 (count existing-target-paths))
            (= 1 (count target-paths)))
       (update-files! (first existing-source-paths) (first target-paths))
-      ;source  exists, target  doen't exist and its location is unique, so ask user
+      ;multiple sources and targets exist so ask user for correct locations
       (<= 1 (count existing-source-paths))
       (ask-for-localtion-and-update! name target-project existing-source-paths target-paths)
-
+      ;default: do nothing
       :else (m/info "WARNING: Could not find strategy to update" name "on project" target-project
                     "\n    ==>" name "may not exist on the source project"))))
 
 (defn update-name-space! [name-space target-project source-project-desc]
   (if (should-update? sync-ns-def name-space target-project)
-    (update-file-if-exists!
+    (safe-update!
      name-space
      target-project
      (namespace->source-path name-space source-project-desc)
@@ -149,7 +154,7 @@
 
 (defn update-resource! [resource target-project source-project-desc]
   (if (should-update? resource-def resource target-project)
-    (update-file-if-exists!
+    (safe-update!
      resource
      target-project
      (resource->source-path resource source-project-desc)
@@ -243,6 +248,8 @@
     #(u/run-command-on (->target-project-path %) lein-test %)
     projects)))
 
+;;;;; Sync Commands
+
 (defn reset-all! [projects _]
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) reset-project! p)))
@@ -250,7 +257,7 @@
 (defn commit-all! [projects _]
   (let [commit-msg (->> projects
                         (str/join ",")
-                        (str "\nPlease enter the commit message for projects: ")
+                        (str "\nPlease enter the commit message for the projects: ")
                         (u/ask-user))]
     (doseq [p projects]
       (u/run-command-on (->target-project-path p) commit-project! p commit-msg))))
