@@ -2,7 +2,6 @@
   (:refer-clojure :exclude [run!])
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
-            [clojure.math.combinatorics :as combo]
             [clojure.java.shell :as sh]
             [leiningen.utils :as u]
             [leiningen.core.project :as p]
@@ -15,14 +14,6 @@
 (def src-path-def [:source-paths])
 (def test-path-def [:test-paths])
 (def resource-path-def [:resource-paths])
-
-(defn cartesian-product [c1 c2]
-  (combo/cartesian-product c1 c2))
-
-(defn ns-exists? [path]
-  (-> path
-      (io/as-file)
-      (.exists)))
 
 (defn ->target-project-path [project-name]
   (str "../" project-name))
@@ -68,9 +59,13 @@
        (get-in source-project-desc resource-path-def)))
 
 (defn namespace->target-path [namespace target-project read-project-clj]
-  (let [project-desc (read-project-clj target-project)
-        {folders :src-or-test ns-path :namespace-path} (split-path namespace project-desc)]
-    (map #(str (->target-project-path target-project) "/" % "/" ns-path) folders)))
+  (let [{folders :src-or-test
+         ns-path :namespace-path} (->> target-project
+                                       (read-project-clj)
+                                       (split-path namespace))]
+    (map
+     #(str (->target-project-path target-project) "/" % "/" ns-path)
+     folders)))
 
 (defn namespace->source-path [namespace source-project-desc]
   (let [{folders :src-or-test ns-path :namespace-path} (split-path namespace source-project-desc)]
@@ -124,8 +119,8 @@
      (ask-for-localtion namespace project target-paths))))
 
 (defn update-file-if-exists! [name target-project source-paths target-paths]
-  (let [existing-source-paths (filter ns-exists? source-paths)
-        existing-target-paths (filter ns-exists? target-paths)]
+  (let [existing-source-paths (filter u/path-exists? source-paths)
+        existing-target-paths (filter u/path-exists? target-paths)]
     (m/info "* Update" name "to the project" (str/upper-case target-project))
     (cond
       ;source and target exist and unique
@@ -160,30 +155,23 @@
      (resource->source-path resource source-project-desc)
      (resource->target-path resource target-project read-target-project-clj))))
 
-(defn update-namespaces! [namspaces source-project-desc]
+(defn update-namespaces! [namespaces source-project-desc]
   (m/info "\n*********************** UPDATE NAMESPACES ***********************\n*")
-  (doseq [[namespace project] namspaces]
-    (update-name-space! namespace project source-project-desc))
+  (doseq [[namespace target-project] namespaces]
+    (update-name-space! namespace target-project source-project-desc))
   (m/info "*\n****************************************************************\n"))
 
 (defn update-resouces! [resources source-project-desc]
   (m/info "\n*********************** UPDATE RESOURCES ***********************\n*")
-  (doseq [[resource project] resources]
-    (update-resource! resource project source-project-desc))
+  (doseq [[resource target-project] resources]
+    (update-resource! resource target-project source-project-desc))
   (m/info "*\n****************************************************************\n"))
-
-(defn run-cmd [cmd]
-  (m/info "... Executing " (str/join " " cmd))
-  (let [result (apply sh/sh cmd)]
-    (if (u/is-success? result)
-      {:result :passed}
-      {:result :failed :cmd (str/join " " cmd)})))
 
 (defn lein-test [project]
   (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
   (let [failed-cmd (->> project
                         (test-cmd)
-                        (map run-cmd)
+                        (map u/run-cmd)
                         (filter #(= (:result %) :failed)))]
     (if (empty? failed-cmd)
       (do
@@ -238,8 +226,8 @@
 (defn check-and-push! [project]
   (if (empty? (unpushed-commit))
     (m/info "\n ===> Nothing to push on" project)
-    (if (= "yes" (-> (str "\n*Are you sure to push on " project "? (yes/no)")
-                     (u/ask-user u/yes-or-no)))
+    (if (= "y" (-> (str "\n*Are you sure to push on " project "? (y/n)")
+                   (u/ask-user u/yes-or-no)))
       (push! project))))
 
 (defn status [project]
@@ -284,8 +272,8 @@
     (u/run-command-on (->target-project-path p) diff p)))
 
 (defn update-projects! [target-projects source-project-desc]
-  (let [namespaces (cartesian-product (get-in source-project-desc sync-ns-def) target-projects)
-        resources (cartesian-product (get-in source-project-desc resource-def) target-projects)]
+  (let [namespaces (u/cartesian-product (get-in source-project-desc sync-ns-def) target-projects)
+        resources (u/cartesian-product (get-in source-project-desc resource-def) target-projects)]
     (if (not (empty? namespaces)) (update-namespaces! namespaces source-project-desc))
     (if (not (empty? resources)) (update-resouces! resources source-project-desc))))
 

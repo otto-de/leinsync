@@ -26,15 +26,7 @@
 
 (defn execute-program [target-projects source-project-desc options]
   (doseq [command (->commands options)]
-    (command
-     target-projects
-     source-project-desc)))
-
-(defn one-arg-program [source-project-desc target-projects options]
-  (execute-program
-   (u/split target-projects)
-   source-project-desc
-   options))
+    (command target-projects source-project-desc)))
 
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
@@ -65,6 +57,7 @@
 (defn sync [project-desc & args]
   (let [{:keys [options arguments summary]} (cli/parse-opts args cli-options)]
     (cond
-      (= 1 (count arguments)) (one-arg-program project-desc (first arguments) options)
+      (= 1 (count arguments))
+      (execute-program (u/split (first arguments)) project-desc options)
       :else (main/abort (usage summary)))
     (main/exit)))
