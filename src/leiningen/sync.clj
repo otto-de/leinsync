@@ -4,7 +4,8 @@
             [leiningen.utils :as u]
             [leiningen.namespaces :as ns]
             [clojure.string :as str]
-            [clojure.tools.cli :as cli]))
+            [clojure.tools.cli :as cli]
+            [leiningen.core.main :as m]))
 
 (def sync-commands {:default ns/update-and-test!
                     :notest  ns/update-projects!
@@ -55,9 +56,12 @@
        (str/join \newline)))
 
 (defn sync [project-desc & args]
-  (let [{:keys [options arguments summary]} (cli/parse-opts args cli-options)]
+  (let [{:keys [options arguments summary errors]} (cli/parse-opts args cli-options)]
     (cond
-      (= 1 (count arguments))
-      (execute-program (u/split (first arguments)) project-desc options)
+      (not-empty errors) (m/info errors)
+      (= 1 (count arguments)) (execute-program
+                               (u/split (first arguments))
+                               project-desc
+                               options)
       :else (main/abort (usage summary)))
     (main/exit)))
