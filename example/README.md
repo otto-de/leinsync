@@ -3,9 +3,22 @@ In order to synchronize namespaces between projects, run in the current source p
 
     $ cd project-1
     $ lein sync "project-2"
-    UPDATE ../project-2/src/ns/namespace_1.clj
-    UPDATE ../project-2/src/ns/namespace_1.clj
-    |===================================| PROJECT |===================================|
-
-    ... Executing tests of project-2 on ..leinsync/example/project-2
-    ===> Some Tests of project-2 are FAILED!!!
+    *********************** UPDATE NAMESPACES ***********************
+    *
+    * Update ns.namespace-1 to the project PROJECT-2
+    *
+    ****************************************************************
+    
+    
+    *********************** UPDATE RESOURCES ***********************
+    *
+    * Update default.edn to the project PROJECT-2
+    *
+    ****************************************************************
+    
+    |****************************| ../project-2 |****************************|
+    
+    ... Executing tests of project-2 on /Users/minhtuannguyen/repository/github/leinsync/example/project-2
+    
+    ... Executing  ./lein.sh test
+    ===> On project-2 some tests are FAILED when executing ./lein.sh test
