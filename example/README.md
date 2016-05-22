@@ -18,7 +18,7 @@ In order to synchronize namespaces between projects, run in the current source p
     
     |****************************| ../project-2 |****************************|
     
-    ... Executing tests of project-2 on /Users/minhtuannguyen/repository/github/leinsync/example/project-2
+    ... Executing tests of project-2 on .../leinsync/example/project-2
     
     ... Executing  ./lein.sh test
     ===> On project-2 some tests are FAILED when executing ./lein.sh test
