@@ -6,8 +6,11 @@
   :dependencies [[org.clojure/clojure "1.7.0"]]
   :main ^:skip-aot project-2.core
   :target-path "target/%s"
-
+  :resource-paths  ["resources"]
   ;define here the namespaces which will be updated by leinsync
-  :ns-sync ["ns.namespace-1"]
+  :ns-sync {:namespaces  ["ns.namespace-1" "ns.namespace-1"]           
+            :test-cmd    [["./lein.sh" "test"]]
+            :resources   ["default.edn"] } 
+
   :profiles {:uberjar {:aot :all}
-             :dev     {:plugins [[sync "0.9.3"]]}})
+             :dev     {:plugins [[sync "0.9.6"]]}})
