@@ -14,6 +14,7 @@
 (def src-path-def [:source-paths])
 (def test-path-def [:test-paths])
 (def resource-path-def [:resource-paths])
+(def standard-test-cmd [["./lein.sh" "clean"] ["./lein.sh" "test"]])
 
 (defn ->target-project-path [project-name]
   (str "../" project-name))
@@ -28,9 +29,7 @@
                  (->target-project-path)
                  (read-project-clj)
                  (get-in test-cmd-def))]
-    (if (empty? cmds)
-      [["./lein.sh" "clean"] ["./lein.sh" "test"]]
-      cmds)))
+    (if (empty? cmds) standard-test-cmd cmds)))
 
 (defn test-or-source-namespace [namespace project-clj]
   (if (or (.endsWith namespace "-test")
@@ -260,7 +259,8 @@
                         (str "\nPlease enter the commit message for the projects: ")
                         (u/ask-user))]
     (doseq [p projects]
-      (u/run-command-on (->target-project-path p) commit-project! p commit-msg))))
+      (u/run-command-on (->target-project-path p) commit-project! p commit-msg))
+    (m/info "To push        : lein sync" (str/join "," projects) "--push")))
 
 (defn pull-rebase-all! [projects _]
   (doseq [p projects]
@@ -270,7 +270,7 @@
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) check-and-push! p)))
 
-(defn status_all [projects _]
+(defn status-all [projects _]
   (doseq [p projects]
     (u/run-command-on (->target-project-path p) status p)))
 

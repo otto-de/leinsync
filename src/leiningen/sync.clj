@@ -13,7 +13,7 @@
                     :diff    ns/show-all-diff
                     :pull    ns/pull-rebase-all!
                     :push    ns/push-all!
-                    :status  ns/status_all
+                    :status  ns/status-all
                     :commit  ns/commit-all!})
 
 (defn ->commands [options]
@@ -58,7 +58,7 @@
 (defn sync [project-desc & args]
   (let [{:keys [options arguments summary errors]} (cli/parse-opts args cli-options)]
     (cond
-      (not-empty errors) (m/info errors)
+      (not-empty errors) (m/info errors \newline (usage summary))
       (= 1 (count arguments)) (execute-program
                                (u/split (first arguments))
                                project-desc
