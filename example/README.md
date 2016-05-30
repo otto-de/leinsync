@@ -20,5 +20,5 @@ In order to synchronize namespaces between projects, run in the current source p
     
     ... Executing tests of project-2 on .../leinsync/example/project-2
     
-    ... Executing  ./lein.sh test
-    ===> On project-2 some tests are FAILED when executing ./lein.sh test
+    ... Executing lein test
+    ===> On project-2 some tests are FAILED when executing lein test
