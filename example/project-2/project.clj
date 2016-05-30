@@ -9,7 +9,7 @@
   :resource-paths  ["resources"]
   ;define here the namespaces which will be updated by leinsync
   :ns-sync {:namespaces  ["ns.namespace-1" "ns.namespace-1"]           
-            :test-cmd    [["./lein.sh" "test"]]
+            :test-cmd    [["lein" "test"]]
             :resources   ["default.edn"] } 
 
   :profiles {:uberjar {:aot :all}

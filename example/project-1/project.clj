@@ -11,7 +11,7 @@
 
   ;define here the namespaces which will be updated by leinsync
   :ns-sync {:namespaces  ["ns.namespace-1" "ns.namespace-2"]           
-            :test-cmd    [["./lein.sh" "test"]]
+            :test-cmd    [["lein" "test"]]
             :resources   ["default.edn"] } 
   :profiles {:uberjar {:aot :all}
              :dev     {:plugins [[sync "0.9.6"]]}})
