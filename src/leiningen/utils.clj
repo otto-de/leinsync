@@ -51,7 +51,8 @@
   (read-line))
 
 (defn yes-or-no [input]
-  (or (= input "yes") (= input "no")))
+  (or (= input "y")
+      (= input "n")))
 
 (defn is-number [limit input]
   (let [n (read-string input)]
