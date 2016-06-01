@@ -41,6 +41,7 @@
 (defn usage [options-summary]
   (->> [""
         "sync is a Leiningen plugin to synchronize same codebase between different clojure projects"
+        (str "version: " (u/get-version "sync"))
         ""
         "Usage:"
         ""
