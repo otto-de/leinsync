@@ -83,3 +83,77 @@
 (deftest ^:unit flap-map-4
   (is (true? (u/exists? "test-resources/project_test.clj")))
   (is (false? (u/exists? "test-resources/project_test_not-exists.clj"))))
+
+(deftest ^:unit determine-source-target
+  (testing "source and target exist and unique"
+    (let [name "path.1"
+          existing-source-paths ["source/path/1"]
+          existing-target-paths ["target/path/1"]
+          target-paths ["target/path/1"]
+          target-project "project"]
+      (is (= {:source "source/path/1" :target "target/path/1"}
+             (ns/determine-source-target name
+                                         existing-source-paths
+                                         existing-target-paths
+                                         target-paths
+                                         target-project
+                                         ns/ask-for-source-and-target)))))
+
+  (testing "source  exists, target doen't exist but its location is unique"
+    (let [name "path.1"
+          existing-source-paths ["source/path/1"]
+          existing-target-paths []
+          target-paths ["target/path/1"]
+          target-project "project"]
+      (is (= {:source "source/path/1" :target "target/path/1"}
+             (ns/determine-source-target name
+                                         existing-source-paths
+                                         existing-target-paths
+                                         target-paths
+                                         target-project
+                                         ns/ask-for-source-and-target)))))
+
+  (testing "multiple sources and targets exist so ask user for correct locations"
+    (let [ask-for-source-and-target (fn [_ _ _ _] {:source :user-input-1 :target :user-input-2})
+          name "path.1"
+          existing-source-paths ["source/path/1" "source/path/2"]
+          existing-target-paths []
+          target-paths ["target/path/1"]
+          target-project "project"]
+      (is (= {:source :user-input-1 :target :user-input-2}
+             (ns/determine-source-target name
+                                         existing-source-paths
+                                         existing-target-paths
+                                         target-paths
+                                         target-project
+                                         ask-for-source-and-target)))))
+
+  (testing "multiple sources and targets exist so ask user for correct locations"
+    (let [ask-for-source-and-target (fn [_ _ _ _] {:source :user-input-1 :target :user-input-2})
+          name "path.1"
+          existing-source-paths ["source/path/1"]
+          existing-target-paths []
+          target-paths ["target/path/1" "target/path/2"]
+          target-project "project"]
+      (is (= {:source :user-input-1 :target :user-input-2}
+             (ns/determine-source-target name
+                                         existing-source-paths
+                                         existing-target-paths
+                                         target-paths
+                                         target-project
+                                         ask-for-source-and-target)))))
+
+  (testing "multiple sources and targets exist so ask user for correct locations"
+    (let [ask-for-source-and-target (fn [_ _ _ _] {:source :user-input-1 :target :user-input-2})
+          name "path.1"
+          existing-source-paths ["source/path/1" "source/path/2"]
+          existing-target-paths []
+          target-paths ["target/path/1" "target/path/2"]
+          target-project "project"]
+      (is (= {:source :user-input-1 :target :user-input-2}
+             (ns/determine-source-target name
+                                         existing-source-paths
+                                         existing-target-paths
+                                         target-paths
+                                         target-project
+                                         ask-for-source-and-target))))))

@@ -5,8 +5,7 @@
             [clojure.java.shell :as sh]
             [leiningen.utils :as u]
             [leiningen.core.project :as p]
-            [leiningen.core.main :as m])
-  (:import (java.io FileNotFoundException)))
+            [leiningen.core.main :as m]))
 
 (def sync-ns-def [:ns-sync :namespaces])
 (def resource-def [:ns-sync :resources])
@@ -93,6 +92,10 @@
        "      Please choose one of options (a number):"
        (str "\n         + -1 -> to skip updating " namespace)))
 
+(defn log-warning [name target-project]
+  (m/info "* WARNING: Could not update" name "on project" target-project
+          "\n    ==>" name "may not exist on the source project"))
+
 (defn localtion-question-with
   ([ns project [first & rest]]
    (localtion-question-with (initial-question ns project) 0 first rest))
@@ -100,9 +103,7 @@
    (if (nil? first)
      question
      (recur (str question "\n         +  " index " -> " first)
-            (inc index)
-            ffirst
-            rrest))))
+            (inc index) ffirst rrest))))
 
 (defn ask-for-localtion
   ([namespace paths] (ask-for-localtion namespace "source project" paths))
@@ -112,36 +113,56 @@
        (u/ask-user (partial u/is-number (count paths)))
        (read-string))))
 
-(defn ask-for-localtion-and-update! [name target-project existing-source-paths target-paths]
+(defn ask-for-source-and-target [name target-project existing-source-paths target-paths]
   (let [source-location (if (= 1 (count existing-source-paths))
                           0 (ask-for-localtion name existing-source-paths))
         target-location (if (= 1 (count target-paths))
                           0 (ask-for-localtion name target-project target-paths))]
     (if (and (>= source-location 0) (>= target-location 0))
-      (update-files!
-       (nth existing-source-paths source-location)
-       (nth target-paths target-location)))))
+      {:source (nth existing-source-paths source-location)
+       :target (nth target-paths target-location)}
+      {:source :unknown :target :unknown})))
 
-(defn safe-update! [name target-project source-paths target-paths]
+(defn determine-source-target [resource-name
+                               existing-source-paths
+                               existing-target-paths
+                               target-paths
+                               target-project
+                               ask-for-input]
+  (cond
+    ;source and target exist and unique
+    (and (= 1 (count existing-source-paths))
+         (= 1 (count existing-target-paths)))
+    {:source (first existing-source-paths)
+     :target (first existing-target-paths)}
+
+    ;source  exists, target doen't exist but its location is unique
+    (and (= 1 (count existing-source-paths))
+         (= 0 (count existing-target-paths))
+         (= 1 (count target-paths)))
+    {:source (first existing-source-paths)
+     :target (first target-paths)}
+
+    ;multiple sources and targets exist so ask user for correct locations
+    (<= 1 (count existing-source-paths))
+    (ask-for-input resource-name target-project existing-source-paths target-paths)
+
+    ;default
+    :else {:source :unknown :target :unknown}))
+
+(defn safe-update! [resource-name target-project source-paths target-paths]
+  (m/info "* Update" resource-name "to the project" (str/upper-case target-project))
   (let [existing-source-paths (filter u/exists? source-paths)
-        existing-target-paths (filter u/exists? target-paths)]
-    (m/info "* Update" name "to the project" (str/upper-case target-project))
-    (cond
-      ;source and target exist and unique
-      (and (= 1 (count existing-source-paths))
-           (= 1 (count existing-target-paths)))
-      (update-files! (first existing-source-paths) (first existing-target-paths))
-      ;source  exists, target doen't exist but its location is unique
-      (and (= 1 (count existing-source-paths))
-           (= 0 (count existing-target-paths))
-           (= 1 (count target-paths)))
-      (update-files! (first existing-source-paths) (first target-paths))
-      ;multiple sources and targets exist so ask user for correct locations
-      (<= 1 (count existing-source-paths))
-      (ask-for-localtion-and-update! name target-project existing-source-paths target-paths)
-      ;default: do nothing
-      :else (m/info "* WARNING: Could not find strategy to update" name "on project" target-project
-                    "\n    ==>" name "may not exist on the source project"))))
+        existing-target-paths (filter u/exists? target-paths)
+        {source :source target :target} (determine-source-target resource-name
+                                                                 existing-source-paths
+                                                                 existing-target-paths
+                                                                 target-paths
+                                                                 target-project
+                                                                 ask-for-source-and-target)]
+    (if (and (not= source :unknown) (not= target :unknown))
+      (update-files! source target)
+      (log-warning resource-name target-project))))
 
 (defn update-name-space! [name-space target-project source-project-desc]
   (if (should-update? sync-ns-def name-space target-project)
