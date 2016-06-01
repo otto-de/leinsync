@@ -74,11 +74,10 @@
     (map #(str % "/" ns-path) folders)))
 
 (defn update-files! [from-file to-file]
-  (try
-    (io/make-parents (io/file to-file))
-    (spit (io/file to-file) (slurp (io/file from-file)))
-    (catch FileNotFoundException e
-      (m/info "* Could not update" to-file "because: " (.getMessage e)))))
+  (io/make-parents (io/file to-file))
+  (spit
+   (io/file to-file)
+   (slurp (io/file from-file))))
 
 (defn should-update? [entry-definition entry target-project]
   (-> target-project
@@ -141,7 +140,7 @@
       (<= 1 (count existing-source-paths))
       (ask-for-localtion-and-update! name target-project existing-source-paths target-paths)
       ;default: do nothing
-      :else (m/info "WARNING: Could not find strategy to update" name "on project" target-project
+      :else (m/info "* WARNING: Could not find strategy to update" name "on project" target-project
                     "\n    ==>" name "may not exist on the source project"))))
 
 (defn update-name-space! [name-space target-project source-project-desc]
