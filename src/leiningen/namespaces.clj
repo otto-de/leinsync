@@ -192,7 +192,9 @@
     (update-resource! resource target-project source-project-desc))
   (m/info "*\n****************************************************************\n"))
 
-(defn lein-test [project]
+;;;;; Command Actions ;;;;;
+
+(defn- lein-test [project]
   (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
   (let [failed-cmd (->> project
                         (test-cmd)
@@ -207,23 +209,22 @@
                 (str/join " and " (map :cmd failed-cmd)) "\n")
         {:project project :result :failed}))))
 
-(defn reset-project! [project]
+(defn- reset-project! [project]
   (m/info "\n... Reset changes of" project "on" (u/output-of (sh/sh "pwd")))
   (if (u/is-success? (sh/sh "git" "checkout" "."))
     (m/info "===> Reset all changes")
     (m/info "===> Could NOT reset changes on" project)))
 
-(defn get-changed-files []
-  (->> (sh/sh "git" "diff" "--name-only")
-       (u/output-of)))
+(defn- get-changed-files []
+  (u/output-of (sh/sh "git" "diff" "--name-only")))
 
-(defn diff [project]
+(defn- diff [project]
   (let [changes (get-changed-files)]
     (if (empty? changes)
       (m/info "* No update has been applied on the project" project "\n")
       (m/info "* Changes on project" project "\n\n" changes))))
 
-(defn commit-project! [project commit-msg]
+(defn- commit-project! [project commit-msg]
   (if (not (empty? (get-changed-files)))
     (let [commit-result (sh/sh "git" "commit" "-am" commit-msg)]
       (if (not (u/is-success? commit-result))
@@ -231,44 +232,43 @@
         (m/info "Commited")))
     (m/info "\n* No change to be committed on" project)))
 
-(defn pull-rebase! [project]
+(defn- pull-rebase! [project]
   (m/info "\n* Pull on" project)
   (let [pull-result (sh/sh "git" "pull" "-r")]
     (if (not (u/is-success? pull-result))
       (m/info "===> Could not commit because" (u/error-of pull-result))
       (m/info (u/output-of pull-result)))))
 
-(defn unpushed-commit []
-  (-> (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")
-      (u/output-of)))
+(defn- unpushed-commit []
+  (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
 
-(defn push! [p]
+(defn- push! [p]
   (let [push-result (sh/sh "git" "push" "origin")]
     (if (not (u/is-success? push-result))
       (m/info "===> Could not push on" p "because" (u/error-of push-result))
       (m/info (u/output-of push-result)))))
 
-(defn check-and-push! [project]
+(defn- check-and-push! [project]
   (if (empty? (unpushed-commit))
     (m/info "\n ===> Nothing to push on" project)
     (if (= "y" (-> (str "\n*Are you sure to push on " project "? (y/n)")
                    (u/ask-user u/yes-or-no)))
       (push! project))))
 
-(defn status [project]
+(defn- status [project]
   (m/info "\n * Status of" project)
   (let [status-result (sh/sh "git" "status")]
     (if (not (u/is-success? status-result))
       (m/info "===> Could not get status because" (u/error-of status-result))
       (m/info (u/output-of status-result)))))
 
-(defn test-all [projects]
+(defn- test-all [projects]
   (doall
    (map
     #(u/run-command-on (->target-project-path %) lein-test %)
     projects)))
 
-;;;;; Sync Commands
+;;;;; Sync Commands ;;;;;
 
 (defn reset-all! [projects _]
   (doseq [p projects]
@@ -305,8 +305,7 @@
     (if (not (empty? namespaces)) (update-namespaces! namespaces source-project-desc))
     (if (not (empty? resources)) (update-resouces! resources source-project-desc))))
 
-(defn update-and-test! [target-projects src-project-desc]
-  (update-projects! target-projects src-project-desc)
+(defn run-test [target-projects _]
   (let [passed-projects (->> (test-all target-projects)
                              (filter #(= (:result %) :passed))
                              (map :project)

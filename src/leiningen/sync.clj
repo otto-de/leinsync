@@ -7,22 +7,26 @@
             [clojure.tools.cli :as cli]
             [leiningen.core.main :as m]))
 
-(def sync-commands {:default ns/update-and-test!
+(def sync-commands {:default [:update :test]
+                    :update  ns/update-projects!
                     :notest  ns/update-projects!
+                    :test    ns/run-test
                     :reset   ns/reset-all!
                     :diff    ns/show-all-diff
-                    :pull    ns/pull-rebase-all!
-                    :push    ns/push-all!
                     :status  ns/status-all
-                    :commit  ns/commit-all!})
+                    :commit  ns/commit-all!
+                    :pull    ns/pull-rebase-all!
+                    :push    ns/push-all!})
+
+(defn find-command [option-keys]
+  (->> option-keys
+       (select-keys sync-commands)
+       (reduce-kv (fn [m _ f] (conj m (partial u/run! f))) [])))
 
 (defn ->commands [options]
-  (let [commands (->> options
-                      (keys)
-                      (select-keys sync-commands)
-                      (reduce-kv (fn [m _ f] (conj m (partial u/run! f))) []))]
+  (let [commands (find-command (keys options))]
     (if (empty? commands)
-      [(partial u/run! (:default sync-commands))]
+      (find-command (:default sync-commands))
       commands)))
 
 (defn execute-program [target-projects source-project-desc options]
@@ -31,12 +35,13 @@
 
 (def cli-options
   [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
+   [nil "--test" "Executing tests on target projects"]
    [nil "--diff" "Show changes on target projects"]
+   [nil "--status" "Check status on target projects"]
+   [nil "--reset" "Reset all the uncommited changes in all target projects"]
    [nil "--commit" "Commit change on target projects"]
-   [nil "--pull" "pull rebase on target projects"]
-   [nil "--push" "push on target projects"]
-   [nil "--status" "check status on target projects"]
-   [nil "--reset" "Reset all the uncommited changes in all target projects"]])
+   [nil "--pull" "Pull rebase on target projects"]
+   [nil "--push" "Push on target projects"]])
 
 (defn usage [options-summary]
   (->> [""
