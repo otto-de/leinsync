@@ -6,7 +6,8 @@
             [clojure.math.combinatorics :as combo]
             [clojure.java.shell :as sh])
   (:import (jnr.posix POSIXFactory)
-           (java.io File)))
+           (java.io File)
+           (java.util Properties)))
 
 (defn change-dir-to [relative-path]
   (let [absolute-path (.getCanonicalPath (new File relative-path))]
@@ -83,3 +84,11 @@
       {:result :passed}
       {:result :failed
        :cmd    (str/join " " cmd)})))
+
+(defn get-version [name]
+  (let [path (str "META-INF/maven/" name "/" name "/pom.properties")
+        props (io/resource path)]
+    (if props
+      (with-open [stream (io/input-stream props)]
+        (let [props (doto (Properties.) (.load stream))]
+          (.getProperty props "version"))))))
