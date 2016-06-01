@@ -91,7 +91,8 @@
 (defn initial-question [namespace project]
   (str "* ==> The location of " namespace " on " (str/upper-case project)
        " could not be determined.\n"
-       "      Please choose one of options (a number):"))
+       "      Please choose one of options (a number):"
+       (str "\n         + -1 -> to skip updating " namespace)))
 
 (defn localtion-question-with
   ([ns project [first & rest]]
@@ -99,7 +100,7 @@
   ([question index first [ffirst rrest]]
    (if (nil? first)
      question
-     (recur (str question "\n         + " index " -> " first)
+     (recur (str question "\n         +  " index " -> " first)
             (inc index)
             ffirst
             rrest))))
@@ -107,20 +108,20 @@
 (defn ask-for-localtion
   ([namespace paths] (ask-for-localtion namespace "source project" paths))
   ([namespace project paths]
-   (nth paths
-        (-> namespace
-            (localtion-question-with project paths)
-            (u/ask-user (partial u/is-number (count paths)))
-            (read-string)))))
+   (-> namespace
+       (localtion-question-with project paths)
+       (u/ask-user (partial u/is-number (count paths)))
+       (read-string))))
 
 (defn ask-for-localtion-and-update! [name target-project existing-source-paths target-paths]
-  (update-files!
-   (if (= 1 (count existing-source-paths))
-     (first existing-source-paths)
-     (ask-for-localtion name existing-source-paths))
-   (if (= 1 (count target-paths))
-     (first target-paths)
-     (ask-for-localtion name target-project target-paths))))
+  (let [source-location (if (= 1 (count existing-source-paths))
+                          0 (ask-for-localtion name existing-source-paths))
+        target-location (if (= 1 (count target-paths))
+                          0 (ask-for-localtion name target-project target-paths))]
+    (if (and (>= source-location 0) (>= target-location 0))
+      (update-files!
+       (nth existing-source-paths source-location)
+       (nth target-paths target-location)))))
 
 (defn safe-update! [name target-project source-paths target-paths]
   (let [existing-source-paths (filter u/exists? source-paths)
