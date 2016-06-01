@@ -268,6 +268,13 @@
     #(u/run-command-on (->target-project-path %) lein-test %)
     projects)))
 
+(defn- log-test-hints [passed-projects]
+  (when (not (empty? passed-projects))
+    (m/info "* Tests are passed on projects:" passed-projects "\n")
+    (m/info "To see changes : lein sync" passed-projects "--diff")
+    (m/info "To commit      : lein sync" passed-projects "--commit")
+    (m/info "To push        : lein sync" passed-projects "--push")))
+
 ;;;;; Sync Commands ;;;;;
 
 (defn reset-all! [projects _]
@@ -306,12 +313,8 @@
     (if (not (empty? resources)) (update-resouces! resources source-project-desc))))
 
 (defn run-test [target-projects _]
-  (let [passed-projects (->> (test-all target-projects)
-                             (filter #(= (:result %) :passed))
-                             (map :project)
-                             (str/join ","))]
-    (when (not (empty? passed-projects))
-      (m/info "* Tests are passed on projects:" passed-projects "\n")
-      (m/info "To see changes : lein sync" passed-projects "--diff")
-      (m/info "To commit      : lein sync" passed-projects "--commit")
-      (m/info "To push        : lein sync" passed-projects "--push"))))
+  (->> (test-all target-projects)
+       (filter #(= (:result %) :passed))
+       (map :project)
+       (str/join ",")
+       (log-test-hints)))
