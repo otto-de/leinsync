@@ -4,25 +4,26 @@
             [leiningen.core.project :as p]
             [leiningen.utils :as u]))
 
-(defn- read-fn [_]
-  (p/read-raw "test-resources/project_test.clj"))
-
 (deftest ^:unit convert-namespace->des-path-of-src
   (is (= ["../project/folder1/de/otto/one/cool/ns.clj"
           "../project/folder2/de/otto/one/cool/ns.clj"]
-         (ns/namespace->target-path "de.otto.one.cool.ns" "project" read-fn))))
+         (ns/namespace->target-path
+          "de.otto.one.cool.ns" "project"
+          (p/read-raw "test-resources/project_test.clj")))))
 
 (deftest ^:unit convert-namespace->des-path-of-test
   (is (= ["../project/testfolder1/de/otto/one/cool/ns_test.clj"
           "../project/testfolder2/de/otto/one/cool/ns_test.clj"]
-         (ns/namespace->target-path "de.otto.one.cool.ns-test" "project" read-fn))))
+         (ns/namespace->target-path
+          "de.otto.one.cool.ns-test" "project"
+          (p/read-raw "test-resources/project_test.clj")))))
 
 (deftest ^:unit resource->target-path-test
   (is (= ["../target-project/folder1/resource.edn"
           "../target-project/folder2/resource.edn"]
          (ns/resource->target-path "resource.edn"
                                    "target-project"
-                                   (fn [_] {:resource-paths ["folder1" "folder2"]})))))
+                                   {:resource-paths ["folder1" "folder2"]}))))
 
 (deftest ^:unit resource->source-path-test
   (is (= ["folder1/resource.edn"
