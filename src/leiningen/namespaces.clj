@@ -18,15 +18,15 @@
 (defn ->target-project-path [project-name]
   (str "../" project-name))
 
-(defn read-project-clj [project-path]
-  (-> project-path
+(defn read-target-project-clj [p]
+  (-> p
+      (->target-project-path)
       (str "/project.clj")
       (p/read-raw)))
 
 (defn test-cmd [target-project]
   (let [cmds (-> target-project
-                 (->target-project-path)
-                 (read-project-clj)
+                 (read-target-project-clj)
                  (get-in test-cmd-def))]
     (if (empty? cmds) standard-test-cmd cmds)))
 
@@ -43,13 +43,8 @@
                        (str/replace #"\." "/")
                        (str ".clj"))})
 
-(defn read-target-project-clj [p]
-  (read-project-clj (->target-project-path p)))
-
-(defn resource->target-path [resource target-project read-project-clj]
-  (let [resource-folders (-> target-project
-                             (read-project-clj)
-                             (get-in resource-path-def))]
+(defn resource->target-path [resource target-project target-project-desc]
+  (let [resource-folders (get-in target-project-desc resource-path-def)]
     (map
      #(str (->target-project-path target-project) "/" % "/" resource)
      resource-folders)))
@@ -59,11 +54,9 @@
    #(str % "/" resource)
    (get-in source-project-desc resource-path-def)))
 
-(defn namespace->target-path [namespace target-project read-project-clj]
+(defn namespace->target-path [namespace target-project target-project-desc]
   (let [{folders :src-or-test
-         ns-path :namespace-path} (->> target-project
-                                       (read-project-clj)
-                                       (split-path namespace))]
+         ns-path :namespace-path} (split-path namespace target-project-desc)]
     (map
      #(str (->target-project-path target-project) "/" % "/" ns-path)
      folders)))
@@ -78,10 +71,8 @@
    (io/file to-file)
    (slurp (io/file from-file))))
 
-(defn should-update? [entry-definition entry target-project]
-  (-> target-project
-      (->target-project-path)
-      (read-project-clj)
+(defn should-update? [entry-definition entry target-project-desc]
+  (-> target-project-desc
       (get-in entry-definition)
       (set)
       (contains? entry)))
@@ -164,32 +155,32 @@
       (update-files! source target)
       (log-warning resource-name target-project))))
 
-(defn update-name-space! [name-space target-project source-project-desc]
-  (if (should-update? sync-ns-def name-space target-project)
+(defn update-name-space! [name-space target-project source-project-desc target-project-desc]
+  (if (should-update? sync-ns-def name-space target-project-desc)
     (safe-update!
      name-space
      target-project
      (namespace->source-path name-space source-project-desc)
-     (namespace->target-path name-space target-project read-target-project-clj))))
+     (namespace->target-path name-space target-project target-project-desc))))
 
-(defn update-resource! [resource target-project source-project-desc]
-  (if (should-update? resource-def resource target-project)
+(defn update-resource! [resource target-project source-project-desc target-project-desc]
+  (if (should-update? resource-def resource target-project-desc)
     (safe-update!
      resource
      target-project
      (resource->source-path resource source-project-desc)
-     (resource->target-path resource target-project read-target-project-clj))))
+     (resource->target-path resource target-project target-project-desc))))
 
 (defn update-namespaces! [namespaces source-project-desc]
   (m/info "\n*********************** UPDATE NAMESPACES ***********************\n*")
   (doseq [[namespace target-project] namespaces]
-    (update-name-space! namespace target-project source-project-desc))
+    (update-name-space! namespace target-project source-project-desc (read-target-project-clj target-project)))
   (m/info "*\n****************************************************************\n"))
 
 (defn update-resouces! [resources source-project-desc]
   (m/info "\n*********************** UPDATE RESOURCES ***********************\n*")
   (doseq [[resource target-project] resources]
-    (update-resource! resource target-project source-project-desc))
+    (update-resource! resource target-project source-project-desc (read-target-project-clj target-project)))
   (m/info "*\n****************************************************************\n"))
 
 ;;;;; Command Actions ;;;;;
