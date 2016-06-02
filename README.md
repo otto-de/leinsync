@@ -53,12 +53,13 @@ container-folder/
 
 Options:
    + --notest  :  Synchronize shared code base without executing tests on target projects.
+   + --test    :  Executing tests on target projects
    + --reset   :  Reset all uncommitted changes in all target projects.
+   + --status  :  Check status on target projects
    + --diff    :  Show changes on target projects
    + --commit  :  Commit change on target projects
-   + --pull    :  pull rebase on target projects
-   + --status  :  check status on target projects
-   + --push    :  push on target projects
+   + --pull    :  Pull rebase on target projects
+   + --push    :  Push on target projects
 
 Define `:ns-sync` configuration in the project.clj of each target project. It has the following options:
 
