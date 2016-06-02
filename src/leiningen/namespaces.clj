@@ -15,6 +15,7 @@
 (def resource-path-def [:resource-paths])
 (def standard-test-cmd [["./lein.sh" "clean"] ["./lein.sh" "test"]])
 
+;;;; Read target project  helper  ;;;;
 (defn ->target-project-path [project-name]
   (str "../" project-name))
 
@@ -23,6 +24,14 @@
       (->target-project-path)
       (str "/project.clj")
       (p/read-raw)))
+
+(defn read-all-target-project-clj [target-projects]
+  (zipmap (map keyword target-projects) (map read-target-project-clj target-projects)))
+
+(defn project-clj-of [m p]
+  (get-in m [(keyword p)]))
+
+;;;; Sync Logic ;;;;;
 
 (defn test-cmd [target-project]
   (let [cmds (-> target-project
@@ -171,16 +180,16 @@
      (resource->source-path resource source-project-desc)
      (resource->target-path resource target-project target-project-desc))))
 
-(defn update-namespaces! [namespaces source-project-desc]
+(defn update-namespaces! [namespaces source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE NAMESPACES ***********************\n*")
   (doseq [[namespace target-project] namespaces]
-    (update-name-space! namespace target-project source-project-desc (read-target-project-clj target-project)))
+    (update-name-space! namespace target-project source-project-desc (project-clj-of target-projects-desc target-project)))
   (m/info "*\n****************************************************************\n"))
 
-(defn update-resouces! [resources source-project-desc]
+(defn update-resouces! [resources source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE RESOURCES ***********************\n*")
   (doseq [[resource target-project] resources]
-    (update-resource! resource target-project source-project-desc (read-target-project-clj target-project)))
+    (update-resource! resource target-project source-project-desc (project-clj-of target-projects-desc target-project)))
   (m/info "*\n****************************************************************\n"))
 
 ;;;;; Command Actions ;;;;;
@@ -298,10 +307,11 @@
     (u/run-command-on (->target-project-path p) diff p)))
 
 (defn update-projects! [target-projects source-project-desc]
-  (let [namespaces (u/cartesian-product (get-in source-project-desc sync-ns-def) target-projects)
+  (let [all-target-projects-desc (read-all-target-project-clj target-projects)
+        namespaces (u/cartesian-product (get-in source-project-desc sync-ns-def) target-projects)
         resources (u/cartesian-product (get-in source-project-desc resource-def) target-projects)]
-    (if (not (empty? namespaces)) (update-namespaces! namespaces source-project-desc))
-    (if (not (empty? resources)) (update-resouces! resources source-project-desc))))
+    (if (not (empty? namespaces)) (update-namespaces! namespaces source-project-desc all-target-projects-desc))
+    (if (not (empty? resources)) (update-resouces! resources source-project-desc all-target-projects-desc))))
 
 (defn run-test [target-projects _]
   (->> (test-all target-projects)
