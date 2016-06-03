@@ -56,7 +56,8 @@
         options-summary
         ""
         "To specify the namespaces and resources to be shared, you must define them in project.clj. i.e"
-        ":ns-sync {:namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
+        ":ns-sync {:test-cmd    [[\"lein\" \"test\"]]"
+        "          :namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
         "          :resources   [\"resource.to.be.sync.1\"  \"resource.to.be.sync.2\" ]}"
         ""]
        (str/join \newline)))

@@ -251,7 +251,7 @@
 (defn- check-and-push! [project]
   (if (empty? (unpushed-commit))
     (m/info "\n ===> Nothing to push on" project)
-    (if (= "y" (-> (str "\n*Are you sure to push on " project "? (y/n)")
+    (if (= "y" (-> (str "\n* Are you sure to push on " project "? (y/n)")
                    (u/ask-user u/yes-or-no)))
       (push! project))))
 
@@ -268,9 +268,11 @@
     #(u/run-command-on (->target-project-path %) lein-test %)
     projects)))
 
-(defn- log-test-hints [passed-projects]
+(defn- log-test-hints [passed-projects failed-project]
+  (when (not (empty? failed-project))
+    (m/info "* Please have a look  at the failed project(s):" failed-project))
   (when (not (empty? passed-projects))
-    (m/info "* Tests are passed on projects:" passed-projects "\n")
+    (m/info "* Tests are passed on project(s):" passed-projects "\n\n")
     (m/info "To see changes : lein sync" passed-projects "--diff")
     (m/info "To commit      : lein sync" passed-projects "--commit")
     (m/info "To push        : lein sync" passed-projects "--push")))
@@ -288,7 +290,7 @@
                         (u/ask-user))]
     (doseq [p projects]
       (u/run-command-on (->target-project-path p) commit-project! p commit-msg))
-    (m/info "To push        : lein sync" (str/join "," projects) "--push")))
+    (m/info "\n\nTo push        : lein sync" (str/join "," projects) "--push")))
 
 (defn pull-rebase-all! [projects _]
   (doseq [p projects]
@@ -314,8 +316,12 @@
     (if (not (empty? resources)) (update-resouces! resources source-project-desc all-target-projects-desc))))
 
 (defn run-test [target-projects _]
-  (->> (test-all target-projects)
-       (filter #(= (:result %) :passed))
-       (map :project)
-       (str/join ",")
-       (log-test-hints)))
+  (let [results (test-all target-projects)]
+    (log-test-hints (->> results
+                         (filter #(= (:result %) :passed))
+                         (map :project)
+                         (str/join ","))
+                    (->> results
+                         (filter #(= (:result %) :failed))
+                         (map :project)
+                         (str/join ",")))))
