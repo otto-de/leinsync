@@ -37,14 +37,6 @@ container-folder/
     ¦   +-- name.space-test.1
     ¦   +-- name.space-test.2
     +-- project.clj
-+-- project-4
-    +-- src
-    ¦   +-- name.space.1
-    ¦   +-- name.space.2
-    +-- test
-    ¦   +-- name.space-test.1
-    ¦   +-- name.space-test.2
-    +-- project.clj
 ```
 
 ## Usage
@@ -71,7 +63,7 @@ Define `:ns-sync` configuration in the project.clj of each target project. It ha
 The `:ns-sync` configuration can be specified like that:
 
 ```json
-:ns-sync { :test-cmd [["./lein.sh" "profile-1" "test"] ["./lein.sh" "profile-1"  "test"]]
+:ns-sync { :test-cmd [["./lein.sh" "profile-1" "test"] ["./lein.sh" "profile-2"  "test"]]
            :namespaces ["name.space.1" "name.space.2"]
            :resources ["resources.1" "resources.2"]}
 ```
