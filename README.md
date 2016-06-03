@@ -41,7 +41,7 @@ container-folder/
 
 ## Usage
 
-* lein [options] sync "project-1,project-2,project-3"
+* lein sync [options] "project-1,project-2,project-3"
 
 Options:
    + --notest  :  Synchronize shared code base without executing tests on target projects.
