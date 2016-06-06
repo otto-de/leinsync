@@ -165,4 +165,5 @@
           {:name "ns4", :project-1 "X", :project-2 "X"}
           {:name "ns3", :project-1 "", :project-2 "X"}]
          (ns/build-resource-table {:project-1 {:ns-sync {:namespaces ["ns1" "ns2" "ns4"]}}
-                                   :project-2 {:ns-sync {:namespaces ["ns1" "ns3" "ns4"]}}}))))
+                                   :project-2 {:ns-sync {:namespaces ["ns1" "ns3" "ns4"]}}}
+                                  ns/namespace-def))))

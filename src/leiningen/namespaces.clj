@@ -206,16 +206,33 @@
        aggregated-result
        (recur r aggregated-result)))))
 
-(defn determin-occurence [projects]
+(defn determin-occurence [projects resource-selector]
   (let [initial-m (zipmap (keys projects) (take (count projects) (repeat "")))]
     (reduce-kv
      (fn [m project desc]
        (into m
              (map (fn [ns] [(keyword ns)
                             (merge-with str {project "X"} initial-m)])
-                  (get-in desc namespace-def))))
+                  (get-in desc resource-selector))))
      []
      projects)))
+
+(defn pretty-print-table [m]
+  (reduce-kv
+   (fn [m k v]
+     (conj m (merge {:name (name k)} v)))
+   []
+   m))
+
+(defn build-resource-table [projects resource-selector]
+  (-> projects
+      (determin-occurence resource-selector)
+      (reduce-occurence)
+      (pretty-print-table)))
+
+(defn log-resouces-table [m]
+  (pp/print-table (sort-by :name m))
+  (m/info "\n"))
 
 ;;;;; Command Actions ;;;;;
 
@@ -302,21 +319,13 @@
     (m/info "To commit      : lein sync" passed-projects "--commit")
     (m/info "To push        : lein sync" passed-projects "--push")))
 
-(defn pretty-print-table [m]
-  (reduce-kv
-   (fn [m k v]
-     (conj m (merge {:name (name k)} v)))
-   []
-   m))
-
-(defn build-resource-table [projects]
-  (-> projects
-      (determin-occurence)
-      (reduce-occurence)
-      (pretty-print-table)))
-
-(defn log-resouces-table [m]
-  (pp/print-table (sort-by :name m)))
+(defn list-resources [target-projects {source-project-name :name :as source-project-desc} selector]
+  (m/info "\n* List of" (name (last selector)))
+  (-> target-projects
+      (read-all-target-project-clj)
+      (assoc (keyword source-project-name) source-project-desc)
+      (build-resource-table selector)
+      (log-resouces-table)))
 
 ;;;;; Sync Commands ;;;;;
 
@@ -367,9 +376,6 @@
                          (map :project)
                          (str/join ",")))))
 
-(defn list [target-projects {source-project-name :name :as source-project-desc}]
-  (-> target-projects
-      (read-all-target-project-clj)
-      (assoc (keyword source-project-name) source-project-desc)
-      (build-resource-table)
-      (log-resouces-table)))
+(defn list [target-projects source-project-desc]
+  (list-resources target-projects source-project-desc namespace-def)
+  (list-resources target-projects source-project-desc resource-def))
