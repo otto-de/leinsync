@@ -44,6 +44,7 @@ container-folder/
 * lein sync [options] "project-1,project-2,project-3"
 
 Options:
+   + --list    :  List resources to be synchronized.
    + --notest  :  Synchronize shared code base without executing tests on target projects.
    + --test    :  Executing tests on target projects
    + --reset   :  Reset all uncommitted changes in all target projects.
