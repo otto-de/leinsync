@@ -224,15 +224,15 @@
    []
    m))
 
+(defn log-resouces-table [m]
+  (pp/print-table (sort-by :name m))
+  (m/info "\n"))
+
 (defn build-resource-table [projects resource-selector]
   (-> projects
       (determin-occurence resource-selector)
       (reduce-occurence)
       (pretty-print-table)))
-
-(defn log-resouces-table [m]
-  (pp/print-table (sort-by :name m))
-  (m/info "\n"))
 
 ;;;;; Command Actions ;;;;;
 
@@ -319,13 +319,9 @@
     (m/info "To commit      : lein sync" passed-projects "--commit")
     (m/info "To push        : lein sync" passed-projects "--push")))
 
-(defn list-resources [target-projects {source-project-name :name :as source-project-desc} selector]
+(defn list-resources [all-projects-desc selector]
   (m/info "\n* List of" (name (last selector)))
-  (-> target-projects
-      (read-all-target-project-clj)
-      (assoc (keyword source-project-name) source-project-desc)
-      (build-resource-table selector)
-      (log-resouces-table)))
+  (log-resouces-table (build-resource-table all-projects-desc selector)))
 
 ;;;;; Sync Commands ;;;;;
 
@@ -376,6 +372,9 @@
                          (map :project)
                          (str/join ",")))))
 
-(defn list [target-projects source-project-desc]
-  (list-resources target-projects source-project-desc namespace-def)
-  (list-resources target-projects source-project-desc resource-def))
+(defn list [target-projects {source-project-name :name :as source-project-desc}]
+  (let [all-projects-desc (-> target-projects
+                              (read-all-target-project-clj)
+                              (assoc (keyword source-project-name) source-project-desc))]
+    (list-resources all-projects-desc namespace-def)
+    (list-resources all-projects-desc resource-def)))

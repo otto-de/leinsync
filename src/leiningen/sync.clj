@@ -35,7 +35,7 @@
     (command target-projects source-project-desc)))
 
 (def cli-options
-  [[nil "--list" "list resources to be synchronized"]
+  [[nil "--list" "List resources to be synchronized"]
    [nil "--notest" "Synchronize shared code base without executing tests on target projects"]
    [nil "--test" "Executing tests on target projects"]
    [nil "--diff" "Show changes on target projects"]
