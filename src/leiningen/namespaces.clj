@@ -193,6 +193,30 @@
     (update-resource! resource target-project source-project-desc (project-clj-of target-projects-desc target-project)))
   (m/info "*\n****************************************************************\n"))
 
+(defn aggregate-result [result ns p]
+  (if (contains? result ns)
+    (assoc result ns (merge-with str p (get result ns)))
+    (assoc result ns p)))
+
+(defn reduce-occurence
+  ([ns-occurence] (reduce-occurence ns-occurence {}))
+  ([[[ns p] & r] result]
+   (let [aggregated-result (aggregate-result result ns p)]
+     (if (empty? r)
+       aggregated-result
+       (recur r aggregated-result)))))
+
+(defn determin-occurence [projects]
+  (let [initial-m (zipmap (keys projects) (take (count projects) (repeat "")))]
+    (reduce-kv
+     (fn [m project desc]
+       (into m
+             (map (fn [ns] [(keyword ns)
+                            (merge-with str {project "X"} initial-m)])
+                  (get-in desc namespace-def))))
+     []
+     projects)))
+
 ;;;;; Command Actions ;;;;;
 
 (defn- lein-test [project]
@@ -278,30 +302,6 @@
     (m/info "To commit      : lein sync" passed-projects "--commit")
     (m/info "To push        : lein sync" passed-projects "--push")))
 
-(defn aggregate-result [result ns p]
-  (if (contains? result ns)
-    (assoc result ns (merge-with str p (get result ns)))
-    (assoc result ns p)))
-
-(defn reduce-occurence
-  ([ns-occurence] (reduce-occurence ns-occurence {}))
-  ([[[ns p] & r] result]
-   (let [aggregated-result (aggregate-result result ns p)]
-     (if (empty? r)
-       aggregated-result
-       (recur r aggregated-result)))))
-
-(defn determin-occurence [projects]
-  (let [initial-m (zipmap (keys projects) (take (count projects) (repeat "")))]
-    (reduce-kv
-     (fn [m project desc]
-       (into m
-             (map (fn [ns] [(keyword ns)
-                            (merge-with str {project "X"} initial-m)])
-                  (get-in desc namespace-def))))
-     []
-     projects)))
-
 (defn pretty-print-table [m]
   (reduce-kv
    (fn [m k v]
@@ -316,7 +316,7 @@
       (pretty-print-table)))
 
 (defn log-resouces-table [m]
-  (pp/print-table m))
+  (pp/print-table (sort-by :name m)))
 
 ;;;;; Sync Commands ;;;;;
 
@@ -368,7 +368,8 @@
                          (str/join ",")))))
 
 (defn list [target-projects {source-project-name :name :as source-project-desc}]
-  (-> (read-all-target-project-clj target-projects)
+  (-> target-projects
+      (read-all-target-project-clj)
       (assoc (keyword source-project-name) source-project-desc)
       (build-resource-table)
       (log-resouces-table)))
