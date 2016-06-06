@@ -28,7 +28,7 @@
 (defn run! [action & args]
   (try
     (apply action args)
-    (catch Exception e (m/info "Error " (.getMessage e)))))
+    (catch Exception e (m/info "Error " (.getMessage e) e))))
 
 (defn format-str [input max-length]
   (let [diff (- max-length (count input))]

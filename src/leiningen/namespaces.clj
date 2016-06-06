@@ -1,13 +1,14 @@
 (ns leiningen.namespaces
-  (:refer-clojure :exclude [run!])
+  (:refer-clojure :exclude [run! list])
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [leiningen.utils :as u]
             [leiningen.core.project :as p]
+            [clojure.pprint :as pp]
             [leiningen.core.main :as m]))
 
-(def sync-ns-def [:ns-sync :namespaces])
+(def namespace-def [:ns-sync :namespaces])
 (def resource-def [:ns-sync :resources])
 (def test-cmd-def [:ns-sync :test-cmd])
 (def src-path-def [:source-paths])
@@ -165,7 +166,7 @@
       (log-warning resource-name target-project))))
 
 (defn update-name-space! [name-space target-project source-project-desc target-project-desc]
-  (if (should-update? sync-ns-def name-space target-project-desc)
+  (if (should-update? namespace-def name-space target-project-desc)
     (safe-update!
      name-space
      target-project
@@ -277,6 +278,46 @@
     (m/info "To commit      : lein sync" passed-projects "--commit")
     (m/info "To push        : lein sync" passed-projects "--push")))
 
+(defn aggregate-result [result ns p]
+  (if (contains? result ns)
+    (assoc result ns (merge-with str p (get result ns)))
+    (assoc result ns p)))
+
+(defn reduce-occurence
+  ([ns-occurence] (reduce-occurence ns-occurence {}))
+  ([[[ns p] & r] result]
+   (let [aggregated-result (aggregate-result result ns p)]
+     (if (empty? r)
+       aggregated-result
+       (recur r aggregated-result)))))
+
+(defn determin-occurence [projects]
+  (let [initial-m (zipmap (keys projects) (take (count projects) (repeat "")))]
+    (reduce-kv
+     (fn [m project desc]
+       (into m
+             (map (fn [ns] [(keyword ns)
+                            (merge-with str {project "X"} initial-m)])
+                  (get-in desc namespace-def))))
+     []
+     projects)))
+
+(defn pretty-print-table [m]
+  (reduce-kv
+   (fn [m k v]
+     (conj m (merge {:name (name k)} v)))
+   []
+   m))
+
+(defn build-resource-table [projects]
+  (-> projects
+      (determin-occurence)
+      (reduce-occurence)
+      (pretty-print-table)))
+
+(defn log-resouces-table [m]
+  (pp/print-table m))
+
 ;;;;; Sync Commands ;;;;;
 
 (defn reset-all! [projects _]
@@ -310,7 +351,7 @@
 
 (defn update-projects! [target-projects source-project-desc]
   (let [all-target-projects-desc (read-all-target-project-clj target-projects)
-        namespaces (u/cartesian-product (get-in source-project-desc sync-ns-def) target-projects)
+        namespaces (u/cartesian-product (get-in source-project-desc namespace-def) target-projects)
         resources (u/cartesian-product (get-in source-project-desc resource-def) target-projects)]
     (if (not (empty? namespaces)) (update-namespaces! namespaces source-project-desc all-target-projects-desc))
     (if (not (empty? resources)) (update-resouces! resources source-project-desc all-target-projects-desc))))
@@ -325,3 +366,9 @@
                          (filter #(= (:result %) :failed))
                          (map :project)
                          (str/join ",")))))
+
+(defn list [target-projects {source-project-name :name :as source-project-desc}]
+  (-> (read-all-target-project-clj target-projects)
+      (assoc (keyword source-project-name) source-project-desc)
+      (build-resource-table)
+      (log-resouces-table)))
