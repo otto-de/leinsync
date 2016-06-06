@@ -8,6 +8,7 @@
             [leiningen.core.main :as m]))
 
 (def sync-commands {:default [:update :test]
+                    :list    ns/list
                     :update  ns/update-projects!
                     :notest  ns/update-projects!
                     :test    ns/run-test
@@ -34,7 +35,8 @@
     (command target-projects source-project-desc)))
 
 (def cli-options
-  [[nil "--notest" "Synchronize shared code base without executing tests on target projects"]
+  [[nil "--list" "list resources to be synchronized"]
+   [nil "--notest" "Synchronize shared code base without executing tests on target projects"]
    [nil "--test" "Executing tests on target projects"]
    [nil "--diff" "Show changes on target projects"]
    [nil "--status" "Check status on target projects"]
