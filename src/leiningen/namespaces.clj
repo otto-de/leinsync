@@ -207,15 +207,31 @@
        aggregated-result
        (recur rest aggregated-result)))))
 
+(defn empty-project-occurence [projects initial-value]
+  (zipmap
+   (keys projects)
+   (take (count projects) (repeat initial-value))))
+
+(defn resource-occurence [resource project project-desc]
+  (let [paths (concat (resource->target-path resource (name project) project-desc)
+                      (namespace->target-path resource (name project) project-desc))]
+    (if (empty? (filter u/exists? paths))
+      {project "O X"}
+      {project "  X"})))
+
+(defn map-ns->project [project project-desc empty-project-occurence]
+  (fn [resource]
+    [(keyword resource)
+     (merge-with
+      str
+      (resource-occurence resource project project-desc)
+      empty-project-occurence)]))
+
 (defn resource-name->project [projects selector]
-  (let [initial-m (zipmap (keys projects) (take (count projects) (repeat "")))]
+  (let [empty-occurence (empty-project-occurence projects "")]
     (reduce-kv
      (fn [m project desc]
-       (into m
-             (map (fn [ns]
-                    [(keyword ns)
-                     (merge-with str {project "X"} initial-m)])
-                  (get-in desc selector))))
+       (into m (map (map-ns->project project desc empty-occurence) (get-in desc selector))))
      []
      projects)))
 
@@ -225,8 +241,10 @@
    []
    data))
 
-(defn log-resouces-table [m selector]
-  (m/info "\n* List of" (name (last selector)))
+(defn log-resouces-table [m resource-name]
+  (m/info "\n* List of" resource-name)
+  (m/info "     - X  :  the namespace/resource is defined in the project.clj")
+  (m/info "     - O  :  the namespace/resource does not exist in the project")
   (pp/print-table (sort-by :name m))
   (m/info "\n"))
 
@@ -324,7 +342,7 @@
 (defn list-resources [projects-desc selector]
   (-> projects-desc
       (build-resource-table selector)
-      (log-resouces-table selector)))
+      (log-resouces-table (name (last selector)))))
 
 ;;;;; Sync Commands ;;;;;
 
@@ -375,9 +393,9 @@
                          (map :project)
                          (str/join ",")))))
 
-(defn list [target-projects {source-project :name :as source-project-desc}]
+(defn list [target-projects {source-project :name}]
   (let [all-projects-desc (-> target-projects
-                              (read-all-target-project-clj)
-                              (assoc (keyword source-project) source-project-desc))]
+                              (conj source-project)
+                              (read-all-target-project-clj))]
     (list-resources all-projects-desc namespace-def)
     (list-resources all-projects-desc resource-def)))
