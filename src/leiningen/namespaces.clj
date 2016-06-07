@@ -40,11 +40,15 @@
                  (get-in test-cmd-def))]
     (if (empty? cmds) standard-test-cmd cmds)))
 
+(defn sync-get-in [project-clj test-path-def default]
+  (-> (get-in project-clj test-path-def default)
+      (distinct)))
+
 (defn test-or-source-namespace [namespace project-clj]
   (if (or (.endsWith namespace "-test")
           (.contains namespace "test"))
-    (get-in project-clj test-path-def ["test"])
-    (get-in project-clj src-path-def ["src"])))
+    (sync-get-in project-clj test-path-def ["test"])
+    (sync-get-in project-clj src-path-def ["src"])))
 
 (defn split-path [path project-desc]
   {:src-or-test    (test-or-source-namespace path project-desc)

@@ -65,6 +65,12 @@
   (is (= ["testfolder1" "testfolder2"]
          (ns/test-or-source-namespace "test-utils-ns" project-clj))))
 
+(deftest ^:unit edge-case-duplicate-folders
+  (is (= ["thesamefolder/de/otto/one/cool/ns.clj"
+          "anotherfolder/de/otto/one/cool/ns.clj"]
+         (ns/namespace->source-path "de.otto.one.cool.ns" {:source-paths ["thesamefolder" "thesamefolder" "thesamefolder"
+                                                                          "anotherfolder"]
+                                                           :test-paths   ["testfolder1" "testfolder2"]}))))
 (deftest ^:unit flap-map-1
   (is (= '([:a :1] [:a :2] [:a :3] [:b :1] [:b :2] [:b :3] [:c :1] [:c :2] [:c :3])
          (u/cartesian-product '(:a :b :c) '(:1 :2 :3)))))
