@@ -160,12 +160,19 @@
                                          ask-for-source-and-target))))))
 
 (deftest ^:unit build-resource-table
-  (let [projects {:project-1 {:ns-sync {:namespaces ["ns1" "ns2" "ns4"]}}
-                  :project-2 {:ns-sync {:namespaces ["ns1" "ns3" "ns4"]}}}]
-    (is (= [{:name "ns1", :project-1 "X", :project-2 "X"}
-            {:name "ns2", :project-1 "X", :project-2 ""}
-            {:name "ns3", :project-1 "", :project-2 "X"}
-            {:name "ns4", :project-1 "X", :project-2 "X"}]
+  (let [projects {:project-1 {:ns-sync         {:namespaces ["ns1" "ns2" "ns4"]}
+                              :source-paths    ["a"]
+                              :test-paths      ["b"]
+                              :resource-paths ["c"]}
+                  :project-2 {:ns-sync         {:namespaces ["ns1" "ns3" "ns4"]}
+                              :source-paths    ["d"]
+                              :test-paths      ["e"]
+                              :resource-paths ["f"]}}]
+
+    (is (= [{:name "ns1", :project-1 "O X", :project-2 "O X"}
+            {:name "ns2", :project-1 "O X", :project-2 ""}
+            {:name "ns3", :project-1 "", :project-2 "O X"}
+            {:name "ns4", :project-1 "O X", :project-2 "O X"}]
            (->> ns/namespace-def
-                (ns/build-resource-table projects)
+                (ns/build-resource-table  projects)
                 (sort-by :name))))))
