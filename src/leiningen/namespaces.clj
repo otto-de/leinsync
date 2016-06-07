@@ -193,46 +193,48 @@
     (update-resource! resource target-project source-project-desc (project-clj-of target-projects-desc target-project)))
   (m/info "*\n****************************************************************\n"))
 
-(defn aggregate-result [result ns p]
-  (if (contains? result ns)
-    (assoc result ns (merge-with str p (get result ns)))
-    (assoc result ns p)))
+(defn aggregate [result [namespace project]]
+  (let [project-occurence (if (contains? result namespace)
+                            (merge-with str project (get result namespace))
+                            project)]
+    (assoc result namespace project-occurence)))
 
-(defn reduce-occurence
-  ([ns-occurence] (reduce-occurence ns-occurence {}))
-  ([[[ns p] & r] result]
-   (let [aggregated-result (aggregate-result result ns p)]
-     (if (empty? r)
+(defn merge-project-occurence
+  ([data] (merge-project-occurence data {}))
+  ([[first & rest] result]
+   (let [aggregated-result (aggregate result first)]
+     (if (empty? rest)
        aggregated-result
-       (recur r aggregated-result)))))
+       (recur rest aggregated-result)))))
 
-(defn determin-occurence [projects resource-selector]
+(defn resource-name->project [projects selector]
   (let [initial-m (zipmap (keys projects) (take (count projects) (repeat "")))]
     (reduce-kv
      (fn [m project desc]
        (into m
-             (map (fn [ns] [(keyword ns)
-                            (merge-with str {project "X"} initial-m)])
-                  (get-in desc resource-selector))))
+             (map (fn [ns]
+                    [(keyword ns)
+                     (merge-with str {project "X"} initial-m)])
+                  (get-in desc selector))))
      []
      projects)))
 
-(defn pretty-print-table [m]
+(defn ->pretty-print-structure [data]
   (reduce-kv
-   (fn [m k v]
-     (conj m (merge {:name (name k)} v)))
+   (fn [m k v] (conj m (merge {:name (name k)} v)))
    []
-   m))
+   data))
 
-(defn log-resouces-table [m]
+(defn log-resouces-table [m selector]
+  (m/info "\n* List of" (name (last selector)))
   (pp/print-table (sort-by :name m))
   (m/info "\n"))
 
-(defn build-resource-table [projects resource-selector]
+(defn build-resource-table [projects selector]
   (-> projects
-      (determin-occurence resource-selector)
-      (reduce-occurence)
-      (pretty-print-table)))
+      (resource-name->project selector)
+      (merge-project-occurence)
+      (->pretty-print-structure)))
 
 ;;;;; Command Actions ;;;;;
 
@@ -319,9 +321,10 @@
     (m/info "To commit      : lein sync" passed-projects "--commit")
     (m/info "To push        : lein sync" passed-projects "--push")))
 
-(defn list-resources [all-projects-desc selector]
-  (m/info "\n* List of" (name (last selector)))
-  (log-resouces-table (build-resource-table all-projects-desc selector)))
+(defn list-resources [projects-desc selector]
+  (-> projects-desc
+      (build-resource-table selector)
+      (log-resouces-table selector)))
 
 ;;;;; Sync Commands ;;;;;
 
@@ -372,9 +375,9 @@
                          (map :project)
                          (str/join ",")))))
 
-(defn list [target-projects {source-project-name :name :as source-project-desc}]
+(defn list [target-projects {source-project :name :as source-project-desc}]
   (let [all-projects-desc (-> target-projects
                               (read-all-target-project-clj)
-                              (assoc (keyword source-project-name) source-project-desc))]
+                              (assoc (keyword source-project) source-project-desc))]
     (list-resources all-projects-desc namespace-def)
     (list-resources all-projects-desc resource-def)))
