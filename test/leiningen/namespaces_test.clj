@@ -166,19 +166,37 @@
                                          ask-for-source-and-target))))))
 
 (deftest ^:unit build-resource-table
-  (let [projects {:project-1 {:ns-sync         {:namespaces ["ns1" "ns2" "ns4"]}
-                              :source-paths    ["a"]
-                              :test-paths      ["b"]
-                              :resource-paths ["c"]}
-                  :project-2 {:ns-sync         {:namespaces ["ns1" "ns3" "ns4"]}
-                              :source-paths    ["d"]
-                              :test-paths      ["e"]
-                              :resource-paths ["f"]}}]
+  (testing "print table structure for the namespaces"
+    (let [projects {:project-1 {:ns-sync        {:namespaces ["path.to.ns1" "path.to.ns2" "path.to.ns4"]}
+                                :source-paths   ["a"]
+                                :test-paths     ["b"]
+                                :resource-paths ["c"]}
+                    :project-2 {:ns-sync        {:namespaces ["path.to.ns1" "path.to.ns3" "path.to.ns4"]}
+                                :source-paths   ["d"]
+                                :test-paths     ["e"]
+                                :resource-paths ["f"]}}]
 
-    (is (= [{:name "ns1", :project-1 "O X", :project-2 "O X"}
-            {:name "ns2", :project-1 "O X", :project-2 ""}
-            {:name "ns3", :project-1 "", :project-2 "O X"}
-            {:name "ns4", :project-1 "O X", :project-2 "O X"}]
-           (->> ns/namespace-def
-                (ns/build-resource-table  projects)
-                (sort-by :name))))))
+      (is (= [{:package "path.to" :name "ns1", :project-1 "O X", :project-2 "O X"}
+              {:package "path.to" :name "ns2", :project-1 "O X", :project-2 ""}
+              {:package "path.to" :name "ns3", :project-1 "", :project-2 "O X"}
+              {:package "path.to" :name "ns4", :project-1 "O X", :project-2 "O X"}]
+             (->> ns/namespace-def
+                  (ns/build-resource-table projects)
+                  (sort-by :name))))))
+
+  (testing "print table structure for the resources"
+    (let [projects {:project-1 {:ns-sync        {:resources ["r1.xml" "r2.edn" "r3.json"]}
+                                :source-paths   ["a"]
+                                :test-paths     ["b"]
+                                :resource-paths ["c"]}
+                    :project-2 {:ns-sync        {:namespaces ["r1.xml" "r3.json" "r4.csv"]}
+                                :source-paths   ["d"]
+                                :test-paths     ["e"]
+                                :resource-paths ["f"]}}]
+
+      (is (= [{:name "csv", :package "r4", :project-1 "", :project-2 "O X"}
+              {:name "json", :package "r3", :project-1 "", :project-2 "O X"}
+              {:name "xml", :package "r1", :project-1 "", :project-2 "O X"}]
+             (->> ns/namespace-def
+                  (ns/build-resource-table projects)
+                  (sort-by :name)))))))
