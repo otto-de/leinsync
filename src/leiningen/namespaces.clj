@@ -239,9 +239,18 @@
      []
      projects)))
 
-(defn ->pretty-print-structure [data]
+(defn occurence-map-for [k selector]
+  (if (= selector namespace-def)
+    (let [name-segments (str/split (name k) #"\.")]
+      {:package (str/join "." (drop-last name-segments))
+       :name (last name-segments)})
+    {:name (name k)}))
+
+(defn ->pretty-print-structure [data selector]
   (reduce-kv
-   (fn [m k v] (conj m (merge {:name (name k)} v)))
+   (fn [m k v] (conj m (merge
+                        (occurence-map-for k selector)
+                        v)))
    []
    data))
 
@@ -256,7 +265,7 @@
   (-> projects
       (resource-name->project selector)
       (merge-project-occurence)
-      (->pretty-print-structure)))
+      (->pretty-print-structure selector)))
 
 ;;;;; Command Actions ;;;;;
 
