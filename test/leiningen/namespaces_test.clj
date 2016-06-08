@@ -165,6 +165,11 @@
                                          target-project
                                          ask-for-source-and-target))))))
 
+(defn- project-occurence-render [existing-path project]
+  (if (empty? existing-path)
+    {project "O X"}
+    {project "  X"}))
+
 (deftest ^:unit build-resource-table
   (testing "print table structure for the namespaces"
     (let [projects {:project-1 {:ns-sync        {:namespaces ["path.to.ns1" "path.to.ns2" "path.to.ns4"]}
@@ -180,8 +185,7 @@
               {:package "path.to" :name "ns2", :project-1 "O X", :project-2 ""}
               {:package "path.to" :name "ns3", :project-1 "", :project-2 "O X"}
               {:package "path.to" :name "ns4", :project-1 "O X", :project-2 "O X"}]
-             (->> ns/namespace-def
-                  (ns/build-resource-table projects)
+             (->> (ns/build-resource-table projects ns/namespace-def project-occurence-render)
                   (sort-by :name))))))
 
   (testing "print table structure for the resources"
@@ -197,6 +201,5 @@
       (is (= [{:name "csv", :package "r4", :project-1 "", :project-2 "O X"}
               {:name "json", :package "r3", :project-1 "", :project-2 "O X"}
               {:name "xml", :package "r1", :project-1 "", :project-2 "O X"}]
-             (->> ns/namespace-def
-                  (ns/build-resource-table projects)
+             (->> (ns/build-resource-table projects ns/namespace-def project-occurence-render)
                   (sort-by :name)))))))

@@ -6,6 +6,7 @@
             [leiningen.utils :as u]
             [leiningen.core.project :as p]
             [clojure.pprint :as pp]
+            [digest :as d]
             [leiningen.core.main :as m]))
 
 (def namespace-def [:ns-sync :namespaces])
@@ -216,26 +217,38 @@
    (keys projects)
    (take (count projects) (repeat initial-value))))
 
-(defn resource-occurence [resource project project-desc]
-  (let [paths (concat (resource->target-path resource (name project) project-desc)
-                      (namespace->target-path resource (name project) project-desc))]
-    (if (empty? (filter u/exists? paths))
-      {project "O X"}
-      {project "  X"})))
+(defn md5-hash [path]
+  (d/digest "md5" (io/as-file path)))
 
-(defn map-ns->project [project project-desc empty-project-occurence]
+(defn project-occurence-render [paths project]
+  (let [hash-value (str/join "|" (map md5-hash paths))
+        hash-length (dec (count hash-value))
+        short-hash-value (subs hash-value (- hash-length 5) hash-length)]
+    (if (empty? paths)
+      {project (str "O " short-hash-value)}
+      {project short-hash-value})))
+
+(defn resource-occurence [resource project project-desc render]
+  (let [paths (concat (resource->target-path resource (name project) project-desc)
+                      (namespace->target-path resource (name project) project-desc))
+        existing-path (filter u/exists? paths)]
+    (render existing-path project)))
+
+(defn map-ns->project [project project-desc empty-project-occurence render]
   (fn [resource]
     [(keyword resource)
      (merge-with
       str
-      (resource-occurence resource project project-desc)
+      (resource-occurence resource project project-desc render)
       empty-project-occurence)]))
 
-(defn resource-name->project [projects selector]
+(defn resource-name->project [projects selector render]
   (let [empty-occurence (empty-project-occurence projects "")]
     (reduce-kv
      (fn [m project desc]
-       (into m (map (map-ns->project project desc empty-occurence) (get-in desc selector))))
+       (into m (map
+                (map-ns->project project desc empty-occurence render)
+                (get-in desc selector))))
      []
      projects)))
 
@@ -256,14 +269,14 @@
 
 (defn log-resouces-table [m resource-name]
   (m/info "\n* List of" resource-name)
-  (m/info "     - X  :  the namespace/resource is defined in the project.clj")
-  (m/info "     - O  :  the namespace/resource does not exist in the project")
+  (m/info "     - hash-value (.i.e a3d66)  :  the namespace/resource is defined in the project.clj")
+  (m/info "     - O  :                     :  the namespace/resource does not exist in the project")
   (pp/print-table (sort-by :name m))
   (m/info "\n"))
 
-(defn build-resource-table [projects selector]
+(defn build-resource-table [projects selector render]
   (-> projects
-      (resource-name->project selector)
+      (resource-name->project selector render)
       (merge-project-occurence)
       (->pretty-print-structure selector)))
 
@@ -354,7 +367,7 @@
 
 (defn list-resources [projects-desc selector]
   (-> projects-desc
-      (build-resource-table selector)
+      (build-resource-table selector project-occurence-render)
       (log-resouces-table (name (last selector)))))
 
 ;;;;; Sync Commands ;;;;;
