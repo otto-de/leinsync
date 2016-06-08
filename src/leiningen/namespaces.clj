@@ -15,8 +15,9 @@
 (def src-path-def [:source-paths])
 (def test-path-def [:test-paths])
 (def resource-path-def [:resource-paths])
-(def hash-length 10)
 (def standard-test-cmd [["./lein.sh" "clean"] ["./lein.sh" "test"]])
+(def hash-length 8)
+(def empty-occurence-str "X ")
 
 ;;;; Read target project  helper  ;;;;
 (defn ->target-project-path [project-name]
@@ -199,6 +200,17 @@
     (update-resource! resource target-project source-project-desc (project-clj-of target-projects-desc target-project)))
   (m/info "*\n****************************************************************\n"))
 
+(defn log-resouces-table [m resource-name]
+  (m/info "\n* List of" resource-name)
+  (m/info "     -"
+          empty-occurence-str
+          "                        :  the namespace/resource does not exist in the project although it has been specified")
+  (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
+  (m/info "                                    "
+          "|resource| ==> 5532BDEA | means that the hash value doesn't match on all projects\n")
+  (pp/print-table (sort-by :name m))
+  (m/info "\n"))
+
 (defn aggregate [result [namespace project]]
   (let [project-occurence (if (contains? result namespace)
                             (merge-with str project (get result namespace))
@@ -219,7 +231,7 @@
    (take (count projects) (repeat initial-value))))
 
 (defn md5-hash
-  ([paths] (str/join "|" (map #(md5-hash % hash-length) paths)))
+  ([paths] (str/join " | " (map #(md5-hash % hash-length) paths)))
   ([path length]
    (let [hash-value (d/digest "md5" (io/as-file path))
          hash-length (dec (count hash-value))]
@@ -227,7 +239,7 @@
 
 (defn project-occurence-render [paths project]
   (if (empty? paths)
-    {project (str "O ")}
+    {project empty-occurence-str}
     {project (md5-hash paths)}))
 
 (defn resource-occurence [resource project project-desc render]
@@ -261,20 +273,30 @@
        :name    (last name-segments)})
     {:name (name k)}))
 
+(defn mark-value-as-different [v]
+  (if (empty? v)
+    ""
+    (str "==> " (str/upper-case v))))
+
+(defn uppercase-map [m]
+  (zipmap (keys m)
+          (map mark-value-as-different (vals m))))
+
+(defn unterline-different-values [m]
+  (let [unique-values (->> (vals m)
+                           (filter not-empty)
+                           (set))]
+    (if (= 1 (count unique-values))
+      m
+      (uppercase-map m))))
+
 (defn ->pretty-print-structure [data selector]
   (reduce-kv
    (fn [m k v] (conj m (merge
                         (occurence-map-for k selector)
-                        v)))
+                        (unterline-different-values v))))
    []
    data))
-
-(defn log-resouces-table [m resource-name]
-  (m/info "\n* List of" resource-name)
-  (m/info "     - hash-value (.i.e a3d66)  :  the namespace/resource is defined in the project.clj")
-  (m/info "     - X  :                     :  the namespace/resource does not exist in the project")
-  (pp/print-table (sort-by :name m))
-  (m/info "\n"))
 
 (defn build-resource-table [projects selector render]
   (-> projects
