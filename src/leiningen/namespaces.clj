@@ -15,6 +15,7 @@
 (def src-path-def [:source-paths])
 (def test-path-def [:test-paths])
 (def resource-path-def [:resource-paths])
+(def hash-length 10)
 (def standard-test-cmd [["./lein.sh" "clean"] ["./lein.sh" "test"]])
 
 ;;;; Read target project  helper  ;;;;
@@ -218,7 +219,7 @@
    (take (count projects) (repeat initial-value))))
 
 (defn md5-hash
-  ([paths] (str/join "|" (map #(md5-hash % 6) paths)))
+  ([paths] (str/join "|" (map #(md5-hash % hash-length) paths)))
   ([path length]
    (let [hash-value (d/digest "md5" (io/as-file path))
          hash-length (dec (count hash-value))]
