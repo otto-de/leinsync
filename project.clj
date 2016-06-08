@@ -12,6 +12,7 @@
                  [org.clojure/math.combinatorics "0.1.1"]
                  [com.sun.jna/jna "3.0.9"]
                  [com.github.jnr/jnr-posix "3.0.29"]
+                 [digest "1.4.4"]
                  [org.clojure/tools.cli "0.3.3"]]
 
   :profiles {:uberjar {:aot :all}
