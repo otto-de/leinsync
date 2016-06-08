@@ -13,4 +13,4 @@
             :resources   ["default.edn"] } 
 
   :profiles {:uberjar {:aot :all}
-             :dev     {:plugins [[sync "0.9.6"]]}})
+             :dev     {:plugins [[sync "0.9.15"]]}})
