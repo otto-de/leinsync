@@ -217,16 +217,17 @@
    (keys projects)
    (take (count projects) (repeat initial-value))))
 
-(defn md5-hash [path]
-  (d/digest "md5" (io/as-file path)))
+(defn md5-hash
+  ([paths] (str/join "|" (map #(md5-hash % 6) paths)))
+  ([path length]
+   (let [hash-value (d/digest "md5" (io/as-file path))
+         hash-length (dec (count hash-value))]
+     (subs hash-value (max 0 (- hash-length length)) hash-length))))
 
 (defn project-occurence-render [paths project]
-  (let [hash-value (str/join "|" (map md5-hash paths))
-        hash-length (dec (count hash-value))
-        short-hash-value (subs hash-value (- hash-length 5) hash-length)]
-    (if (empty? paths)
-      {project (str "O " short-hash-value)}
-      {project short-hash-value})))
+  (if (empty? paths)
+    {project (str "O ")}
+    {project (md5-hash paths)}))
 
 (defn resource-occurence [resource project project-desc render]
   (let [paths (concat (resource->target-path resource (name project) project-desc)
@@ -256,7 +257,7 @@
   (if (= selector namespace-def)
     (let [name-segments (str/split (name k) #"\.")]
       {:package (str/join "." (drop-last name-segments))
-       :name (last name-segments)})
+       :name    (last name-segments)})
     {:name (name k)}))
 
 (defn ->pretty-print-structure [data selector]
@@ -270,7 +271,7 @@
 (defn log-resouces-table [m resource-name]
   (m/info "\n* List of" resource-name)
   (m/info "     - hash-value (.i.e a3d66)  :  the namespace/resource is defined in the project.clj")
-  (m/info "     - O  :                     :  the namespace/resource does not exist in the project")
+  (m/info "     - X  :                     :  the namespace/resource does not exist in the project")
   (pp/print-table (sort-by :name m))
   (m/info "\n"))
 
