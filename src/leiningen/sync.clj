@@ -2,22 +2,22 @@
   (:refer-clojure :exclude [sync])
   (:require [leiningen.core.main :as main]
             [leiningen.utils :as u]
-            [leiningen.namespaces :as ns]
+            [leiningen.commands :as command]
             [clojure.string :as str]
             [clojure.tools.cli :as cli]
             [leiningen.core.main :as m]))
 
 (def sync-commands {:default [:update :test]
-                    :list    ns/list
-                    :update  ns/update-projects!
-                    :notest  ns/update-projects!
-                    :test    ns/run-test
-                    :reset   ns/reset-all!
-                    :diff    ns/show-all-diff
-                    :status  ns/status-all
-                    :commit  ns/commit-all!
-                    :pull    ns/pull-rebase-all!
-                    :push    ns/push-all!})
+                    :list    command/list
+                    :update  command/update-projects!
+                    :notest  command/update-projects!
+                    :test    command/run-test
+                    :reset   command/reset-all!
+                    :diff    command/show-all-diff
+                    :status  command/status-all
+                    :commit  command/commit-all!
+                    :pull    command/pull-rebase-all!
+                    :push    command/push-all!})
 
 (defn find-command [option-keys]
   (->> option-keys
