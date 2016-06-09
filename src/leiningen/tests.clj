@@ -1,6 +1,5 @@
 (ns leiningen.tests
   (:require [leiningen.utils :as u]
-            [leiningen.namespaces :as ns]
             [clojure.string :as str]
             [leiningen.core.main :as m]
             [clojure.java.shell :as sh]))
@@ -26,8 +25,19 @@
                 (str/join " and " (map :cmd failed-cmd)) "\n")
         {:project project :result :failed}))))
 
-(defn test-all [projects target-projects-desc]
-  (doall
-   (map
-    #(u/run-command-on (ns/->target-project-path %) lein-test % (get-in target-projects-desc [(keyword %)]))
-    projects)))
+(defn log-test-hints [results]
+  (let [passed-projects (->> results
+                             (filter #(= (:result %) :passed))
+                             (map :project)
+                             (str/join ","))
+        failed-project (->> results
+                            (filter #(= (:result %) :failed))
+                            (map :project)
+                            (str/join ","))]
+    (when (not (empty? failed-project))
+      (m/info "* Please have a look  at the failed project(s):" failed-project))
+    (when (not (empty? passed-projects))
+      (m/info "* Tests are passed on project(s):" passed-projects "\n\n")
+      (m/info "To see changes : lein sync" passed-projects "--diff")
+      (m/info "To commit      : lein sync" passed-projects "--commit")
+      (m/info "To push        : lein sync" passed-projects "--push"))))
