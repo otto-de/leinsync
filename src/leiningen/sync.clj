@@ -18,19 +18,19 @@
                     :pull    command/pull-rebase-all!
                     :push    command/push-all!})
 
-(defn find-command [option-keys]
+(defn find-command [option-keys commands]
   (->> option-keys
-       (select-keys sync-commands)
+       (select-keys commands)
        (reduce-kv (fn [m _ f] (conj m (partial u/run! f))) [])))
 
-(defn ->commands [options]
-  (let [commands (find-command (keys options))]
+(defn ->commands [options commands-map]
+  (let [commands (find-command (keys options) commands-map)]
     (if (empty? commands)
-      (find-command (:default sync-commands))
+      (find-command (:default commands-map) commands-map)
       commands)))
 
 (defn execute-program [target-projects source-project-desc options]
-  (doseq [command (->commands options)]
+  (doseq [command (->commands options sync-commands)]
     (command target-projects source-project-desc)))
 
 (def cli-options
