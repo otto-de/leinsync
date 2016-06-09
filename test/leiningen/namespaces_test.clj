@@ -164,3 +164,13 @@
                                          target-paths
                                          target-project
                                          ask-for-source-and-target))))))
+
+(deftest ^:unit should-update?
+  (is (true? (ns/should-update?
+              [:ns-sync :resources] "path.to.ns1"
+              {:ns-sync {:resources ["path.to.ns1" "path.to.ns2"]}})))
+  (is (false? (ns/should-update?
+               [:ns-sync :resources] "path.to.ns3"
+               {:ns-sync {:resources ["path.to.ns1" "path.to.ns2"]}})))
+  (is (false? (ns/should-update? [] "path.to.ns3" {})))
+  (is (false? (ns/should-update? [] "" {}))))
