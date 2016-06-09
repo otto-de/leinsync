@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [leiningen.utils :as u]
+            [leiningen.project-reader :as pr]
             [leiningen.core.main :as m]))
 
 (def namespace-def [:ns-sync :namespaces])
@@ -10,14 +11,6 @@
 (def test-path-def [:test-paths])
 (def resource-path-def [:resource-paths])
 
-;;;; Read target project  helper  ;;;;
-(defn ->target-project-path [project-name]
-  (str "../" project-name))
-
-(defn project-clj-of [m p]
-  (get-in m [(keyword p)]))
-
-;;;; Sync Logic ;;;;;
 (defn sync-get-in [project-clj test-path-def default]
   (-> (get-in project-clj test-path-def default)
       (distinct)))
@@ -38,7 +31,7 @@
 (defn resource->target-path [resource target-project target-project-desc]
   (let [resource-folders (get-in target-project-desc resource-path-def)]
     (map
-     #(str (->target-project-path target-project) "/" % "/" resource)
+     #(str (pr/->target-project-path target-project) "/" % "/" resource)
      resource-folders)))
 
 (defn resource->source-path [resource source-project-desc]
@@ -50,7 +43,7 @@
   (let [{folders :src-or-test
          ns-path :namespace-path} (split-path namespace target-project-desc)]
     (map
-     #(str (->target-project-path target-project) "/" % "/" ns-path)
+     #(str (pr/->target-project-path target-project) "/" % "/" ns-path)
      folders)))
 
 (defn namespace->source-path [namespace source-project-desc]
@@ -166,11 +159,11 @@
 (defn update-namespaces! [namespaces source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE NAMESPACES ***********************\n*")
   (doseq [[namespace target-project] namespaces]
-    (update-name-space! namespace target-project source-project-desc (project-clj-of target-projects-desc target-project)))
+    (update-name-space! namespace target-project source-project-desc (get target-projects-desc (keyword target-project))))
   (m/info "*\n****************************************************************\n"))
 
 (defn update-resouces! [resources source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE RESOURCES ***********************\n*")
   (doseq [[resource target-project] resources]
-    (update-resource! resource target-project source-project-desc (project-clj-of target-projects-desc target-project)))
+    (update-resource! resource target-project source-project-desc (get target-projects-desc (keyword target-project))))
   (m/info "*\n****************************************************************\n"))
