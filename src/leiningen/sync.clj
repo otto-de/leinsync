@@ -1,7 +1,6 @@
 (ns leiningen.sync
   (:refer-clojure :exclude [sync])
-  (:require [leiningen.core.main :as main]
-            [leiningen.utils :as u]
+  (:require [leiningen.utils :as u]
             [leiningen.commands :as command]
             [clojure.string :as str]
             [clojure.tools.cli :as cli]
@@ -72,5 +71,5 @@
                                (u/split (first arguments))
                                project-desc
                                options)
-      :else (main/abort (usage summary)))
-    (main/exit)))
+      :else (m/abort (usage summary)))
+    (m/exit)))

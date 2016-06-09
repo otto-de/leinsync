@@ -1,17 +1,24 @@
 (ns leiningen.commands
   (:refer-clojure :exclude [list])
-  (:require [leiningen.utils :as u]
+  (:require [leiningen.core.main :as m]
+            [clojure.string :as str]
+            [leiningen.core.project :as p]
+            [leiningen.utils :as u]
             [leiningen.namespaces :as ns]
             [leiningen.git :as git]
             [leiningen.list-ns :as l]
-            [leiningen.tests :as t]
-            [clojure.string :as str]
-            [leiningen.core.main :as m]))
+            [leiningen.tests :as t]))
+
+(defn read-target-project-clj [p]
+  (-> p
+      (ns/->target-project-path)
+      (str "/project.clj")
+      (p/read-raw)))
 
 (defn read-all-target-project-clj [target-projects]
   (zipmap
    (map keyword target-projects)
-   (map ns/read-target-project-clj target-projects)))
+   (map read-target-project-clj target-projects)))
 
 (defn test-on [projects-desc p]
   (u/run-command-on (ns/->target-project-path p)
@@ -66,7 +73,7 @@
   (let [all-projects-desc (-> target-projects
                               (conj source-project)
                               (read-all-target-project-clj))]
-    (doall
-     (map
-      (partial l/list-resources all-projects-desc)
-      [ns/namespace-def ns/resource-def]))))
+    (reduce str
+            (map
+             (partial l/list-resources all-projects-desc)
+             [ns/namespace-def ns/resource-def]))))
