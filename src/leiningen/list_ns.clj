@@ -12,14 +12,13 @@
 
 (defn log-resouces-table [m resource-name]
   (m/info "\n* List of" resource-name)
-  (m/info "     -"
-          empty-occurence-str
+  (m/info "     -" empty-occurence-str
           "                        :  the namespace/resource does not exist in the project although it has been specified")
   (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
-  (m/info "                                    "
-          "|resource| ==> 5532BDEA | means that the hash value doesn't match on all projects\n")
+  (m/info "                                     |resource| ==> 5532BDEA | means that the hash value doesn't match on all projects\n")
   (pp/print-table (sort-by :name m))
-  (m/info "\n"))
+  (m/info "\n")
+  resource-name)
 
 (defn aggregate [result [namespace project]]
   (let [project-occurence (if (contains? result namespace)
@@ -55,16 +54,15 @@
 (defn resource-occurence [resource project project-desc render]
   (let [paths (concat (ns/resource->target-path resource (name project) project-desc)
                       (ns/namespace->target-path resource (name project) project-desc))
-        existing-path (filter u/exists? paths)]
-    (render existing-path project)))
+        existing-paths (filter u/exists? paths)]
+    (render existing-paths project)))
 
 (defn map-ns->project [project project-desc empty-project-occurence render]
   (fn [resource]
-    [(keyword resource)
-     (merge-with
-      str
-      (resource-occurence resource project project-desc render)
-      empty-project-occurence)]))
+    [(keyword resource) (merge-with
+                         str
+                         (resource-occurence resource project project-desc render)
+                         empty-project-occurence)]))
 
 (defn resource-name->project [projects selector render]
   (let [empty-occurence (empty-project-occurence projects "")]

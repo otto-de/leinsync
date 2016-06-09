@@ -1,9 +1,7 @@
 (ns leiningen.namespaces
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
-            [clojure.java.shell :as sh]
             [leiningen.utils :as u]
-            [leiningen.core.project :as p]
             [leiningen.core.main :as m]))
 
 (def namespace-def [:ns-sync :namespaces])
@@ -15,12 +13,6 @@
 ;;;; Read target project  helper  ;;;;
 (defn ->target-project-path [project-name]
   (str "../" project-name))
-
-(defn read-target-project-clj [p]
-  (-> p
-      (->target-project-path)
-      (str "/project.clj")
-      (p/read-raw)))
 
 (defn project-clj-of [m p]
   (get-in m [(keyword p)]))
