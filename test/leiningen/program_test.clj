@@ -24,10 +24,8 @@
   (let [m {:a (fn [x y] (+ x y))
            :b (fn [x y] (* x y))
            :c (fn [_ _] (throw RuntimeException))}
-        [fn-1 fn-2 fn-3] (s/find-command [:a :b :c] m)]
-    (is (= 3 (fn-1 1 2)))
-    (is (= 2 (fn-2 1 2)))
-    (is (= nil (fn-3 1 2)))))
+        commands (s/find-command #{:a :b :c} m)]
+    (is (= 3 (count commands)))))
 
 (deftest ^:unit ->commands
   (testing "find correct commands"
@@ -40,5 +38,5 @@
     (let [m {:default [:a]
              :a       (fn [x y] (+ x y))
              :b       (fn [x y] (* x y))}
-          [fn-default & _] (s/->commands {:a "" :b ""} m)]
+          [fn-default & _] (s/->commands {:c "" :d ""} m)]
       (is (= 3 (fn-default 1 2))))))
