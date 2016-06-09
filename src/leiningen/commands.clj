@@ -8,19 +8,15 @@
             [clojure.string :as str]
             [leiningen.core.main :as m]))
 
-(defn- log-test-hints [passed-projects failed-project]
-  (when (not (empty? failed-project))
-    (m/info "* Please have a look  at the failed project(s):" failed-project))
-  (when (not (empty? passed-projects))
-    (m/info "* Tests are passed on project(s):" passed-projects "\n\n")
-    (m/info "To see changes : lein sync" passed-projects "--diff")
-    (m/info "To commit      : lein sync" passed-projects "--commit")
-    (m/info "To push        : lein sync" passed-projects "--push")))
-
 (defn read-all-target-project-clj [target-projects]
   (zipmap
    (map keyword target-projects)
    (map ns/read-target-project-clj target-projects)))
+
+(defn test-on [projects-desc p]
+  (u/run-command-on (ns/->target-project-path p)
+                    t/lein-test p
+                    (get projects-desc (keyword p))))
 
 ;;;;; Sync Commands ;;;;;
 
@@ -61,20 +57,16 @@
     (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc all-target-projects-desc))))
 
 (defn run-test [target-projects _]
-  (let [target-projects-desc (read-all-target-project-clj target-projects)
-        results (t/test-all target-projects target-projects-desc)]
-    (log-test-hints (->> results
-                         (filter #(= (:result %) :passed))
-                         (map :project)
-                         (str/join ","))
-                    (->> results
-                         (filter #(= (:result %) :failed))
-                         (map :project)
-                         (str/join ",")))))
+  (let [target-projects-desc (read-all-target-project-clj target-projects)]
+    (-> (partial test-on target-projects-desc)
+        (map target-projects)
+        (t/log-test-hints))))
 
 (defn list [target-projects {source-project :name}]
   (let [all-projects-desc (-> target-projects
                               (conj source-project)
                               (read-all-target-project-clj))]
-    (l/list-resources all-projects-desc ns/namespace-def)
-    (l/list-resources all-projects-desc ns/resource-def)))
+    (doall
+     (map
+      (partial l/list-resources all-projects-desc)
+      [ns/namespace-def ns/resource-def]))))
