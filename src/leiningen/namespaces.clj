@@ -1,23 +1,16 @@
 (ns leiningen.namespaces
-  (:refer-clojure :exclude [run! list])
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [leiningen.utils :as u]
             [leiningen.core.project :as p]
-            [clojure.pprint :as pp]
-            [digest :as d]
             [leiningen.core.main :as m]))
 
 (def namespace-def [:ns-sync :namespaces])
 (def resource-def [:ns-sync :resources])
-(def test-cmd-def [:ns-sync :test-cmd])
 (def src-path-def [:source-paths])
 (def test-path-def [:test-paths])
 (def resource-path-def [:resource-paths])
-(def standard-test-cmd [["./lein.sh" "clean"] ["./lein.sh" "test"]])
-(def hash-length 8)
-(def empty-occurence-str "X ")
 
 ;;;; Read target project  helper  ;;;;
 (defn ->target-project-path [project-name]
@@ -29,20 +22,10 @@
       (str "/project.clj")
       (p/read-raw)))
 
-(defn read-all-target-project-clj [target-projects]
-  (zipmap (map keyword target-projects) (map read-target-project-clj target-projects)))
-
 (defn project-clj-of [m p]
   (get-in m [(keyword p)]))
 
 ;;;; Sync Logic ;;;;;
-
-(defn test-cmd [target-project]
-  (let [cmds (-> target-project
-                 (read-target-project-clj)
-                 (get-in test-cmd-def))]
-    (if (empty? cmds) standard-test-cmd cmds)))
-
 (defn sync-get-in [project-clj test-path-def default]
   (-> (get-in project-clj test-path-def default)
       (distinct)))
@@ -199,253 +182,3 @@
   (doseq [[resource target-project] resources]
     (update-resource! resource target-project source-project-desc (project-clj-of target-projects-desc target-project)))
   (m/info "*\n****************************************************************\n"))
-
-(defn log-resouces-table [m resource-name]
-  (m/info "\n* List of" resource-name)
-  (m/info "     -"
-          empty-occurence-str
-          "                        :  the namespace/resource does not exist in the project although it has been specified")
-  (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
-  (m/info "                                    "
-          "|resource| ==> 5532BDEA | means that the hash value doesn't match on all projects\n")
-  (pp/print-table (sort-by :name m))
-  (m/info "\n"))
-
-(defn aggregate [result [namespace project]]
-  (let [project-occurence (if (contains? result namespace)
-                            (merge-with str project (get result namespace))
-                            project)]
-    (assoc result namespace project-occurence)))
-
-(defn merge-project-occurence
-  ([data] (merge-project-occurence data {}))
-  ([[first & rest] result]
-   (let [aggregated-result (aggregate result first)]
-     (if (empty? rest)
-       aggregated-result
-       (recur rest aggregated-result)))))
-
-(defn empty-project-occurence [projects initial-value]
-  (zipmap
-   (keys projects)
-   (take (count projects) (repeat initial-value))))
-
-(defn md5-hash
-  ([paths] (str/join " | " (map #(md5-hash % hash-length) paths)))
-  ([path length]
-   (let [hash-value (d/digest "md5" (io/as-file path))
-         hash-length (dec (count hash-value))]
-     (subs hash-value (max 0 (- hash-length length)) hash-length))))
-
-(defn project-occurence-render [paths project]
-  (if (empty? paths)
-    {project empty-occurence-str}
-    {project (md5-hash paths)}))
-
-(defn resource-occurence [resource project project-desc render]
-  (let [paths (concat (resource->target-path resource (name project) project-desc)
-                      (namespace->target-path resource (name project) project-desc))
-        existing-path (filter u/exists? paths)]
-    (render existing-path project)))
-
-(defn map-ns->project [project project-desc empty-project-occurence render]
-  (fn [resource]
-    [(keyword resource)
-     (merge-with
-      str
-      (resource-occurence resource project project-desc render)
-      empty-project-occurence)]))
-
-(defn resource-name->project [projects selector render]
-  (let [empty-occurence (empty-project-occurence projects "")]
-    (reduce-kv
-     (fn [m project desc]
-       (into m (map
-                (map-ns->project project desc empty-occurence render)
-                (get-in desc selector))))
-     []
-     projects)))
-
-(defn occurence-map-for [k selector]
-  (if (= selector namespace-def)
-    (let [name-segments (str/split (name k) #"\.")]
-      {:package (str/join "." (drop-last name-segments))
-       :name    (last name-segments)})
-    {:name (name k)}))
-
-(defn mark-value-as-different [v]
-  (if (empty? v)
-    ""
-    (str "==> " (str/upper-case v))))
-
-(defn uppercase-map [m]
-  (zipmap (keys m)
-          (map mark-value-as-different (vals m))))
-
-(defn unterline-different-values [m]
-  (let [unique-values (->> (vals m)
-                           (filter not-empty)
-                           (set))]
-    (if (= 1 (count unique-values))
-      m
-      (uppercase-map m))))
-
-(defn ->pretty-print-structure [data selector]
-  (reduce-kv
-   (fn [m k v] (conj m (merge
-                        (occurence-map-for k selector)
-                        (unterline-different-values v))))
-   []
-   data))
-
-(defn build-resource-table [projects selector render]
-  (-> projects
-      (resource-name->project selector render)
-      (merge-project-occurence)
-      (->pretty-print-structure selector)))
-
-;;;;; Command Actions ;;;;;
-
-(defn- lein-test [project]
-  (m/info "\n... Executing tests of" project "on" (u/output-of (sh/sh "pwd")))
-  (let [failed-cmd (->> project
-                        (test-cmd)
-                        (map u/run-cmd)
-                        (filter #(= (:result %) :failed)))]
-    (if (empty? failed-cmd)
-      (do
-        (m/info "===> All tests of" project "are passed\n")
-        {:project project :result :passed})
-      (do
-        (m/info "===> On" project "some tests are FAILED when executing"
-                (str/join " and " (map :cmd failed-cmd)) "\n")
-        {:project project :result :failed}))))
-
-(defn- reset-project! [project]
-  (m/info "\n... Reset changes of" project "on" (u/output-of (sh/sh "pwd")))
-  (if (u/is-success? (sh/sh "git" "checkout" "."))
-    (m/info "===> Reset all changes")
-    (m/info "===> Could NOT reset changes on" project)))
-
-(defn- get-changed-files []
-  (u/output-of (sh/sh "git" "diff" "--name-only")))
-
-(defn- diff [project]
-  (let [changes (get-changed-files)]
-    (if (empty? changes)
-      (m/info "* No update has been applied on the project" project "\n")
-      (m/info "* Changes on project" project "\n\n" changes))))
-
-(defn- commit-project! [project commit-msg]
-  (if (not (empty? (get-changed-files)))
-    (let [commit-result (sh/sh "git" "commit" "-am" commit-msg)]
-      (if (not (u/is-success? commit-result))
-        (m/info "===> Could not commit because" (u/error-of commit-result))
-        (m/info "Commited")))
-    (m/info "\n* No change to be committed on" project)))
-
-(defn- pull-rebase! [project]
-  (m/info "\n* Pull on" project)
-  (let [pull-result (sh/sh "git" "pull" "-r")]
-    (if (not (u/is-success? pull-result))
-      (m/info "===> Could not commit because" (u/error-of pull-result))
-      (m/info (u/output-of pull-result)))))
-
-(defn- unpushed-commit []
-  (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
-
-(defn- push! [p]
-  (let [push-result (sh/sh "git" "push" "origin")]
-    (if (not (u/is-success? push-result))
-      (m/info "===> Could not push on" p "because" (u/error-of push-result))
-      (m/info (u/output-of push-result)))))
-
-(defn- check-and-push! [project]
-  (if (empty? (unpushed-commit))
-    (m/info "\n ===> Nothing to push on" project)
-    (if (= "y" (-> (str "\n* Are you sure to push on " project "? (y/n)")
-                   (u/ask-user u/yes-or-no)))
-      (push! project))))
-
-(defn- status [project]
-  (m/info "\n * Status of" project)
-  (let [status-result (sh/sh "git" "status")]
-    (if (not (u/is-success? status-result))
-      (m/info "===> Could not get status because" (u/error-of status-result))
-      (m/info (u/output-of status-result)))))
-
-(defn- test-all [projects]
-  (doall
-   (map
-    #(u/run-command-on (->target-project-path %) lein-test %)
-    projects)))
-
-(defn- log-test-hints [passed-projects failed-project]
-  (when (not (empty? failed-project))
-    (m/info "* Please have a look  at the failed project(s):" failed-project))
-  (when (not (empty? passed-projects))
-    (m/info "* Tests are passed on project(s):" passed-projects "\n\n")
-    (m/info "To see changes : lein sync" passed-projects "--diff")
-    (m/info "To commit      : lein sync" passed-projects "--commit")
-    (m/info "To push        : lein sync" passed-projects "--push")))
-
-(defn list-resources [projects-desc selector]
-  (-> projects-desc
-      (build-resource-table selector project-occurence-render)
-      (log-resouces-table (name (last selector)))))
-
-;;;;; Sync Commands ;;;;;
-
-(defn reset-all! [projects _]
-  (doseq [p projects]
-    (u/run-command-on (->target-project-path p) reset-project! p)))
-
-(defn commit-all! [projects _]
-  (let [commit-msg (->> projects
-                        (str/join ",")
-                        (str "\nPlease enter the commit message for the projects: ")
-                        (u/ask-user))]
-    (doseq [p projects]
-      (u/run-command-on (->target-project-path p) commit-project! p commit-msg))
-    (m/info "\n\nTo push        : lein sync" (str/join "," projects) "--push")))
-
-(defn pull-rebase-all! [projects _]
-  (doseq [p projects]
-    (u/run-command-on (->target-project-path p) pull-rebase! p)))
-
-(defn push-all! [projects _]
-  (doseq [p projects]
-    (u/run-command-on (->target-project-path p) check-and-push! p)))
-
-(defn status-all [projects _]
-  (doseq [p projects]
-    (u/run-command-on (->target-project-path p) status p)))
-
-(defn show-all-diff [projects _]
-  (doseq [p projects]
-    (u/run-command-on (->target-project-path p) diff p)))
-
-(defn update-projects! [target-projects source-project-desc]
-  (let [all-target-projects-desc (read-all-target-project-clj target-projects)
-        namespaces (u/cartesian-product (get-in source-project-desc namespace-def) target-projects)
-        resources (u/cartesian-product (get-in source-project-desc resource-def) target-projects)]
-    (if (not (empty? namespaces)) (update-namespaces! namespaces source-project-desc all-target-projects-desc))
-    (if (not (empty? resources)) (update-resouces! resources source-project-desc all-target-projects-desc))))
-
-(defn run-test [target-projects _]
-  (let [results (test-all target-projects)]
-    (log-test-hints (->> results
-                         (filter #(= (:result %) :passed))
-                         (map :project)
-                         (str/join ","))
-                    (->> results
-                         (filter #(= (:result %) :failed))
-                         (map :project)
-                         (str/join ",")))))
-
-(defn list [target-projects {source-project :name}]
-  (let [all-projects-desc (-> target-projects
-                              (conj source-project)
-                              (read-all-target-project-clj))]
-    (list-resources all-projects-desc namespace-def)
-    (list-resources all-projects-desc resource-def)))
