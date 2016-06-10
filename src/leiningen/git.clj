@@ -27,7 +27,7 @@
 (defn unpushed-commit []
   (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
 
-(defn push! [p]
+(defn push! []
   (let [push-result (sh/sh "git" "push" "origin")]
     (if (not (u/is-success? push-result))
       (m/info (u/error-of push-result))
@@ -38,7 +38,7 @@
     (m/info "\n ===> Nothing to push on" project)
     (if (= "y" (-> (str "\n* Are you sure to push on " project "? (y/n)")
                    (u/ask-user u/yes-or-no)))
-      (push! project))))
+      (push!))))
 
 (defn status [project]
   (m/info "\n * Status of" project)
