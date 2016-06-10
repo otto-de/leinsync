@@ -9,12 +9,11 @@
             [leiningen.list-ns :as l]
             [leiningen.tests :as t]))
 
-(defn test-on [projects-desc p]
-  (u/run-command-on (pr/->target-project-path p)
-                    t/lein-test p
-                    (get projects-desc (keyword p))))
-
-;;;;; Sync Commands ;;;;;
+(defn test-on [projects-desc project]
+  (u/run-command-on (pr/->target-project-path project)
+                    t/lein-test
+                    project
+                    (get projects-desc (keyword project))))
 
 (defn reset-all! [projects _]
   (doseq [p projects]

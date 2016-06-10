@@ -82,13 +82,10 @@
     {:name (name k)}))
 
 (defn mark-value-as-different [v]
-  (if (empty? v)
-    ""
-    (str "==> " (str/upper-case v))))
+  (if (empty? v) "" (str "==> " (str/upper-case v))))
 
 (defn uppercase-map [m]
-  (zipmap (keys m)
-          (map mark-value-as-different (vals m))))
+  (zipmap (keys m) (map mark-value-as-different (vals m))))
 
 (defn unterline-different-values [m]
   (let [unique-values (->> (vals m)
