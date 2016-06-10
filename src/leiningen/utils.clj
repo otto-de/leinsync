@@ -38,9 +38,9 @@
       :else input)))
 
 (defn run-command-on [project command & args]
-  (m/info "|****************************|"
+  (m/info "\n*************************"
           (format-str project 12)
-          "|****************************|")
+          "*************************")
   (let [original-dir (System/getProperty "user.dir")
         _ (change-dir-to (str original-dir "/" project))
         return (apply command args)
@@ -78,12 +78,12 @@
   (combo/cartesian-product c1 c2))
 
 (defn run-cmd [cmd]
-  (m/info "... Executing " (str/join " " cmd))
-  (let [result (apply sh/sh cmd)]
+  (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd")))
+  (let [result (apply sh/sh cmd)
+        cmd-str (str/join " " cmd)]
     (if (is-success? result)
-      {:result :passed}
-      {:result :failed
-       :cmd    (str/join " " cmd)})))
+      {:result :passed :cmd cmd-str}
+      {:result :failed :cmd cmd-str})))
 
 (defn get-version [name]
   (let [path (str "META-INF/maven/" name "/" name "/pom.properties")

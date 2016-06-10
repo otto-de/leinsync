@@ -159,11 +159,9 @@
 (defn update-namespaces! [namespaces source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE NAMESPACES ***********************\n*")
   (doseq [[namespace target-project] namespaces]
-    (update-name-space! namespace target-project source-project-desc (get target-projects-desc (keyword target-project))))
-  (m/info "*\n****************************************************************\n"))
+    (update-name-space! namespace target-project source-project-desc (get target-projects-desc (keyword target-project)))))
 
 (defn update-resouces! [resources source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE RESOURCES ***********************\n*")
   (doseq [[resource target-project] resources]
-    (update-resource! resource target-project source-project-desc (get target-projects-desc (keyword target-project))))
-  (m/info "*\n****************************************************************\n"))
+    (update-resource! resource target-project source-project-desc (get target-projects-desc (keyword target-project)))))
