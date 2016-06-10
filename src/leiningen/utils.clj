@@ -9,6 +9,8 @@
            (java.io File)
            (java.util Properties)))
 
+(def verbose false)
+
 (defn change-dir-to [relative-path]
   (let [absolute-path (.getCanonicalPath (new File relative-path))]
     (.chdir (POSIXFactory/getPOSIX) absolute-path)
@@ -28,7 +30,10 @@
 (defn run! [action & args]
   (try
     (apply action args)
-    (catch Exception e (m/info "Error " (.getMessage e)))))
+    (catch Exception e
+      (if verbose
+        (m/info "Error " (.getMessage e) e)
+        (m/info "Error " (.getMessage e))))))
 
 (defn format-str [input max-length]
   (let [diff (- max-length (count input))]
@@ -78,7 +83,9 @@
   (combo/cartesian-product c1 c2))
 
 (defn run-cmd [cmd]
-  (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd")))
+  (if verbose
+    (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd")))
+    (m/info "... Executing " (str/join " " cmd)))
   (let [result (apply sh/sh cmd)
         cmd-str (str/join " " cmd)]
     (if (is-success? result)
