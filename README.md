@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/otto-de/leinsync.svg?branch=master)](https://travis-ci.org/otto-de/leinsync)
 [![Clojars Project](https://img.shields.io/clojars/v/sync.svg)](https://clojars.org/sync)
+[![Dependencies Status](http://jarkeeper.com/otto-de/leinsync/status.svg)](http://jarkeeper.com/otto-de/leinsync)
 
 Our system consists of a set of small micro services written in clojure.
 Although we have codes shared between our clojure projects, we have consciously decided against shared libraries.
