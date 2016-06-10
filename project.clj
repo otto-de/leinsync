@@ -9,13 +9,13 @@
                    :focused :focused}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/math.combinatorics "0.1.1"]
+                 [org.clojure/math.combinatorics "0.1.3"]
                  [com.sun.jna/jna "3.0.9"]
                  [com.github.jnr/jnr-posix "3.0.29"]
                  [digest "1.4.4"]
-                 [org.clojure/tools.cli "0.3.3"]]
+                 [org.clojure/tools.cli "0.3.5"]]
 
   :profiles {:uberjar {:aot :all}
              :test    {:resource-paths ["test-resources"]}
-             :dev     {:dependencies [[pjstadig/humane-test-output "0.7.0"]]
+             :dev     {:dependencies [[pjstadig/humane-test-output "0.8.0"]]
                        :plugins      [[lein-cljfmt "0.5.3"]]}})
