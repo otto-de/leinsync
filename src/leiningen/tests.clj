@@ -11,9 +11,14 @@
   (let [cmds (get-in project-desc test-cmd-def)]
     (if (empty? cmds) standard-test-cmd cmds)))
 
+(defn unterline-failed-cmd [{cmd :cmd result :result}]
+  (if (= result :failed)
+    {(keyword cmd) (str "==> " result)}
+    {(keyword cmd) result}))
+
 (defn merge-test-status [aggregrated-status cmd-status]
   (->> cmd-status
-       (map (fn [{cmd :cmd result :result}] {(keyword cmd) result}))
+       (map unterline-failed-cmd)
        (reduce merge)
        (merge aggregrated-status)))
 
