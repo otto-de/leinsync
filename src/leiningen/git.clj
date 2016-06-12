@@ -1,56 +1,68 @@
 (ns leiningen.git
   (:require [leiningen.utils :as u]
             [clojure.java.shell :as sh]
-            [leiningen.core.main :as m]))
+            [leiningen.core.main :as m]
+            [clojure.pprint :as pp]))
+
+(defn log-git-status [status]
+  (pp/print-table status)
+  (m/info "\n"))
 
 (defn get-changed-files []
-  (u/output-of (sh/sh "git" "diff" "--name-only")))
+  (u/output-of (sh/sh "git" "diff" "--name-only") " "))
 
 (defn reset-project! [project]
   (if (u/is-success? (sh/sh "git" "checkout" "."))
-    (m/info "===> Reset all changes")
-    (m/info "===> Could not reset changes on" project)))
+    {:project project :status :reset}
+    {:project project :status :failed}))
 
 (defn diff [project]
   (let [changes (get-changed-files)]
     (if (empty? changes)
-      (m/info "* No update has been applied on the project" project "\n")
-      (m/info "* Changes on project" project "\n\n" changes))))
+      {:project project :diff :no-change}
+      {:project project :diff changes})))
 
 (defn pull-rebase! [project]
-  (m/info "\n* Pull on" project)
   (let [pull-result (sh/sh "git" "pull" "-r")]
     (if (not (u/is-success? pull-result))
-      (m/info (u/error-of pull-result))
-      (m/info (u/output-of pull-result)))))
+      {:project project :cause (u/sub-str (u/error-of pull-result) 30)}
+      {:project project :status :pulled :details (u/sub-str (u/output-of pull-result) 30)})))
 
 (defn unpushed-commit []
   (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
 
-(defn push! []
+(defn push! [project]
   (let [push-result (sh/sh "git" "push" "origin")]
     (if (not (u/is-success? push-result))
-      (m/info (u/error-of push-result))
-      (m/info (u/output-of push-result)))))
+      {:project project :status :failed :cause (u/sub-str (u/error-of push-result) 50)}
+      {:project project :status :pushed :cause "Nothing to push on"})))
 
 (defn check-and-push! [project]
   (if (empty? (unpushed-commit))
-    (m/info "\n ===> Nothing to push on" project)
+    {:project project :status :skipped :cause "Nothing to push on"}
     (if (= "y" (-> (str "\n* Are you sure to push on " project "? (y/n)")
                    (u/ask-user u/yes-or-no)))
-      (push!))))
+      (push! project))))
 
 (defn status [project]
-  (m/info "\n * Status of" project)
-  (let [status-result (sh/sh "git" "status")]
+  (let [status-result (sh/sh "git" "status" "--short")]
     (if (not (u/is-success? status-result))
-      (m/info "===> Could not get status because" (u/error-of status-result))
-      (m/info (u/output-of status-result)))))
+      {:project project :status :error}
+      {:project project
+       :status  (u/output-of status-result " ")})))
 
 (defn commit-project! [project commit-msg]
   (if (empty? (get-changed-files))
-    (m/info "\n* No change to be committed on" project)
+    {:project        project
+     :status         :skipped
+     :commit-message commit-msg
+     :cause          "No change to be committed on"}
     (let [commit-result (sh/sh "git" "commit" "-am" commit-msg)]
       (if (u/is-success? commit-result)
-        (m/info "Commited")
-        (m/info (u/error-of commit-result))))))
+        {:project        project
+         :status         :commited
+         :commit-message commit-msg}
+        {:project        project
+         :status         (str "==>" :failed)
+         :commit-message commit-msg
+         :cause          (u/sub-str (u/error-of commit-result " ") 50)}))))

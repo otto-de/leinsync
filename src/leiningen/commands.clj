@@ -10,39 +10,13 @@
             [leiningen.tests :as t]))
 
 (defn test-on [projects-desc project]
-  (u/run-command-on (pr/->target-project-path project)
-                    t/lein-test
-                    project
-                    (get projects-desc (keyword project))))
+  (u/run-command-on
+   (pr/->target-project-path project)
+   t/lein-test
+   project
+   (get projects-desc (keyword project))))
 
-(defn reset-all! [projects _]
-  (doseq [p projects]
-    (u/run-command-on (pr/->target-project-path p) git/reset-project! p)))
-
-(defn commit-all! [projects _]
-  (let [commit-msg (->> projects
-                        (str/join ",")
-                        (str "\nPlease enter the commit message for the projects: ")
-                        (u/ask-user))]
-    (doseq [p projects]
-      (u/run-command-on (pr/->target-project-path p) git/commit-project! p commit-msg))
-    (m/info "\n\nTo push        : lein sync" (str/join "," projects) "--push")))
-
-(defn pull-rebase-all! [projects _]
-  (doseq [p projects]
-    (u/run-command-on (pr/->target-project-path p) git/pull-rebase! p)))
-
-(defn push-all! [projects _]
-  (doseq [p projects]
-    (u/run-command-on (pr/->target-project-path p) git/check-and-push! p)))
-
-(defn status-all [projects _]
-  (doseq [p projects]
-    (u/run-command-on (pr/->target-project-path p) git/status p)))
-
-(defn show-all-diff [projects _]
-  (doseq [p projects]
-    (u/run-command-on (pr/->target-project-path p) git/diff p)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn update-projects! [target-projects source-project-desc]
   (let [all-target-projects-desc (pr/read-all-target-project-clj target-projects)
@@ -51,11 +25,46 @@
     (if (not (empty? namespaces)) (ns/update-namespaces! namespaces source-project-desc all-target-projects-desc))
     (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc all-target-projects-desc))))
 
+(defn pull-rebase-all! [projects _]
+  (-> #(u/run-command-on (pr/->target-project-path %) git/pull-rebase! %)
+      (map projects)
+      (git/log-git-status)))
+
+(defn push-all! [projects _]
+  (-> #(u/run-command-on (pr/->target-project-path %) git/check-and-push! %)
+      (map projects)
+      (git/log-git-status)))
+
 (defn run-test [target-projects _]
   (let [target-projects-desc (pr/read-all-target-project-clj target-projects)]
     (-> (partial test-on target-projects-desc)
         (map target-projects)
         (t/log-test-hints))))
+
+(defn commit-all! [projects _]
+  (let [commit-msg (->> projects
+                        (str/join ",")
+                        (str "\nPlease enter the commit message for the projects: ")
+                        (u/ask-user))]
+    (-> #(u/run-command-on (pr/->target-project-path %) git/commit-project! % commit-msg)
+        (map projects)
+        (git/log-git-status))
+    (m/info "\n\n*To push        : lein sync" (str/join "," projects) "--push")))
+
+(defn show-all-diff [projects _]
+  (-> #(u/run-command-on (pr/->target-project-path %) git/diff %)
+      (map projects)
+      (git/log-git-status)))
+
+(defn status-all [projects _]
+  (-> #(u/run-command-on (pr/->target-project-path %) git/status %)
+      (map projects)
+      (git/log-git-status)))
+
+(defn reset-all! [projects _]
+  (-> #(u/run-command-on (pr/->target-project-path %) git/reset-project! %)
+      (map projects)
+      (git/log-git-status)))
 
 (defn list [target-projects {source-project :name}]
   (let [all-projects-desc (-> target-projects
