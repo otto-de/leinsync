@@ -40,3 +40,8 @@
              :b       (fn [x y] (* x y))}
           [fn-default & _] (s/->commands {:c "" :d ""} m)]
       (is (= 3 (fn-default 1 2))))))
+
+(deftest ^:unit sub-str
+  (is (= "abcd ..." (u/sub-str "abcde" 4)))
+  (is (= "abcde ..." (u/sub-str "abcde" 7)))
+  (is (= " ..." (u/sub-str "abcde" 0))))

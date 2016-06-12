@@ -19,11 +19,15 @@
 (defn is-success? [result]
   (= (:exit result) 0))
 
-(defn output-of [result]
-  (:out result))
+(defn output-of
+  ([result] (:out result))
+  ([result separator]
+   (str/join separator (str/split-lines (str/trim (output-of result))))))
 
-(defn error-of [result]
-  (:err result))
+(defn error-of
+  ([result] (:err result))
+  ([result separator]
+   (str/join separator (str/split-lines (str/trim (error-of result))))))
 
 (defn split [input] (str/split input #","))
 
@@ -35,6 +39,10 @@
         (m/info "Error " (.getMessage e) e)
         (m/info "Error " (.getMessage e))))))
 
+(defn sub-str [input length]
+  (let [max-length (count input)]
+    (str (subs input 0 (min length max-length)) " ...")))
+
 (defn format-str [input max-length]
   (let [diff (- max-length (count input))]
     (cond
@@ -43,9 +51,8 @@
       :else input)))
 
 (defn run-command-on [project command & args]
-  (m/info "\n*************************"
-          (format-str project 12)
-          "*************************")
+  (if verbose
+    (m/info "\n*************************" (format-str project 12) "*************************"))
   (let [original-dir (System/getProperty "user.dir")
         _ (change-dir-to (str original-dir "/" project))
         return (apply command args)
@@ -83,9 +90,7 @@
   (combo/cartesian-product c1 c2))
 
 (defn run-cmd [cmd]
-  (if verbose
-    (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd")))
-    (m/info "... Executing " (str/join " " cmd)))
+  (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd")))
   (let [result (apply sh/sh cmd)
         cmd-str (str/join " " cmd)]
     (if (is-success? result)
