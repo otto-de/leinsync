@@ -90,7 +90,9 @@
   (combo/cartesian-product c1 c2))
 
 (defn run-cmd [cmd]
-  (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd")))
+  (if verbose
+    (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd")))
+    (m/info "... Executing " (str/join " " cmd)))
   (let [result (apply sh/sh cmd)
         cmd-str (str/join " " cmd)]
     (if (is-success? result)
