@@ -28,7 +28,7 @@
     (merge-test-status {:project project :result :failed} cmd-results)))
 
 (defn lein-test [project project-desc]
-  (m/info "\n... Executing tests of" project)
+  (m/info "\n****** Executing tests of" (u/format-str project 12) "******")
   (->> (test-cmd project-desc)
        (map u/run-cmd)
        (test-status project)))

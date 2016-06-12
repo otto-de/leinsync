@@ -19,6 +19,10 @@
 (defn is-success? [result]
   (= (:exit result) 0))
 
+(defn sub-str [input length]
+  (let [max-length (count input)]
+    (str (subs input 0 (min length max-length)) " ...")))
+
 (defn output-of
   ([result] (:out result))
   ([result separator]
@@ -38,10 +42,6 @@
       (if verbose
         (m/info "Error " (.getMessage e) e)
         (m/info "Error " (.getMessage e))))))
-
-(defn sub-str [input length]
-  (let [max-length (count input)]
-    (str (subs input 0 (min length max-length)) " ...")))
 
 (defn format-str [input max-length]
   (let [diff (- max-length (count input))]
@@ -91,7 +91,7 @@
 
 (defn run-cmd [cmd]
   (if verbose
-    (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd")))
+    (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd") " "))
     (m/info "... Executing " (str/join " " cmd)))
   (let [result (apply sh/sh cmd)
         cmd-str (str/join " " cmd)]
