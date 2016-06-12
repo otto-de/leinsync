@@ -4,6 +4,8 @@
             [leiningen.core.main :as m]
             [clojure.pprint :as pp]))
 
+(def output-length 60)
+
 (defn log-git-status [status]
   (pp/print-table status)
   (m/info "\n"))
@@ -25,8 +27,8 @@
 (defn pull-rebase! [project]
   (let [pull-result (sh/sh "git" "pull" "-r")]
     (if (not (u/is-success? pull-result))
-      {:project project :cause (u/sub-str (u/error-of pull-result) 30)}
-      {:project project :status :pulled :details (u/sub-str (u/output-of pull-result) 30)})))
+      {:project project :status :failed :cause (u/sub-str (u/error-of pull-result " ") output-length)}
+      {:project project :status :pulled :details (u/sub-str (u/output-of pull-result " ") output-length)})))
 
 (defn unpushed-commit []
   (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
@@ -34,7 +36,7 @@
 (defn push! [project]
   (let [push-result (sh/sh "git" "push" "origin")]
     (if (not (u/is-success? push-result))
-      {:project project :status :failed :cause (u/sub-str (u/error-of push-result) 50)}
+      {:project project :status :failed :cause (u/sub-str (u/error-of push-result " ") output-length)}
       {:project project :status :pushed :cause "Nothing to push on"})))
 
 (defn check-and-push! [project]
@@ -49,7 +51,9 @@
     (if (not (u/is-success? status-result))
       {:project project :status :error}
       {:project project
-       :status  (u/output-of status-result " ")})))
+       :status  (if (empty? (u/output-of status-result ""))
+                  :no-change
+                  (u/output-of status-result " "))})))
 
 (defn commit-project! [project commit-msg]
   (if (empty? (get-changed-files))
@@ -65,4 +69,4 @@
         {:project        project
          :status         (str "==>" :failed)
          :commit-message commit-msg
-         :cause          (u/sub-str (u/error-of commit-result " ") 50)}))))
+         :cause          (u/sub-str (u/error-of commit-result " ") output-length)}))))
