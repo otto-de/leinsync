@@ -4,7 +4,7 @@
             [leiningen.core.main :as m]
             [clojure.pprint :as pp]))
 
-(def output-length 60)
+(def output-length 120)
 
 (defn log-git-status [status]
   (pp/print-table status)
@@ -16,7 +16,7 @@
 (defn reset-project! [project]
   (if (u/is-success? (sh/sh "git" "checkout" "."))
     {:project project :status :reset}
-    {:project project :status :failed}))
+    {:project project :status (str "==>" :failed)}))
 
 (defn diff [project]
   (let [changes (get-changed-files)]
@@ -27,8 +27,12 @@
 (defn pull-rebase! [project]
   (let [pull-result (sh/sh "git" "pull" "-r")]
     (if (not (u/is-success? pull-result))
-      {:project project :status :failed :cause (u/sub-str (u/error-of pull-result " ") output-length)}
-      {:project project :status :pulled :details (u/sub-str (u/output-of pull-result " ") output-length)})))
+      {:project project
+       :status (str "==>" :failed)
+       :cause (u/sub-str (u/error-of pull-result " ") output-length)}
+      {:project project
+       :status :pulled
+       :details (u/sub-str (u/output-of pull-result " ") output-length)})))
 
 (defn unpushed-commit []
   (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
@@ -36,8 +40,12 @@
 (defn push! [project]
   (let [push-result (sh/sh "git" "push" "origin")]
     (if (not (u/is-success? push-result))
-      {:project project :status :failed :cause (u/sub-str (u/error-of push-result " ") output-length)}
-      {:project project :status :pushed :cause "Nothing to push on"})))
+      {:project project
+       :status (str "==>" :failed)
+       :cause (u/sub-str (u/error-of push-result " ") output-length)}
+      {:project project
+       :status :pushed
+       :cause "Nothing to push on"})))
 
 (defn check-and-push! [project]
   (if (empty? (unpushed-commit))

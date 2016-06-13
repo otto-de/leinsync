@@ -34,15 +34,15 @@
     (command target-projects source-project-desc)))
 
 (def cli-options
-  [[nil "--list" "List resources to be synchronized"]
-   [nil "--notest" "Synchronize shared code base without executing tests on target projects"]
-   [nil "--test" "Executing tests on target projects"]
-   [nil "--diff" "Show changes on target projects"]
-   [nil "--status" "Check status on target projects"]
-   [nil "--reset" "Reset all the uncommited changes in all target projects"]
-   [nil "--commit" "Commit change on target projects"]
-   [nil "--pull" "Pull rebase on target projects"]
-   [nil "--push" "Push on target projects"]])
+  [["-l" "--list" "List resources to be synchronized"]
+   ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
+   ["-t" "--test" "Executing tests on target projects"]
+   ["-d" "--diff" "Show changes on target projects"]
+   ["-s" "--status" "Check status on target projects"]
+   ["-r" "--reset" "Reset all the uncommited changes in all target projects"]
+   ["-c" "--commit" "Commit change on target projects"]
+   ["-p" "--pull" "Pull rebase on target projects"]
+   ["-ps" "--push" "Push on target projects"]])
 
 (defn usage [options-summary]
   (->> [""
