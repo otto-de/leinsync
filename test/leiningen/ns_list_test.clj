@@ -8,6 +8,36 @@
     {project "O X"}
     {project "  X"}))
 
+(deftest ^:unit unterline-different-values
+  (testing "all resources are different"
+    (let [m {:a "1", :b "2", :c "1", :d "2"}]
+      (is (= {:a (l/mark-value-as-different l/all-resources-different-marker (:a m))
+              :b (l/mark-value-as-different l/all-resources-different-marker (:b m))
+              :c (l/mark-value-as-different l/all-resources-different-marker (:c m))
+              :d (l/mark-value-as-different l/all-resources-different-marker (:d m))}
+             (l/unterline-different-values m))))
+
+    (let [m {:a "1" :b "1" :c "1" :d "2" :e "2"}]
+      (is (= {:a (l/mark-value-as-different l/all-resources-different-marker (:a m))
+              :b (l/mark-value-as-different l/all-resources-different-marker (:b m))
+              :c (l/mark-value-as-different l/all-resources-different-marker (:c m))
+              :d (l/mark-value-as-different l/all-resources-different-marker (:d m))
+              :e (l/mark-value-as-different l/all-resources-different-marker (:e m))}
+             (l/unterline-different-values m)))))
+
+  (testing "one resources is different"
+    (let [m {:a "1" :b "1" :c "1" :d "2"}]
+      (is (= {:a (l/mark-value-as-different l/all-resources-different-marker (:a m))
+              :b (l/mark-value-as-different l/all-resources-different-marker (:b m))
+              :c (l/mark-value-as-different l/all-resources-different-marker (:c m))
+              :d (l/mark-value-as-different l/one-resource-different-marker (:d m))}
+             (l/unterline-different-values m))))))
+
+(deftest ^:unit occurence-map-for
+  (is (= {:name "name", :package "path.to.ns"} (l/occurence-map-for "path.to.ns.name" ns/namespace-def)))
+  (is (= {:name "name", :package ""} (l/occurence-map-for "name" ns/namespace-def)))
+  (is (= {:name "data.csv"} (l/occurence-map-for "data.csv" ns/resource-def))))
+
 (deftest ^:unit build-resource-table
   (testing "print table structure for the namespaces"
     (let [projects {:project-1 {:ns-sync        {:namespaces ["path.to.ns1" "path.to.ns2" "path.to.ns4"]}

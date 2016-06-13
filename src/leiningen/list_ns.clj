@@ -8,6 +8,8 @@
             [clojure.pprint :as pp]))
 
 (def hash-length 8)
+(def all-resources-different-marker "==> ")
+(def one-resource-different-marker "####> ")
 (def empty-occurence-str "X ")
 
 (defn log-resouces-table [m resource-name]
@@ -80,19 +82,51 @@
        :name    (last name-segments)})
     {:name (name k)}))
 
-(defn mark-value-as-different [v]
-  (if (empty? v) "" (str "==> " (str/upper-case v))))
+(defn mark-value-as-different
+  ([marker v] (if (empty? v) "" (str marker (str/upper-case v))))
+  ([assertion-marker standard-marker assertion v]
+   (if (assertion v)
+     (mark-value-as-different assertion-marker v)
+     (mark-value-as-different standard-marker v))))
 
-(defn uppercase-map [m]
-  (zipmap (keys m) (map mark-value-as-different (vals m))))
+(defn mark-as-diffrent
+  ([m] (zipmap (keys m)
+               (map (partial mark-value-as-different all-resources-different-marker)
+                    (vals m))))
+  ([m first-val second-val]
+   (let [values (vals m)
+         first-val-occurence (count (remove #(= first-val %) values))
+         second-val-occurence (count (remove #(= second-val %) values))]
+
+     (if (or (= first-val-occurence 1) (= second-val-occurence 1))
+       (cond
+         (< first-val-occurence second-val-occurence)
+         (zipmap (keys m)
+                 (map (partial mark-value-as-different
+                               one-resource-different-marker
+                               all-resources-different-marker
+                               #(= % second-val))
+                      (vals m)))
+         (> first-val-occurence second-val-occurence)
+         (zipmap (keys m)
+                 (map (partial mark-value-as-different
+                               one-resource-different-marker
+                               all-resources-different-marker
+                               #(= % first-val))
+                      (vals m)))
+         :else m)
+       (mark-as-diffrent m)))))
 
 (defn unterline-different-values [m]
-  (let [unique-values (->> (vals m)
+  (let [unique-values (->> m
+                           (vals)
                            (filter not-empty)
                            (set))]
-    (if (= 1 (count unique-values))
-      m
-      (uppercase-map m))))
+    (cond
+      (= 1 (count unique-values)) m
+      (= 2 (count unique-values))
+      (mark-as-diffrent m (first unique-values) (second unique-values))
+      :else (mark-as-diffrent m))))
 
 (defn ->pretty-print-structure [data selector]
   (reduce-kv
