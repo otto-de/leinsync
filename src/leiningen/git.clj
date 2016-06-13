@@ -6,17 +6,24 @@
 
 (def output-length 120)
 
-(defn log-git-status [status]
+(defn log-git-status [status & args]
   (pp/print-table status)
+  (apply m/info args)
   (m/info "\n"))
+
+(defn status-failed []
+  (str "==>" :failed))
 
 (defn get-changed-files []
   (u/output-of (sh/sh "git" "diff" "--name-only") " "))
 
+(defn unpushed-commit []
+  (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
+
 (defn reset-project! [project]
   (if (u/is-success? (sh/sh "git" "checkout" "."))
-    {:project project :status :reset}
-    {:project project :status (str "==>" :failed)}))
+    {:project project :status :resetted}
+    {:project project :status status-failed}))
 
 (defn diff [project]
   (let [changes (get-changed-files)]
@@ -26,26 +33,22 @@
 
 (defn pull-rebase! [project]
   (let [pull-result (sh/sh "git" "pull" "-r")]
-    (if (not (u/is-success? pull-result))
+    (if (u/is-success? pull-result)
       {:project project
-       :status (str "==>" :failed)
-       :cause (u/sub-str (u/error-of pull-result " ") output-length)}
+       :status  :pulled
+       :details (u/sub-str (u/output-of pull-result " ") output-length)}
       {:project project
-       :status :pulled
-       :details (u/sub-str (u/output-of pull-result " ") output-length)})))
-
-(defn unpushed-commit []
-  (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
+       :status  status-failed
+       :cause   (u/sub-str (u/error-of pull-result " ") output-length)})))
 
 (defn push! [project]
   (let [push-result (sh/sh "git" "push" "origin")]
-    (if (not (u/is-success? push-result))
+    (if (u/is-success? push-result)
       {:project project
-       :status (str "==>" :failed)
-       :cause (u/sub-str (u/error-of push-result " ") output-length)}
+       :status  :pushed}
       {:project project
-       :status :pushed
-       :cause "Nothing to push on"})))
+       :status  status-failed
+       :cause   (u/sub-str (u/error-of push-result " ") output-length)})))
 
 (defn check-and-push! [project]
   (if (empty? (unpushed-commit))
@@ -56,25 +59,25 @@
 
 (defn status [project]
   (let [status-result (sh/sh "git" "status" "--short")]
-    (if (not (u/is-success? status-result))
-      {:project project :status :error}
+    (if (u/is-success? status-result)
       {:project project
        :status  (if (empty? (u/output-of status-result ""))
                   :no-change
-                  (u/output-of status-result " "))})))
+                  (u/output-of status-result " "))}
+      {:project project :status status-failed})))
 
 (defn commit-project! [project commit-msg]
   (if (empty? (get-changed-files))
     {:project        project
      :status         :skipped
      :commit-message commit-msg
-     :cause          "No change to be committed on"}
+     :cause          "No change to commit on"}
     (let [commit-result (sh/sh "git" "commit" "-am" commit-msg)]
       (if (u/is-success? commit-result)
         {:project        project
          :status         :commited
          :commit-message commit-msg}
         {:project        project
-         :status         (str "==>" :failed)
+         :status         status-failed
          :commit-message commit-msg
          :cause          (u/sub-str (u/error-of commit-result " ") output-length)}))))

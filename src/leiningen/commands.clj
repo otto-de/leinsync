@@ -1,29 +1,12 @@
 (ns leiningen.commands
   (:refer-clojure :exclude [list])
-  (:require [leiningen.core.main :as m]
-            [clojure.string :as str]
-            [leiningen.project-reader :as pr]
-            [leiningen.utils :as u]
-            [leiningen.namespaces :as ns]
-            [leiningen.git :as git]
-            [leiningen.list-ns :as l]
-            [leiningen.tests :as t]))
-
-(defn test-on [projects-desc project]
-  (u/run-command-on
-   (pr/->target-project-path project)
-   t/lein-test
-   project
-   (get projects-desc (keyword project))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn update-projects! [target-projects source-project-desc]
-  (let [all-target-projects-desc (pr/read-all-target-project-clj target-projects)
-        namespaces (u/cartesian-product (get-in source-project-desc ns/namespace-def) target-projects)
-        resources (u/cartesian-product (get-in source-project-desc ns/resource-def) target-projects)]
-    (if (not (empty? namespaces)) (ns/update-namespaces! namespaces source-project-desc all-target-projects-desc))
-    (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc all-target-projects-desc))))
+  (:require   [clojure.string :as str]
+              [leiningen.project-reader :as pr]
+              [leiningen.utils :as u]
+              [leiningen.namespaces :as ns]
+              [leiningen.git :as git]
+              [leiningen.list-ns :as l]
+              [leiningen.tests :as t]))
 
 (defn pull-rebase-all! [projects _]
   (-> #(u/run-command-on (pr/->target-project-path %) git/pull-rebase! %)
@@ -36,8 +19,8 @@
       (git/log-git-status)))
 
 (defn run-test [target-projects _]
-  (let [target-projects-desc (pr/read-all-target-project-clj target-projects)]
-    (-> (partial test-on target-projects-desc)
+  (let [target-project-desc (pr/read-all-target-project-clj target-projects)]
+    (-> #(u/run-command-on (pr/->target-project-path %) t/lein-test % ((keyword %) target-project-desc))
         (map target-projects)
         (t/log-test-hints))))
 
@@ -45,11 +28,11 @@
   (let [commit-msg (->> projects
                         (str/join ",")
                         (str "\nPlease enter the commit message for the projects: ")
-                        (u/ask-user))]
+                        (u/ask-user))
+        projects-str (str/join "," projects)]
     (-> #(u/run-command-on (pr/->target-project-path %) git/commit-project! % commit-msg)
         (map projects)
-        (git/log-git-status))
-    (m/info "\n\n*To push        : lein sync" (str/join "," projects) "--push")))
+        (git/log-git-status "\n*To push        : lein sync" projects-str "--push"))))
 
 (defn show-all-diff [projects _]
   (-> #(u/run-command-on (pr/->target-project-path %) git/diff %)
@@ -70,7 +53,14 @@
   (let [all-projects-desc (-> target-projects
                               (conj source-project)
                               (pr/read-all-target-project-clj))]
-    (reduce str
-            (map
-             (partial l/list-resources all-projects-desc)
-             [ns/namespace-def ns/resource-def]))))
+    (doall
+     (map
+      (partial l/list-resources all-projects-desc)
+      [ns/namespace-def ns/resource-def]))))
+
+(defn update-projects! [target-projects source-project-desc]
+  (let [all-target-project-desc (pr/read-all-target-project-clj target-projects)
+        namespaces (u/cartesian-product (get-in source-project-desc ns/namespace-def) target-projects)
+        resources (u/cartesian-product (get-in source-project-desc ns/resource-def) target-projects)]
+    (if (not (empty? namespaces)) (ns/update-namespaces! namespaces source-project-desc all-target-project-desc))
+    (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc all-target-project-desc))))
