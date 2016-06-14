@@ -14,6 +14,9 @@
 (defn status-failed []
   (str "==> " :failed))
 
+(defn commit-date [path]
+  (u/output-of (sh/sh "git" "log" "-1" "--format=%cr" path) ""))
+
 (defn get-changed-files []
   (u/output-of (sh/sh "git" "diff" "--name-only") " "))
 
