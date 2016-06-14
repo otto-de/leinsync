@@ -17,8 +17,8 @@
   (m/info "     -" empty-occurence-str
           "                        :  the namespace/resource does not exist in the project although it has been specified")
   (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
-  (m/info "                                     ==>    hash : means that the resource doesn't match on all projects\n")
-  (m/info "                                     =[x]=> hash : means that the resource on this project is different from others\n")
+  (m/info "                                     ==>    hash : means that the resource doesn't match on all projects")
+  (m/info "                                     =[x]=> hash : means that the resource on this project is different from others")
   (pp/print-table (sort-by :name m))
   (m/info "\n"))
 
@@ -59,7 +59,7 @@
         existing-paths (filter u/exists? paths)]
     (render existing-paths project)))
 
-(defn map-ns->project [project project-desc empty-project-occurence render]
+(defn resource->project [project project-desc empty-project-occurence render]
   (fn [resource]
     [(keyword resource) (merge-with
                          str
@@ -71,7 +71,7 @@
     (reduce-kv
      (fn [m project desc]
        (into m (map
-                (map-ns->project project desc empty-occurence render)
+                (resource->project project desc empty-occurence render)
                 (get-in desc selector))))
      []
      projects)))
@@ -83,34 +83,33 @@
        :name    (last name-segments)})
     {:name (name k)}))
 
-(defn mark-value-as-different
+(defn mark-value-with
   ([marker v] (if (empty? v) "" (str marker (str/upper-case v))))
   ([assertion-marker standard-marker assertion v]
    (if (assertion v)
-     (mark-value-as-different assertion-marker v)
-     (mark-value-as-different standard-marker v))))
+     (mark-value-with assertion-marker v)
+     (mark-value-with standard-marker v))))
 
 (defn mark-as-diffrent
   ([m] (zipmap (keys m)
-               (map (partial mark-value-as-different all-resources-different-marker)
+               (map (partial mark-value-with all-resources-different-marker)
                     (vals m))))
   ([m first-val second-val]
    (let [not-empty-values (remove empty? (vals m))
          first-val-occurence (count (remove #(= first-val %) not-empty-values))
          second-val-occurence (count (remove #(= second-val %) not-empty-values))]
-
      (if (or (= first-val-occurence 1) (= second-val-occurence 1))
        (cond
          (< first-val-occurence second-val-occurence)
          (zipmap (keys m)
-                 (map (partial mark-value-as-different
+                 (map (partial mark-value-with
                                one-resource-different-marker
                                all-resources-different-marker
                                #(= % second-val))
                       (vals m)))
          (> first-val-occurence second-val-occurence)
          (zipmap (keys m)
-                 (map (partial mark-value-as-different
+                 (map (partial mark-value-with
                                one-resource-different-marker
                                all-resources-different-marker
                                #(= % first-val))
@@ -129,7 +128,7 @@
       (mark-as-diffrent m (first unique-values) (second unique-values))
       :else (mark-as-diffrent m))))
 
-(defn ->pretty-print-structure [data selector]
+(defn pretty-print-structure [data selector]
   (reduce-kv
    (fn [m k v] (conj m (merge
                         (occurence-map-for k selector)
@@ -141,7 +140,7 @@
   (-> projects
       (resource-name->project selector render)
       (merge-project-occurence)
-      (->pretty-print-structure selector)))
+      (pretty-print-structure selector)))
 
 (defn list-resources [projects-desc selector]
   (-> projects-desc
