@@ -12,7 +12,7 @@
   (m/info "\n"))
 
 (defn status-failed []
-  (str "==>" :failed))
+  (str "==> " :failed))
 
 (defn get-changed-files []
   (u/output-of (sh/sh "git" "diff" "--name-only") " "))
@@ -23,7 +23,7 @@
 (defn reset-project! [project]
   (if (u/is-success? (sh/sh "git" "checkout" "."))
     {:project project :status :resetted}
-    {:project project :status status-failed}))
+    {:project project :status (status-failed)}))
 
 (defn diff [project]
   (let [changes (get-changed-files)]
@@ -38,7 +38,7 @@
        :status  :pulled
        :details (u/sub-str (u/output-of pull-result " ") output-length)}
       {:project project
-       :status  status-failed
+       :status  (status-failed)
        :cause   (u/sub-str (u/error-of pull-result " ") output-length)})))
 
 (defn push! [project]
@@ -47,7 +47,7 @@
       {:project project
        :status  :pushed}
       {:project project
-       :status  status-failed
+       :status  (status-failed)
        :cause   (u/sub-str (u/error-of push-result " ") output-length)})))
 
 (defn check-and-push! [project]
@@ -64,7 +64,7 @@
        :status  (if (empty? (u/output-of status-result ""))
                   :no-change
                   (u/output-of status-result " "))}
-      {:project project :status status-failed})))
+      {:project project :status (status-failed)})))
 
 (defn commit-project! [project commit-msg]
   (if (empty? (get-changed-files))
@@ -78,6 +78,6 @@
          :status         :commited
          :commit-message commit-msg}
         {:project        project
-         :status         status-failed
+         :status         (status-failed)
          :commit-message commit-msg
          :cause          (u/sub-str (u/error-of commit-result " ") output-length)}))))

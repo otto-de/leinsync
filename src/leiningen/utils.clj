@@ -13,6 +13,8 @@
 
 (defn change-dir-to [relative-path]
   (let [absolute-path (.getCanonicalPath (new File relative-path))]
+    (if (not (.exists (io/as-file absolute-path)))
+      (throw (RuntimeException. (str "The folder "  absolute-path " does not exist"))))
     (.chdir (POSIXFactory/getPOSIX) absolute-path)
     (System/setProperty "user.dir" absolute-path)))
 
@@ -40,8 +42,8 @@
     (apply action args)
     (catch Exception e
       (if verbose
-        (m/info "Error " (.getMessage e) e)
-        (m/info "Error " (.getMessage e))))))
+        (m/info "Error: " (.getMessage e) e)
+        (m/info "Error: " (.getMessage e))))))
 
 (defn format-str [input max-length]
   (let [diff (- max-length (count input))]
