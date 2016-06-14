@@ -24,7 +24,7 @@
   (let [m {:a (fn [x y] (+ x y))
            :b (fn [x y] (* x y))
            :c (fn [_ _] (throw RuntimeException))}
-        commands (s/find-command #{:a :b :c} m)]
+        commands (s/find-command {:a "" :b "" :c ""} m)]
     (is (= 3 (count commands)))))
 
 (deftest ^:unit ->commands
@@ -35,10 +35,10 @@
       (is (= 2 (count commands)))))
 
   (testing "returns fallback if no command found"
-    (let [m {:default [:a]
-             :a       (fn [x y] (+ x y))
-             :b       (fn [x y] (* x y))}
-          [fn-default & _] (s/->commands {:c "" :d ""} m)]
+    (let [m {:default {:a ""}
+             :a       (fn [_ x y] (+ x y))
+             :b       (fn [_ x y] (* x y))}
+          [fn-default & _] (s/->commands {} m)]
       (is (= 3 (fn-default 1 2))))))
 
 (deftest ^:unit sub-str
