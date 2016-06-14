@@ -1,36 +1,25 @@
 (ns leiningen.sync
   (:refer-clojure :exclude [sync])
   (:require [leiningen.utils :as u]
-            [leiningen.commands :as command]
+            [leiningen.commands :as c]
             [clojure.string :as str]
             [clojure.tools.cli :as cli]
             [leiningen.core.main :as m]))
 
-(def sync-commands {:default [:update :test]
-                    :list    command/list
-                    :update  command/update-projects!
-                    :notest  command/update-projects!
-                    :test    command/run-test
-                    :reset   command/reset-all!
-                    :diff    command/show-all-diff
-                    :status  command/status-all
-                    :commit  command/commit-all!
-                    :pull    command/pull-rebase-all!
-                    :push    command/push-all!})
-
-(defn find-command [option-keys commands]
-  (->> option-keys
-       (select-keys commands)
-       (reduce-kv (fn [m _ f] (conj m (partial u/run! f))) [])))
+(defn find-command [options commands]
+  (let [option-keys (keys options)]
+    (->> option-keys
+         (select-keys commands)
+         (reduce-kv (fn [m k f] (conj m (partial u/run! f (k options)))) []))))
 
 (defn ->commands [options commands-map]
-  (let [commands (find-command (keys options) commands-map)]
+  (let [commands (find-command options commands-map)]
     (if (empty? commands)
       (find-command (:default commands-map) commands-map)
       commands)))
 
 (defn execute-program [target-projects source-project-desc options]
-  (doseq [command (->commands options sync-commands)]
+  (doseq [command (->commands options c/sync-commands)]
     (command target-projects source-project-desc)))
 
 (def cli-options
