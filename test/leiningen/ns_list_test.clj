@@ -31,6 +31,15 @@
               :b (l/mark-value-as-different l/all-resources-different-marker (:b m))
               :c (l/mark-value-as-different l/all-resources-different-marker (:c m))
               :d (l/mark-value-as-different l/one-resource-different-marker (:d m))}
+             (l/unterline-different-values m)))))
+
+  (testing "edge case where one project does not has this namespace"
+    (let [m {:a "1" :b "1" :c "1" :d "2" :e ""}]
+      (is (= {:a (l/mark-value-as-different l/all-resources-different-marker (:a m))
+              :b (l/mark-value-as-different l/all-resources-different-marker (:b m))
+              :c (l/mark-value-as-different l/all-resources-different-marker (:c m))
+              :d (l/mark-value-as-different l/one-resource-different-marker (:d m))
+              :e (l/mark-value-as-different l/all-resources-different-marker (:e m))}
              (l/unterline-different-values m))))))
 
 (deftest ^:unit occurence-map-for

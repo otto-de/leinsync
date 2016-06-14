@@ -9,7 +9,7 @@
 
 (def hash-length 8)
 (def all-resources-different-marker "==> ")
-(def one-resource-different-marker "####> ")
+(def one-resource-different-marker "=[x]=> ")
 (def empty-occurence-str "X ")
 
 (defn log-resouces-table [m resource-name]
@@ -17,7 +17,8 @@
   (m/info "     -" empty-occurence-str
           "                        :  the namespace/resource does not exist in the project although it has been specified")
   (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
-  (m/info "                                     |resource| ==> 5532BDEA | means that the hash value doesn't match on all projects\n")
+  (m/info "                                     ==>    hash : means that the resource doesn't match on all projects\n")
+  (m/info "                                     =[x]=> hash : means that the resource on this project is different from others\n")
   (pp/print-table (sort-by :name m))
   (m/info "\n"))
 
@@ -94,9 +95,9 @@
                (map (partial mark-value-as-different all-resources-different-marker)
                     (vals m))))
   ([m first-val second-val]
-   (let [values (vals m)
-         first-val-occurence (count (remove #(= first-val %) values))
-         second-val-occurence (count (remove #(= second-val %) values))]
+   (let [not-empty-values (remove empty? (vals m))
+         first-val-occurence (count (remove #(= first-val %) not-empty-values))
+         second-val-occurence (count (remove #(= second-val %) not-empty-values))]
 
      (if (or (= first-val-occurence 1) (= second-val-occurence 1))
        (cond
