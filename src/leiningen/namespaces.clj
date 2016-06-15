@@ -21,12 +21,21 @@
     (sync-get-in project-clj test-path-def ["test"])
     (sync-get-in project-clj src-path-def ["src"])))
 
-(defn split-path [path project-desc]
+(defn namespace->path [path project-desc]
   {:src-or-test    (test-or-source-namespace path project-desc)
    :namespace-path (-> path
                        (str/replace #"-" "_")
                        (str/replace #"\." "/")
                        (str ".clj"))})
+
+(defn path->namespace [path project-desc]
+  (let [source-folders (concat (get-in project-desc src-path-def)
+                               (get-in project-desc test-path-def))
+        _ (-> path
+              (str/replace #"\.clj" "")
+              (str/replace #"\.clj" ""))])
+  {:resource-path ""
+   :namespace     ""})
 
 (defn resource->target-path [resource target-project target-project-desc]
   (let [resource-folders (get-in target-project-desc resource-path-def)]
@@ -41,13 +50,13 @@
 
 (defn namespace->target-path [namespace target-project target-project-desc]
   (let [{folders :src-or-test
-         ns-path :namespace-path} (split-path namespace target-project-desc)]
+         ns-path :namespace-path} (namespace->path namespace target-project-desc)]
     (map
      #(str (pr/->target-project-path target-project) "/" % "/" ns-path)
      folders)))
 
 (defn namespace->source-path [namespace source-project-desc]
-  (let [{folders :src-or-test ns-path :namespace-path} (split-path namespace source-project-desc)]
+  (let [{folders :src-or-test ns-path :namespace-path} (namespace->path namespace source-project-desc)]
     (map #(str % "/" ns-path) folders)))
 
 (defn update-files! [from-file to-file]
