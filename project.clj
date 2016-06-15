@@ -1,4 +1,4 @@
-(defproject sync "0.9.21"
+(defproject sync "0.9.22-SNAPSHOT"
   :description "sync is a Leiningen plugin to sync same code base between different clojure projects"
   :url "https://github.com/otto-de/leinsync"
   :license {:name "Eclipse Public License"
