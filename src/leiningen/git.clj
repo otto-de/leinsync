@@ -3,7 +3,8 @@
             [clojure.java.shell :as sh]
             [leiningen.core.main :as m]
             [clojure.pprint :as pp]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [leiningen.namespaces :as ns]))
 
 (def output-length 120)
 
@@ -100,8 +101,14 @@
        :commit-message commit-msg
        :cause          (u/sub-str (u/error-of commit-result " ") output-length)})))
 
-(defn commit-project! [project commit-msg]
-  (let [add-status (->> (get-changed-files)
+(defn should-synchronize-resources? [projects-desc path]
+  (not= (ns/path->namespace path projects-desc)
+        {:resource-path :not-found
+         :resource-name :not-found}))
+
+(defn commit-project! [project commit-msg projects-desc]
+  (let [add-status (->> (concat (get-changed-files) (get-untracked-files))
+                        (filter (partial should-synchronize-resources? projects-desc))
                         (map add)
                         (filter #(= % :failed)))]
     (if (zero? (count add-status))

@@ -29,8 +29,9 @@
                         (str/join ",")
                         (str "\nPlease enter the commit message for the projects: ")
                         (u/ask-user))
-        projects-str (str/join "," projects)]
-    (-> #(u/run-command-on (pr/->target-project-path %) git/commit-project! % commit-msg)
+        projects-str (str/join "," projects)
+        projects-desc (pr/read-all-target-project-clj projects)]
+    (-> #(u/run-command-on (pr/->target-project-path %) git/commit-project! % commit-msg (get projects-desc (keyword %)))
         (map projects)
         (git/log-git-status "\n*To push        : lein sync" projects-str "--push"))))
 
