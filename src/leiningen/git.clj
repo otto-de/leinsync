@@ -19,6 +19,14 @@
   (u/output-of (sh/sh "git" "log" "-1" "--format=%cr" path) ""))
 
 (defn get-changed-files []
+  (let [result (sh/sh "git" "ls-files" "--others" "--exclude-standard")]
+    (if (u/is-success? result)
+      (->> (u/output-of result)
+           (str/split-lines)
+           (remove empty?))
+      [])))
+
+(defn get-untracked-files []
   (let [result (sh/sh "git" "diff" "--name-only")]
     (if (u/is-success? result)
       (->> (u/output-of result)

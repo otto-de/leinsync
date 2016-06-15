@@ -4,6 +4,59 @@
             [leiningen.core.project :as p]
             [leiningen.utils :as u]))
 
+(comment (deftest ^:unit path->namespace
+           (testing "happy path"
+             (is (= {:resource-path "folder1"
+                     :namespace     "otto.one.cool.ns"}
+                    (ns/path->namespace "folder1/de/otto/one/cool/ns.clj" {:source-paths ["folder1"]
+                                                                           :test-paths   []
+                                                                           :ns-sync      {:namespaces ["otto.one.cool.ns"]
+                                                                                          :resources  [""]}})))
+
+             (is (= {:resource-path "folder1"
+                     :namespace     "otto.one.cool.ns"}
+                    (ns/path->namespace "folder1/de/otto/one/cool/ns.clj" {:source-paths ["folder1"]
+                                                                           :test-paths   []
+                                                                           :ns-sync      {:namespaces ["otto.one.cool.ns"]
+                                                                                          :resources  [""]}})))
+             (is (= {:resource-path "folder1"
+                     :namespace     "log.xml"}
+                    (ns/path->namespace "folder1/de/otto/one/cool/ns.clj" {:source-paths []
+                                                                           :test-paths   ["folder1"]
+                                                                           :ns-sync      {:namespaces [""]
+                                                                                          :resources  ["log.xml"]}}))))
+
+           (testing "negative case because folder3 is not specified with leinsync"
+             (is (= {:resource-path :not-found
+                     :namespace     :not-found}
+                    (ns/path->namespace "folder3/de/otto/one/cool/ns.clj" {:source-paths []
+                                                                           :test-paths   []
+                                                                           :ns-sync      {:namespaces ["otto.one.cool.ns"]
+                                                                                          :resources  [""]}}))))
+
+           (testing "negative case because it is resouce ist not a clojure file"
+             (is (= {:resource-path :not-found
+                     :namespace     :not-found}
+                    (ns/path->namespace "folder1/de/otto/one/cool/ns.xml" {:source-paths ["folder1"]
+                                                                           :test-paths   []
+                                                                           :ns-sync      {:namespaces ["otto.one.cool.ns"]
+                                                                                          :resources  [""]}}))))
+
+           (testing "negative case because ns is unknown"
+             (is (= {:resource-path :not-found
+                     :namespace     :not-found}
+                    (ns/path->namespace "folder1/de/otto/one/cool/ns.clj" {:source-paths ["folder1"]
+                                                                           :test-paths   []
+                                                                           :ns-sync      {:namespaces ["otto.another.cool.ns"]
+                                                                                          :resources  [""]}}))))
+           (testing "negative case because resource is unknown"
+             (is (= {:resource-path :not-found
+                     :namespace     :not-found}
+                    (ns/path->namespace "folder1/log1.xml" {:source-paths ["folder1"]
+                                                            :test-paths   []
+                                                            :ns-sync      {:namespaces ["otto.another.cool.ns"]
+                                                                           :resources  ["log2.xml"]}}))))))
+
 (deftest ^:unit convert-namespace->des-path-of-src
   (is (= ["../project/folder1/de/otto/one/cool/ns.clj"
           "../project/folder2/de/otto/one/cool/ns.clj"]
@@ -46,12 +99,12 @@
 (deftest ^:unit split-test-path
   (is (= {:src-or-test    ["testfolder1" "testfolder2"]
           :namespace-path "de/otto/one/cool/ns_test.clj"}
-         (ns/split-path "de.otto.one.cool.ns-test" project-clj))))
+         (ns/namespace->path "de.otto.one.cool.ns-test" project-clj))))
 
 (deftest ^:unit split-src-path
   (is (= {:src-or-test    ["folder1" "folder2"]
           :namespace-path "de/otto/one/cool/ns.clj"}
-         (ns/split-path "de.otto.one.cool.ns" project-clj))))
+         (ns/namespace->path "de.otto.one.cool.ns" project-clj))))
 
 (deftest ^:unit is-a-test-ns
   (is (= ["testfolder1" "testfolder2"]
