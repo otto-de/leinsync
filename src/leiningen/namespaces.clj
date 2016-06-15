@@ -29,13 +29,23 @@
                        (str ".clj"))})
 
 (defn path->namespace [path project-desc]
-  (let [source-folders (concat (get-in project-desc src-path-def)
-                               (get-in project-desc test-path-def))
-        _ (-> path
-              (str/replace #"\.clj" "")
-              (str/replace #"\.clj" ""))])
-  {:resource-path ""
-   :namespace     ""})
+  (let [source-folders (set (concat (get-in project-desc src-path-def)
+                                    (get-in project-desc test-path-def)))
+        resources-folders (set (get-in project-desc resource-path-def))
+        namespaces-list (set (get-in project-desc namespace-def))
+        resources-list (set (get-in project-desc resource-def))
+        [folder & path-segments] (str/split (str/replace path #"\.clj" "") #"/")]
+    (cond
+      (and (contains? source-folders folder)
+           (contains? namespaces-list (str/join "." path-segments)))
+      {:resource-path folder
+       :resource-name (str/join "." path-segments)}
+      (and (contains? resources-folders folder)
+           (contains? resources-list (str/join "/" path-segments)))
+      {:resource-path folder
+       :resource-name (str/join "/" path-segments)}
+
+      :else {:resource-path :not-found :resource-name :not-found})))
 
 (defn resource->target-path [resource target-project target-project-desc]
   (let [resource-folders (get-in target-project-desc resource-path-def)]
