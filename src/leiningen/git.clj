@@ -2,7 +2,8 @@
   (:require [leiningen.utils :as u]
             [clojure.java.shell :as sh]
             [leiningen.core.main :as m]
-            [clojure.pprint :as pp]))
+            [clojure.pprint :as pp]
+            [clojure.string :as str]))
 
 (def output-length 120)
 
@@ -18,7 +19,18 @@
   (u/output-of (sh/sh "git" "log" "-1" "--format=%cr" path) ""))
 
 (defn get-changed-files []
-  (u/output-of (sh/sh "git" "diff" "--name-only") " "))
+  (let [result (sh/sh "git" "diff" "--name-only")]
+    (if (u/is-success? result)
+      (->> (u/output-of result)
+           (str/split-lines)
+           (remove empty?))
+      [])))
+
+(defn add [path]
+  (let [result (sh/sh "git" "add" path)]
+    (if (u/is-success? result)
+      {:status :added}
+      {:status :failed})))
 
 (defn unpushed-commit []
   (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
@@ -32,7 +44,7 @@
   (let [changes (get-changed-files)]
     (if (empty? changes)
       {:project project :diff :no-change}
-      {:project project :diff changes})))
+      {:project project :diff (str/join " " changes)})))
 
 (defn pull-rebase! [project]
   (let [pull-result (sh/sh "git" "pull" "-r")]
@@ -69,18 +81,24 @@
                   (u/output-of status-result " "))}
       {:project project :status (status-failed)})))
 
+(defn commit! [project commit-msg]
+  (let [commit-result (sh/sh "git" "commit" "-m" commit-msg)]
+    (if (u/is-success? commit-result)
+      {:project        project
+       :status         :commited
+       :commit-message commit-msg}
+      {:project        project
+       :status         (status-failed)
+       :commit-message commit-msg
+       :cause          (u/sub-str (u/error-of commit-result " ") output-length)})))
+
 (defn commit-project! [project commit-msg]
-  (if (empty? (get-changed-files))
-    {:project        project
-     :status         :skipped
-     :commit-message commit-msg
-     :cause          "No change to commit on"}
-    (let [commit-result (sh/sh "git" "commit" "-am" commit-msg)]
-      (if (u/is-success? commit-result)
-        {:project        project
-         :status         :commited
-         :commit-message commit-msg}
-        {:project        project
-         :status         (status-failed)
-         :commit-message commit-msg
-         :cause          (u/sub-str (u/error-of commit-result " ") output-length)}))))
+  (let [add-status (->> (get-changed-files)
+                        (map add)
+                        (filter #(= % :failed)))]
+    (if (zero? (count add-status))
+      (commit! project commit-msg)
+      {:project        project
+       :status         :skipped
+       :commit-message commit-msg
+       :cause          add-status})))
