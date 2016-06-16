@@ -66,7 +66,7 @@
     (if (not (empty? namespaces)) (ns/update-namespaces! namespaces source-project-desc all-target-project-desc))
     (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc all-target-project-desc))))
 
-(def sync-commands {:default {:update "" :test ""}
+(def SYNC-COMMANDS {:default {:update "" :test ""}
                     :list    list
                     :update  update-projects!
                     :notest  update-projects!

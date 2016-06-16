@@ -19,7 +19,7 @@
       commands)))
 
 (defn execute-program [target-projects source-project-desc options]
-  (doseq [command (->commands options c/sync-commands)]
+  (doseq [command (->commands options c/SYNC-COMMANDS)]
     (command target-projects source-project-desc)))
 
 (def cli-options
@@ -31,7 +31,7 @@
    ["-r" "--reset" "Reset all the uncommited changes in all target projects"]
    ["-c" "--commit" "Commit change on target projects"]
    ["-p" "--pull" "Pull rebase on target projects"]
-   ["-ps" "--push" "Push on target projects"]])
+   ["-u" "--push" "Push on target projects"]])
 
 (defn usage [options-summary]
   (->> [""
