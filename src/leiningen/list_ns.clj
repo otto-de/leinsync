@@ -5,7 +5,7 @@
             [leiningen.utils :as u]
             [digest :as d]
             [leiningen.core.main :as m]
-            [clojure.pprint :as pp]))
+            [leiningen.table-pretty-print :as pp]))
 
 (def hash-length 8)
 (def all-resources-different-marker "==> ")

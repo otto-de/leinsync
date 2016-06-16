@@ -2,7 +2,7 @@
   (:require [leiningen.utils :as u]
             [clojure.java.shell :as sh]
             [leiningen.core.main :as m]
-            [clojure.pprint :as pp]
+            [leiningen.table-pretty-print :as pp]
             [clojure.string :as str]
             [leiningen.namespaces :as ns]))
 

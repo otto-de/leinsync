@@ -2,7 +2,7 @@
   (:require [leiningen.utils :as u]
             [clojure.string :as str]
             [leiningen.core.main :as m]
-            [clojure.pprint :as pp]))
+            [leiningen.table-pretty-print :as pp]))
 
 (def test-cmd-def [:ns-sync :test-cmd])
 (def standard-test-cmd [["./lein.sh" "clean"] ["./lein.sh" "test"]])
