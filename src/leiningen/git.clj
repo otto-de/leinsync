@@ -41,8 +41,8 @@
       {:status :added}
       {:status :failed})))
 
-(defn unpushed-commit []
-  (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")))
+(defn unpushed-commit-changes []
+  (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only") " "))
 
 (defn reset-project! [project]
   (if (u/is-success? (sh/sh "git" "checkout" "."))
@@ -75,19 +75,22 @@
        :cause   (u/sub-str (u/error-of push-result " ") output-length)})))
 
 (defn check-and-push! [project]
-  (if (empty? (unpushed-commit))
+  (if (empty? (unpushed-commit-changes))
     {:project project :status :skipped :cause "Nothing to push on"}
     (if (= "y" (-> (str "\n* Are you sure to push on " project "? (y/n)")
                    (u/ask-user u/yes-or-no)))
       (push! project))))
 
 (defn status [project]
-  (let [status-result (sh/sh "git" "status" "--short")]
+  (let [status-result (sh/sh "git" "status" "--short")
+        unpushed-changes (unpushed-commit-changes)]
     (if (u/is-success? status-result)
-      {:project project
-       :status  (if (empty? (u/output-of status-result ""))
-                  :no-change
-                  (u/output-of status-result " "))}
+      {:project  project
+       :status   (if (empty? (u/output-of status-result ""))
+                   :no-change
+                   (u/output-of status-result " "))
+       :unpushed-commit-change (if (empty? unpushed-changes)
+                                 :no-change unpushed-changes)}
       {:project project :status (status-failed)})))
 
 (defn commit! [project commit-msg]
