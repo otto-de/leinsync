@@ -43,5 +43,5 @@
 
 (deftest ^:unit sub-str
   (is (= "abcd ..." (u/sub-str "abcde" 4)))
-  (is (= "abcde ..." (u/sub-str "abcde" 7)))
+  (is (= "abcde" (u/sub-str "abcde" 7)))
   (is (= " ..." (u/sub-str "abcde" 0))))

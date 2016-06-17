@@ -54,10 +54,8 @@
   (let [all-projects-desc (-> target-projects
                               (conj source-project)
                               (pr/read-all-target-project-clj))]
-    (doall
-     (map
-      (partial l/list-resources all-projects-desc)
-      [ns/namespace-def ns/resource-def]))))
+    (l/list-resources all-projects-desc ns/namespace-def)
+    (l/list-resources all-projects-desc ns/resource-def)))
 
 (defn update-projects! [_ target-projects source-project-desc]
   (let [all-target-project-desc (pr/read-all-target-project-clj target-projects)

@@ -22,8 +22,10 @@
   (= (:exit result) 0))
 
 (defn sub-str [input length]
-  (let [max-length (count input)]
-    (str (subs input 0 (min length max-length)) " ...")))
+  (let [input-length (count input)]
+    (if (<= input-length length)
+      input
+      (str (subs input 0 (min length input-length)) " ..."))))
 
 (defn output-of
   ([result] (:out result))
