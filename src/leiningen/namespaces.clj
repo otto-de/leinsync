@@ -47,6 +47,11 @@
 
       :else {:resource-path :not-found :resource-name :not-found})))
 
+(defn sync-resources? [projects-desc path]
+  (not= (path->namespace path projects-desc)
+        {:resource-path :not-found
+         :resource-name :not-found}))
+
 (defn resource->target-path [resource target-project target-project-desc]
   (let [resource-folders (get-in target-project-desc resource-path-def)]
     (map
