@@ -31,14 +31,18 @@
                         (u/ask-user))
         projects-str (str/join "," projects)
         projects-desc (pr/read-all-target-project-clj projects)]
-    (-> #(u/run-command-on (pr/->target-project-path %) git/commit-project! % commit-msg (get projects-desc (keyword %)))
+    (-> #(u/run-command-on (pr/->target-project-path %) git/commit-project! % commit-msg ((keyword %) projects-desc))
         (map projects)
         (git/log-git-status "\n*To push        : lein sync" projects-str "--push"))))
 
 (defn status-all [_ projects _]
-  (-> #(u/run-command-on (pr/->target-project-path %) git/status %)
-      (map projects)
-      (git/log-git-status)))
+  (let [projects-desc (pr/read-all-target-project-clj projects)]
+    (-> #(u/run-command-on (pr/->target-project-path %) git/overview-status %)
+        (map projects)
+        (git/log-git-status))
+    (-> #(u/run-command-on (pr/->target-project-path %) git/details-status % ((keyword %) projects-desc))
+        (map projects)
+        (git/log-git-status))))
 
 (defn reset-all! [_ projects _]
   (-> #(u/run-command-on (pr/->target-project-path %) git/reset-project! %)
