@@ -26,7 +26,6 @@
   [["-l" "--list" "List resources to be synchronized"]
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
-   ["-d" "--diff" "Show changes on target projects"]
    ["-s" "--status" "Check status on target projects"]
    ["-r" "--reset" "Reset all the uncommited changes in all target projects"]
    ["-c" "--commit" "Commit change on target projects"]

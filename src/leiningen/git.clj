@@ -49,12 +49,6 @@
     {:project project :status :resetted}
     {:project project :status (status-failed)}))
 
-(defn diff [project]
-  (let [changes (get-changed-files)]
-    (if (empty? changes)
-      {:project project :diff :no-change}
-      {:project project :diff (str/join " " changes)})))
-
 (defn pull-rebase! [project]
   (let [pull-result (sh/sh "git" "pull" "-r")]
     (if (u/is-success? pull-result)
