@@ -35,11 +35,6 @@
         (map projects)
         (git/log-git-status "\n*To push        : lein sync" projects-str "--push"))))
 
-(defn show-all-diff [_ projects _]
-  (-> #(u/run-command-on (pr/->target-project-path %) git/diff %)
-      (map projects)
-      (git/log-git-status)))
-
 (defn status-all [_ projects _]
   (-> #(u/run-command-on (pr/->target-project-path %) git/status %)
       (map projects)
@@ -70,7 +65,6 @@
                     :notest  update-projects!
                     :test    run-test
                     :reset   reset-all!
-                    :diff    show-all-diff
                     :status  status-all
                     :commit  commit-all!
                     :pull    pull-rebase-all!

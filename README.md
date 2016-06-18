@@ -50,7 +50,6 @@ Options:
    + --test    :  Executing tests on target projects
    + --reset   :  Reset all uncommitted changes in all target projects.
    + --status  :  Check status on target projects
-   + --diff    :  Show changes on target projects
    + --commit  :  Commit change on target projects
    + --pull    :  Pull rebase on target projects
    + --push    :  Push on target projects
