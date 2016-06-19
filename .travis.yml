@@ -7,4 +7,4 @@ jdk:
   - oraclejdk7
   - oraclejdk8
 after_script:
-  - bash -ex test-resource/coveralls.sh
+  - bash -ex test-resources/coveralls.sh
