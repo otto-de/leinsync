@@ -13,6 +13,15 @@
                                                                   :resource-paths []
                                                                   :ns-sync        {:namespaces ["de.otto.one.cool.ns"]
                                                                                    :resources  [""]}})))
+
+    (is (= {:resource-path "folder1"
+            :resource-name "de.otto.one.cool.name-space-1"}
+           (ns/path->namespace "folder1/de/otto/one/cool/name_space_1.clj" {:source-paths   ["folder1"]
+                                                                            :test-paths     []
+                                                                            :resource-paths []
+                                                                            :ns-sync        {:namespaces ["de.otto.one.cool.name-space-1"]
+                                                                                             :resources  [""]}})))
+
     (is (= {:resource-path "folder1"
             :resource-name "de.otto.one.cool.ns"}
            (ns/path->namespace "folder1/de/otto/one/cool/ns.clj" {:source-paths   []

@@ -3,7 +3,8 @@
             [clojure.java.io :as io]
             [leiningen.utils :as u]
             [leiningen.project-reader :as pr]
-            [leiningen.core.main :as m]))
+            [leiningen.core.main :as m]
+            [clojure.string :as s]))
 
 (def namespace-def [:ns-sync :namespaces])
 (def resource-def [:ns-sync :resources])
@@ -28,24 +29,35 @@
                        (str/replace #"\." "/")
                        (str ".clj"))})
 
+(defn parse-resource-name [resource-name]
+  (if (and (not (nil? resource-name)) (s/includes? resource-name ".clj"))
+    (-> resource-name
+        (s/replace  #"_" "-")
+        (s/replace  #".clj" ""))
+    resource-name))
+
 (defn path->namespace [path project-desc]
   (let [source-folders (set (concat (get-in project-desc src-path-def)
                                     (get-in project-desc test-path-def)))
         resources-folders (set (get-in project-desc resource-path-def))
         namespaces-list (set (get-in project-desc namespace-def))
         resources-list (set (get-in project-desc resource-def))
-        [folder & path-segments] (str/split (str/replace path #"\.clj" "") #"/")]
+        [folder & path-segments] (str/split path #"/")
+        resource-name (parse-resource-name (last path-segments))
+        dot-path-segments (str/join "." (concat (drop-last path-segments) [resource-name]))
+        slash-path-segments (str/join "/" path-segments)]
     (cond
       (and (contains? source-folders folder)
-           (contains? namespaces-list (str/join "." path-segments)))
+           (contains? namespaces-list dot-path-segments))
       {:resource-path folder
-       :resource-name (str/join "." path-segments)}
+       :resource-name dot-path-segments}
       (and (contains? resources-folders folder)
-           (contains? resources-list (str/join "/" path-segments)))
+           (contains? resources-list slash-path-segments))
       {:resource-path folder
-       :resource-name (str/join "/" path-segments)}
+       :resource-name slash-path-segments}
 
-      :else {:resource-path :not-found :resource-name :not-found})))
+      :else {:resource-path :not-found
+             :resource-name :not-found})))
 
 (defn sync-resources? [projects-desc path]
   (not= (path->namespace path projects-desc)
