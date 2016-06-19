@@ -47,5 +47,31 @@
   (is (= " ..." (u/sub-str "abcde" 0))))
 
 (deftest ^:unit includes?
-  (is (true?  (u/includes? "abcde" "a")))
-  (is (false?  (u/includes? "abcde" "f"))))
+  (is (true? (u/includes? "abcde" "a")))
+  (is (false? (u/includes? "abcde" "f"))))
+
+(deftest ^:unit is-success?
+  (is (true? (u/is-success? {:exit 0})))
+  (is (false? (u/is-success? {:exit 1}))))
+
+(deftest ^:unit output-of
+  (is (= "text" (u/output-of {:out "text"})))
+  (is (= "a,b,c" (u/output-of {:out "a\nb\nc\n"} ","))))
+
+(deftest ^:unit error-of
+  (is (= "text" (u/error-of {:err "text"})))
+  (is (= "a,b,c" (u/error-of {:err "a\nb\nc\n"} ","))))
+
+(deftest ^:unit yes-or-no
+  (is (true? (u/yes-or-no "y")))
+  (is (true? (u/yes-or-no "n")))
+  (is (false? (u/yes-or-no "yn"))))
+
+(deftest ^:unit is-number
+  (is (false? (u/is-number 6 "6")))
+  (is (true? (u/is-number 6 "5")))
+  (is (false? (u/is-number 6 "7"))))
+
+(deftest ^:unit is-number
+  (is (true? (u/lazy-contains? (lazy-seq [1 2]) 1)))
+  (is (false? (u/lazy-contains? (lazy-seq [1 2]) 3))))
