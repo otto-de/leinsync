@@ -29,7 +29,7 @@
                        (str ".clj"))})
 
 (defn parse-resource-name [resource-name]
-  (if (and (not (nil? resource-name)) (str/includes? resource-name ".clj"))
+  (if (and (not (nil? resource-name)) (u/includes? resource-name ".clj"))
     (-> resource-name
         (str/replace  #"_" "-")
         (str/replace  #".clj" ""))

@@ -14,7 +14,7 @@
 (defn change-dir-to [relative-path]
   (let [absolute-path (.getCanonicalPath (new File relative-path))]
     (if (not (.exists (io/as-file absolute-path)))
-      (throw (RuntimeException. (str "The folder "  absolute-path " does not exist"))))
+      (throw (RuntimeException. (str "The folder " absolute-path " does not exist"))))
     (.chdir (POSIXFactory/getPOSIX) absolute-path)
     (System/setProperty "user.dir" absolute-path)))
 
@@ -110,3 +110,6 @@
       (with-open [stream (io/input-stream props)]
         (let [props (doto (Properties.) (.load stream))]
           (.getProperty props "version"))))))
+
+(defn includes? [s substr]
+  (.contains s substr))
