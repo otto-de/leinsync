@@ -65,3 +65,7 @@
     (is (= ["folder1/de/otto/one/cool/ns.clj"
             "folder2/log.xml"]
            (git/sync-resources-of changed-file untracked-file project-desc)))))
+
+(deftest ^:unit changes-empty?
+  (is (true? (git/changes-empty? {:unpushed-changes :no-change})))
+  (is (false? (git/changes-empty? ["something"]))))

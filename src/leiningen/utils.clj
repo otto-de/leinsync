@@ -27,10 +27,15 @@
       input
       (str (subs input 0 (min length input-length)) " ..."))))
 
+(declare output-of)
+
+(defn split-output-of [result]
+  (str/split-lines (str/trim (output-of result))))
+
 (defn output-of
   ([result] (:out result))
   ([result separator]
-   (str/join separator (str/split-lines (str/trim (output-of result))))))
+   (str/join separator (split-output-of result))))
 
 (defn error-of
   ([result] (:err result))
