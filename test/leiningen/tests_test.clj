@@ -14,3 +14,24 @@
   (is (= {:project "project", :result :failed, :test-1 "==> :failed", :test-2 :passed}
          (t/test-status "project" [{:cmd "test-1" :result :failed}
                                    {:cmd "test-2" :result :passed}]))))
+
+(deftest ^:unit unterline-failed-cmd
+  (is (= {:run :passed}
+         (t/unterline-failed-cmd {:cmd :run :result :passed})))
+  (is (= {:run (str "==> " :failed)}
+         (t/unterline-failed-cmd {:cmd :run :result :failed}))))
+
+(deftest ^:unit merge-test-status
+  (is (= :failed
+         (:result (t/merge-test-status
+                    {:cmd ["test" "5"] :result :failed}
+                    [:cmd ["test" "2"] {:result :failed}
+                     {:cmd ["test" "3"] :result :passed}
+                     {:cmd ["test" "4"] :result :failed}]))))
+
+  (is (= :passed
+         (:result (t/merge-test-status
+                    {:cmd ["test" "5"] :result :passed}
+                    [:cmd ["test" "2"] {:result :passed}
+                     {:cmd ["test" "3"] :result :passed}
+                     {:cmd ["test" "4"] :result :passed}])))))
