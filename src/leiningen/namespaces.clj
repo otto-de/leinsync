@@ -3,8 +3,7 @@
             [clojure.java.io :as io]
             [leiningen.utils :as u]
             [leiningen.project-reader :as pr]
-            [leiningen.core.main :as m]
-            [clojure.string :as s]))
+            [leiningen.core.main :as m]))
 
 (def namespace-def [:ns-sync :namespaces])
 (def resource-def [:ns-sync :resources])
@@ -30,10 +29,10 @@
                        (str ".clj"))})
 
 (defn parse-resource-name [resource-name]
-  (if (and (not (nil? resource-name)) (s/includes? resource-name ".clj"))
+  (if (and (not (nil? resource-name)) (str/includes? resource-name ".clj"))
     (-> resource-name
-        (s/replace  #"_" "-")
-        (s/replace  #".clj" ""))
+        (str/replace  #"_" "-")
+        (str/replace  #".clj" ""))
     resource-name))
 
 (defn path->namespace [path project-desc]
