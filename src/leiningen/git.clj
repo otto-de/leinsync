@@ -95,7 +95,8 @@
                                               (remove-change-status-from %)))
                                     (str/join " "))]
     {:synchronized-resources (if (empty? synchronized-resources)
-                               :no-change synchronized-resources)}))
+                               :no-change
+                               synchronized-resources)}))
 
 (defn details-status [project projects-desc]
   (let [status-result (sh/sh "git" "status" "--short")

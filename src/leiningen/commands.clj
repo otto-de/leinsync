@@ -18,18 +18,17 @@
       (map projects)
       (git/log-git-status)))
 
-(defn run-test [_ target-projects _]
-  (let [target-project-desc (pr/read-all-target-project-clj target-projects)]
+(defn run-test [_ projects _]
+  (let [target-project-desc (pr/read-all-target-project-clj projects)]
     (-> #(u/run-command-on (pr/->target-project-path %) t/lein-test % ((keyword %) target-project-desc))
-        (map target-projects)
+        (map projects)
         (t/log-test-hints))))
 
 (defn commit-all! [_ projects _]
-  (let [commit-msg (->> projects
-                        (str/join ",")
+  (let [projects-str (str/join "," projects)
+        commit-msg (->> projects-str
                         (str "\nPlease enter the commit message for the projects: ")
                         (u/ask-user))
-        projects-str (str/join "," projects)
         projects-desc (pr/read-all-target-project-clj projects)]
     (-> #(u/run-command-on (pr/->target-project-path %) git/commit-project! % commit-msg ((keyword %) projects-desc))
         (map projects)
