@@ -45,3 +45,7 @@
   (is (= "abcd ..." (u/sub-str "abcde" 4)))
   (is (= "abcde" (u/sub-str "abcde" 7)))
   (is (= " ..." (u/sub-str "abcde" 0))))
+
+(deftest ^:unit includes?
+  (is (true?  (u/includes? "abcde" "a")))
+  (is (false?  (u/includes? "abcde" "f"))))

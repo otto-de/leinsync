@@ -113,3 +113,6 @@
 
 (defn includes? [s substr]
   (.contains s substr))
+
+(defn lazy-contains? [coll key]
+  (boolean (some #(= % key) coll)))
