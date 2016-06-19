@@ -8,6 +8,17 @@
 
 (def output-length 120)
 
+(defn remove-change-status-from [path]
+  (-> path
+      (str/replace #"M\s" "")
+      (str/replace #"A\s" "")
+      (str/replace #"D\s" "")
+      (str/replace #"R\s" "")
+      (str/replace #"C\s" "")
+      (str/replace #"U\s" "")
+      (str/replace #"\?\?\s" "")
+      (str/replace #"\s" "")))
+
 (defn log-git-status [status & args]
   (pp/print-table status)
   (apply m/info args)
@@ -75,20 +86,13 @@
                    (u/ask-user u/yes-or-no)))
       (push! project))))
 
-(defn get-details-status [project status-result projects-desc]
-  (let [status-lines (-> status-result
-                         (u/output-of)
-                         (str/replace #"M\s" "")
-                         (str/replace #"A\s" "")
-                         (str/replace #"D\s" "")
-                         (str/replace #"R\s" "")
-                         (str/replace #"C\s" "")
-                         (str/replace #"U\s" "")
-                         (str/replace #"\?\?\s" "")
-                         (str/split-lines))
-        changed-files (map #(str/replace % #"\s" "") status-lines)
-        synchronized-resources (->> changed-files
-                                    (filter #(ns/sync-resources? projects-desc %))
+(defn get-details-status [status-result projects-desc]
+  (let [synchronized-resources (->> status-result
+                                    (u/output-of)
+                                    (str/split-lines)
+                                    (filter #(ns/sync-resources?
+                                              projects-desc
+                                              (remove-change-status-from %)))
                                     (str/join " "))]
     {:synchronized-resources (if (empty? synchronized-resources)
                                :no-change synchronized-resources)}))
@@ -100,7 +104,7 @@
       (merge {:project                project
               :unpushed-commit-change (if (empty? unpushed-changes)
                                         :no-change unpushed-changes)}
-             (get-details-status project status-result projects-desc))
+             (get-details-status status-result projects-desc))
       {:project project :status (status-failed)})))
 
 (defn overview-status [project]
