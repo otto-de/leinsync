@@ -74,7 +74,8 @@
   (let [push-result (sh/sh "git" "push" "origin")]
     (if (u/is-success? push-result)
       {:project project
-       :status  :pushed}
+       :status  :pushed
+       :details (u/sub-str (u/output-of push-result " ") output-length)}
       {:project project
        :status  (status-failed)
        :cause   (u/sub-str (u/error-of push-result " ") output-length)})))
@@ -98,12 +99,12 @@
                                               (remove-git-change-status-from %))))
         other-resources (->> status-lines
                              (filter #(not (u/lazy-contains? synchronized-resources %))))]
-    {:sync-relevante-changes (if (empty? synchronized-resources)
-                               :no-change
-                               (str/join " " synchronized-resources))
-     :other-changes          (if (empty? other-resources)
-                               :no-change
-                               (str/join " " other-resources))}))
+    {:sync-relevant-changes (if (empty? synchronized-resources)
+                              :no-change
+                              (str/join " " synchronized-resources))
+     :other-changes         (if (empty? other-resources)
+                              :no-change
+                              (str/join " " other-resources))}))
 
 (defn details-status [project projects-desc]
   (let [status-result (sh/sh "git" "status" "--short")]
