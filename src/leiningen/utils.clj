@@ -82,7 +82,7 @@
      (if (validate-fn input)
        input
        (do
-         (m/info "the input was not correct")
+         (m/info "The input was not correct")
          (recur (capture-input question)))))))
 
 (defn exists? [path]

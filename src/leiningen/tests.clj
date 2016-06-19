@@ -47,6 +47,6 @@
       (m/info "\n* Please have a look  at the failed project(s):" failed-project))
     (when (not (empty? passed-projects))
       (m/info "\n* Tests are passed on project(s):" passed-projects "\n\n")
-      (m/info "To see changes : lein sync" passed-projects "--diff")
+      (m/info "To see changes : lein sync" passed-projects "--status")
       (m/info "To commit      : lein sync" passed-projects "--commit")
       (m/info "To push        : lein sync" passed-projects "--push"))))
