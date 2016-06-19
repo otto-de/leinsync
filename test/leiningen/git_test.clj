@@ -47,8 +47,8 @@
         git-status-lines ["M folder1/de/otto/one/cool/ns.clj"
                           "M folder1/de/otto/one/not-relevante-ns.clj"
                           "D folder2/log.xml"]]
-    (is (= {:other-changes          "M folder1/de/otto/one/not-relevante-ns.clj"
-            :sync-relevante-changes "M folder1/de/otto/one/cool/ns.clj D folder2/log.xml"}
+    (is (= {:other-changes         "M folder1/de/otto/one/not-relevante-ns.clj"
+            :sync-relevant-changes "M folder1/de/otto/one/cool/ns.clj D folder2/log.xml"}
            (git/get-details-status git-status-lines project-desc)))))
 
 (deftest ^:unit sync-resources-of
