@@ -69,3 +69,4 @@ resources/version.properties
 log_location_IS_UNDEFINED
 
 target
+cov/
