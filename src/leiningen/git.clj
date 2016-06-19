@@ -27,22 +27,19 @@
 (defn status-failed []
   (str "==> " :failed))
 
-(defn commit-date [path]
-  (u/output-of (sh/sh "git" "log" "-1" "--format=%cr" path) ""))
-
 (defn get-changed-files []
   (let [result (sh/sh "git" "ls-files" "--others" "--exclude-standard")]
     (if (u/is-success? result)
-      (->> (u/output-of result)
-           (str/split-lines)
+      (->> result
+           (u/split-output-of)
            (remove empty?))
       [])))
 
 (defn get-untracked-files []
   (let [result (sh/sh "git" "diff" "--name-only")]
     (if (u/is-success? result)
-      (->> (u/output-of result)
-           (str/split-lines)
+      (->> result
+           (u/split-output-of)
            (remove empty?))
       [])))
 
@@ -82,9 +79,14 @@
        :status  (status-failed)
        :cause   (u/sub-str (u/error-of push-result " ") output-length)})))
 
+(defn changes-empty? [unpushed-commit-changes]
+  (= :no-change (:unpushed-changes unpushed-commit-changes)))
+
 (defn check-and-push! [project]
-  (if (empty? (unpushed-commit-changes))
-    {:project project :status :skipped :cause "Nothing to push on"}
+  (if (changes-empty? (unpushed-commit-changes))
+    {:project project
+     :status  :skipped
+     :cause   "Nothing to push on"}
     (if (= "y" (-> (str "\n* Are you sure to push on " project "? (y/n)")
                    (u/ask-user u/yes-or-no)))
       (push! project))))
@@ -108,11 +110,9 @@
     (if (u/is-success? status-result)
       (merge {:project project}
              (unpushed-commit-changes)
-             (get-details-status (->> status-result
-                                      (u/output-of)
-                                      (str/split-lines))
-                                 projects-desc))
-      {:project project :status (status-failed)})))
+             (get-details-status (u/split-output-of status-result) projects-desc))
+      {:project project
+       :status  (status-failed)})))
 
 (defn commit! [project commit-msg]
   (let [commit-result (sh/sh "git" "commit" "-m" commit-msg)]
@@ -130,13 +130,19 @@
        (filter #(ns/sync-resources? projects-desc %))))
 
 (defn commit-project! [project commit-msg projects-desc]
-  (let [add-status (->> projects-desc
-                        (sync-resources-of (get-changed-files) (get-untracked-files))
-                        (map add)
-                        (filter #(= % :failed)))]
-    (if (zero? (count add-status))
-      (commit! project commit-msg)
-      {:project        project
-       :status         :skipped
-       :commit-message commit-msg
-       :cause          add-status})))
+  (let [resources-to-add (sync-resources-of
+                          (get-changed-files)
+                          (get-untracked-files)
+                          projects-desc)
+        add-status (map add resources-to-add)
+        failed-add-actions (filter #(= % :failed) add-status)]
+    (cond
+      (zero? (count add-status)) {:project        project
+                                  :status         :skipped
+                                  :commit-message commit-msg
+                                  :cause          "No change to commit"}
+      (not (zero? (count failed-add-actions))) {:project        project
+                                                :status         :skipped
+                                                :commit-message commit-msg
+                                                :cause          add-status}
+      :else (commit! project commit-msg))))

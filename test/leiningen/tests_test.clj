@@ -24,14 +24,14 @@
 (deftest ^:unit merge-test-status
   (is (= :failed
          (:result (t/merge-test-status
-                    {:cmd ["test" "5"] :result :failed}
-                    [:cmd ["test" "2"] {:result :failed}
-                     {:cmd ["test" "3"] :result :passed}
-                     {:cmd ["test" "4"] :result :failed}]))))
+                   {:cmd ["test" "5"] :result :failed}
+                   [:cmd ["test" "2"] {:result :failed}
+                    {:cmd ["test" "3"] :result :passed}
+                    {:cmd ["test" "4"] :result :failed}]))))
 
   (is (= :passed
          (:result (t/merge-test-status
-                    {:cmd ["test" "5"] :result :passed}
-                    [:cmd ["test" "2"] {:result :passed}
-                     {:cmd ["test" "3"] :result :passed}
-                     {:cmd ["test" "4"] :result :passed}])))))
+                   {:cmd ["test" "5"] :result :passed}
+                   [:cmd ["test" "2"] {:result :passed}
+                    {:cmd ["test" "3"] :result :passed}
+                    {:cmd ["test" "4"] :result :passed}])))))

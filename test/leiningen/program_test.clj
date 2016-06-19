@@ -58,6 +58,9 @@
   (is (= "text" (u/output-of {:out "text"})))
   (is (= "a,b,c" (u/output-of {:out "a\nb\nc\n"} ","))))
 
+(deftest ^:unit split-output-of
+  (is (= ["a" "b" "c"] (u/split-output-of {:out "a\nb\nc\n"}))))
+
 (deftest ^:unit error-of
   (is (= "text" (u/error-of {:err "text"})))
   (is (= "a,b,c" (u/error-of {:err "a\nb\nc\n"} ","))))
