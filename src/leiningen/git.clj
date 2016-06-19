@@ -8,7 +8,7 @@
 
 (def output-length 120)
 
-(defn remove-change-status-from [path]
+(defn remove-git-change-status-from [path]
   (-> path
       (str/replace #"M\s" "")
       (str/replace #"A\s" "")
@@ -53,7 +53,10 @@
       {:status :failed})))
 
 (defn unpushed-commit-changes []
-  (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only") " "))
+  (let [unpushed-changes (-> (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")
+                             (u/output-of " "))]
+    {:unpushed-changes (if (empty? unpushed-changes)
+                         :no-change unpushed-changes)}))
 
 (defn reset-project! [project]
   (if (u/is-success? (sh/sh "git" "checkout" "."))
@@ -86,35 +89,29 @@
                    (u/ask-user u/yes-or-no)))
       (push! project))))
 
-(defn get-details-status [status-result projects-desc]
-  (let [synchronized-resources (->> status-result
-                                    (u/output-of)
-                                    (str/split-lines)
+(defn get-details-status [status-lines projects-desc]
+  (let [synchronized-resources (->> status-lines
                                     (filter #(ns/sync-resources?
                                               projects-desc
-                                              (remove-change-status-from %)))
-                                    (str/join " "))]
-    {:synchronized-resources (if (empty? synchronized-resources)
+                                              (remove-git-change-status-from %))))
+        other-resources (->> status-lines
+                             (filter #(not (u/lazy-contains? synchronized-resources %))))]
+    {:sync-relevante-changes (if (empty? synchronized-resources)
                                :no-change
-                               synchronized-resources)}))
+                               (str/join " " synchronized-resources))
+     :other-changes          (if (empty? other-resources)
+                               :no-change
+                               (str/join " " other-resources))}))
 
 (defn details-status [project projects-desc]
-  (let [status-result (sh/sh "git" "status" "--short")
-        unpushed-changes (unpushed-commit-changes)]
-    (if (u/is-success? status-result)
-      (merge {:project                project
-              :unpushed-commit-change (if (empty? unpushed-changes)
-                                        :no-change unpushed-changes)}
-             (get-details-status status-result projects-desc))
-      {:project project :status (status-failed)})))
-
-(defn overview-status [project]
   (let [status-result (sh/sh "git" "status" "--short")]
     (if (u/is-success? status-result)
-      {:project     project
-       :all-changes (if (empty? (u/output-of status-result ""))
-                      :no-change
-                      (u/output-of status-result " "))}
+      (merge {:project project}
+             (unpushed-commit-changes)
+             (get-details-status (->> status-result
+                                      (u/output-of)
+                                      (str/split-lines))
+                                 projects-desc))
       {:project project :status (status-failed)})))
 
 (defn commit! [project commit-msg]
@@ -128,9 +125,13 @@
        :commit-message commit-msg
        :cause          (u/sub-str (u/error-of commit-result " ") output-length)})))
 
+(defn sync-resources-of [changed-files untracked-files projects-desc]
+  (->> (concat changed-files untracked-files)
+       (filter #(ns/sync-resources? projects-desc %))))
+
 (defn commit-project! [project commit-msg projects-desc]
-  (let [add-status (->> (concat (get-changed-files) (get-untracked-files))
-                        (filter #(ns/sync-resources? projects-desc %))
+  (let [add-status (->> projects-desc
+                        (sync-resources-of (get-changed-files) (get-untracked-files))
                         (map add)
                         (filter #(= % :failed)))]
     (if (zero? (count add-status))

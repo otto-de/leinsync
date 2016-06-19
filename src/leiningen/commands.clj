@@ -36,9 +36,6 @@
 
 (defn status-all [_ projects _]
   (let [projects-desc (pr/read-all-target-project-clj projects)]
-    (-> #(u/run-command-on (pr/->target-project-path %) git/overview-status %)
-        (map projects)
-        (git/log-git-status))
     (-> #(u/run-command-on (pr/->target-project-path %) git/details-status % ((keyword %) projects-desc))
         (map projects)
         (git/log-git-status))))
