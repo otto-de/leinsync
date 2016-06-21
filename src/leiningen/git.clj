@@ -131,11 +131,9 @@
        (filter #(ns/sync-resources? projects-desc %))))
 
 (defn commit-project! [project commit-msg projects-desc]
-  (let [resources-to-add (sync-resources-of
-                          (get-changed-files)
-                          (get-untracked-files)
-                          projects-desc)
-        add-status (map add resources-to-add)
+  (let [add-status (->> projects-desc
+                        (sync-resources-of (get-changed-files) (get-untracked-files))
+                        (map add))
         failed-add-actions (filter #(= % :failed) add-status)]
     (cond
       (zero? (count add-status)) {:project        project
