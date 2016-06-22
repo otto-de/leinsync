@@ -1,11 +1,9 @@
-(ns leiningen.table-pretty-print)
+(ns leiningen.table-pretty-print
+  (:require [leiningen.core.main :as m]))
 
-(defn print-table
-  "Prints a collection of maps in a textual table. Prints table headings
-   ks, and then a line of output for each row, corresponding to the keys
-   in ks. If ks are not specified, use the keys of the first item in rows."
-  {:added "1.3"}
-  ([ks rows]
+(defn- print-table
+  ([rows with-extra-seperator-line] (print-table (keys (first rows)) rows with-extra-seperator-line))
+  ([ks rows with-extra-seperator-line]
    (when (seq rows)
      (let [widths (map
                    (fn [k]
@@ -19,10 +17,16 @@
                                                 (for [[col fmt] (map vector (map #(get row %) ks) fmts)]
                                                   (format fmt (str col)))))
                           trailer))]
-       (println)
-       (println (fmt-row "| " " | " " |" (zipmap ks ks)))
-       (println (fmt-row "|-" "-+-" "-|" (zipmap ks spacers)))
+       (m/info)
+       (m/info (fmt-row "| " " | " " |" (zipmap ks ks)))
+       (m/info (fmt-row "|-" "-+-" "-|" (zipmap ks spacers)))
        (doseq [row rows]
-         (println (fmt-row "| " " | " " |" row))
-         (println (fmt-row "|-" "---" "-|" (zipmap ks spacers)))))))
-  ([rows] (print-table (keys (first rows)) rows)))
+         (m/info (fmt-row "| " " | " " |" row))
+         (if with-extra-seperator-line
+           (m/info (fmt-row "|-" "---" "-|" (zipmap ks spacers)))))))))
+
+(defn print-compact-table [rows]
+  (print-table rows false))
+
+(defn print-full-table [rows]
+  (print-table rows true))

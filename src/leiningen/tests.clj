@@ -34,7 +34,7 @@
        (test-status project)))
 
 (defn log-test-hints [results]
-  (pp/print-table results)
+  (pp/print-full-table results)
   (let [passed-projects (->> results
                              (filter #(= (:result %) :passed))
                              (map :project)
