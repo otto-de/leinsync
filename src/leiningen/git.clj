@@ -20,7 +20,7 @@
       (str/replace #"\s" "")))
 
 (defn log-git-status [status & args]
-  (pp/print-table status)
+  (pp/print-full-table status)
   (apply m/info args)
   (m/info "\n"))
 

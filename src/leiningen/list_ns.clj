@@ -5,7 +5,7 @@
             [leiningen.utils :as u]
             [digest :as d]
             [leiningen.core.main :as m]
-            [clojure.pprint :as pp]))
+            [leiningen.table-pretty-print :as pp]))
 
 (def hash-length 8)
 (def all-resources-different-marker "==> ")
@@ -19,7 +19,7 @@
   (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
   (m/info "                                     ==>    hash : means that the resource doesn't match on all projects")
   (m/info "                                     =[x]=> hash : means that the resource on this project is different from others")
-  (pp/print-table (sort-by :name m))
+  (pp/print-compact-table (sort-by :name m))
   (m/info "\n"))
 
 (defn aggregate [result [namespace project]]
