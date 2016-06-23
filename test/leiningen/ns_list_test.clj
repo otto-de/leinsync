@@ -40,6 +40,12 @@
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
               :d (l/mark-value-with l/one-resource-different-marker (:d m))
               :e (l/mark-value-with l/all-resources-different-marker (:e m))}
+             (l/unterline-different-values m)))))
+
+  (testing "edge case 2 different entries"
+    (let [m {:a "1" :b "2"}]
+      (is (= {:a (l/mark-value-with l/one-resource-different-marker (:a m))
+              :b (l/mark-value-with l/one-resource-different-marker (:b m))}
              (l/unterline-different-values m))))))
 
 (deftest ^:unit occurence-map-for
