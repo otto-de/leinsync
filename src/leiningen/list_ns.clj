@@ -94,37 +94,29 @@
   ([m] (zipmap (keys m)
                (map (partial mark-value-with all-resources-different-marker)
                     (vals m))))
+  ([m assertion]
+   (zipmap (keys m)
+           (map (partial mark-value-with
+                         one-resource-different-marker
+                         all-resources-different-marker
+                         assertion)
+                (vals m))))
   ([m first-val second-val]
    (let [not-empty-values (remove empty? (vals m))
-         first-val-occurence (count (remove #(= first-val %) not-empty-values))
-         second-val-occurence (count (remove #(= second-val %) not-empty-values))]
+         [first-val-occurence second-val-occurence] (vals (frequencies not-empty-values))]
      (cond
        (and (not= first-val-occurence 1) (not= second-val-occurence 1))
        (mark-as-diffrent m)
 
        (= first-val-occurence second-val-occurence)
-       (zipmap (keys m)
-               (map (partial mark-value-with
-                             one-resource-different-marker
-                             all-resources-different-marker
-                             #(or (= % first-val) = % second-val))
-                    (vals m)))
-
-       (< first-val-occurence second-val-occurence)
-       (zipmap (keys m)
-               (map (partial mark-value-with
-                             one-resource-different-marker
-                             all-resources-different-marker
-                             #(= % second-val))
-                    (vals m)))
+       (mark-as-diffrent m #(or (= % first-val) = % second-val))
 
        (> first-val-occurence second-val-occurence)
-       (zipmap (keys m)
-               (map (partial mark-value-with
-                             one-resource-different-marker
-                             all-resources-different-marker
-                             #(= % first-val))
-                    (vals m)))
+       (mark-as-diffrent m  #(= % second-val))
+
+       (< first-val-occurence second-val-occurence)
+       (mark-as-diffrent m  #(= % first-val))
+
        :else m))))
 
 (defn unterline-different-values [m]
