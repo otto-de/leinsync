@@ -98,30 +98,40 @@
    (let [not-empty-values (remove empty? (vals m))
          first-val-occurence (count (remove #(= first-val %) not-empty-values))
          second-val-occurence (count (remove #(= second-val %) not-empty-values))]
-     (if (or (= first-val-occurence 1) (= second-val-occurence 1))
-       (cond
-         (< first-val-occurence second-val-occurence)
-         (zipmap (keys m)
-                 (map (partial mark-value-with
-                               one-resource-different-marker
-                               all-resources-different-marker
-                               #(= % second-val))
-                      (vals m)))
-         (> first-val-occurence second-val-occurence)
-         (zipmap (keys m)
-                 (map (partial mark-value-with
-                               one-resource-different-marker
-                               all-resources-different-marker
-                               #(= % first-val))
-                      (vals m)))
-         :else m)
-       (mark-as-diffrent m)))))
+     (cond
+       (and (not= first-val-occurence 1) (not= second-val-occurence 1))
+       (mark-as-diffrent m)
+
+       (= first-val-occurence second-val-occurence)
+       (zipmap (keys m)
+               (map (partial mark-value-with
+                             one-resource-different-marker
+                             all-resources-different-marker
+                             #(or (= % first-val) = % second-val))
+                    (vals m)))
+
+       (< first-val-occurence second-val-occurence)
+       (zipmap (keys m)
+               (map (partial mark-value-with
+                             one-resource-different-marker
+                             all-resources-different-marker
+                             #(= % second-val))
+                    (vals m)))
+
+       (> first-val-occurence second-val-occurence)
+       (zipmap (keys m)
+               (map (partial mark-value-with
+                             one-resource-different-marker
+                             all-resources-different-marker
+                             #(= % first-val))
+                    (vals m)))
+       :else m))))
 
 (defn unterline-different-values [m]
   (let [unique-values (->> m
                            (vals)
                            (filter not-empty)
-                           (set))]
+                           (distinct))]
     (cond
       (= 1 (count unique-values)) m
       (= 2 (count unique-values))
