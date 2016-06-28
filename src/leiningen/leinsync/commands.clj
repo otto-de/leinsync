@@ -6,6 +6,7 @@
             [leiningen.leinsync.namespaces :as ns]
             [leiningen.leinsync.git :as git]
             [leiningen.leinsync.list-ns :as l]
+            [leiningen.leinsync.deps :as deps]
             [leiningen.leinsync.tests :as t]))
 
 (defn pull-rebase-all! [_ projects _]
@@ -59,7 +60,14 @@
     (if (not (empty? namespaces)) (ns/update-namespaces! namespaces source-project-desc all-target-project-desc))
     (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc all-target-project-desc))))
 
+(defn deps [_ target-projects {source-project :name}]
+  (let [all-projects-desc (-> target-projects
+                              (conj source-project)
+                              (pr/read-all-target-project-clj))]
+    (deps/check-deps all-projects-desc)))
+
 (def SYNC-COMMANDS {:default {:update "" :test ""}
+                    :deps    deps
                     :list    list
                     :update  update-projects!
                     :notest  update-projects!
