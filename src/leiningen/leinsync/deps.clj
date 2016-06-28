@@ -1,16 +1,28 @@
 (ns leiningen.leinsync.deps
-  (:require [leiningen.leinsync.table-pretty-print :as pp]))
+  (:require [leiningen.leinsync.table-pretty-print :as pp]
+            [ancient-clj.core :as ancient]))
 
-(defn flat-deps-list [p deps-list]
+(defn last-version-of [artifact]
+  (if-let [last-version (ancient/latest-version-string! artifact)]
+    last-version ""))
+
+(defn check-version-for-update [artifact version]
+  (let [last-version (last-version-of artifact)]
+    (if (or (empty? last-version) (= version last-version))
+      version
+      (str version " ==> " last-version))))
+
+(defn flat-deps-list [p deps-list enrich-version-fn]
   (into {}
         (map
-         (fn [[dep version]] {(keyword dep) {p version}})
+         (fn [[dep version]]
+           {(keyword dep) {p (enrich-version-fn dep version)}})
          deps-list)))
 
-(defn deps->project [projects-desc]
+(defn deps->project [projects-desc enrich-version-fn]
   (reduce-kv
    (fn [m k {deps :dependencies}]
-     (into m (flat-deps-list k deps)))
+     (into m (flat-deps-list k deps enrich-version-fn)))
    []
    projects-desc))
 
@@ -29,9 +41,7 @@
        (map (fn [[k v]] (merge {:name k} v)))))
 
 (defn check-deps [projects-desc]
-  (->> projects-desc
-       (deps->project)
-       (merge-deps)
-       (pretty-print-structure)
-       (pp/print-compact-table)))
-
+  (-> (deps->project projects-desc check-version-for-update)
+      (merge-deps)
+      (pretty-print-structure)
+      (pp/print-compact-table)))

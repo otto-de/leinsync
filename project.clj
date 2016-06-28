@@ -13,6 +13,7 @@
                  [com.sun.jna/jna "3.0.9"]
                  [com.github.jnr/jnr-posix "3.0.29"]
                  [digest "1.4.4"]
+                 [ancient-clj "0.3.14"]
                  [org.clojure/tools.cli "0.3.5"]]
 
   :profiles {:uberjar {:aot :all}
