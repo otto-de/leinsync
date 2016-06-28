@@ -72,6 +72,3 @@
                  :dep-5 {:deps-project-1 :v-6, :deps-project-3 :v-2}}
                 (d/pretty-print-structure (fn [x] (get m x)))
                 (sort-by :name))))))
-
-(deftest ^:unit last-version-of
-  (is (= :unknown (d/last-version-of "not-valid"))))
