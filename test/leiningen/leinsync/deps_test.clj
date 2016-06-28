@@ -3,27 +3,31 @@
             [leiningen.leinsync.deps :as d]))
 
 (deftest ^:unit flat-deps-list
-  (is (= {:dep-1 {:k :v-1}
-          :dep-2 {:k :v-2}}
-         (d/flat-deps-list :k [[:dep-1 :v-1]
-                               [:dep-2 :v-2]]))))
+  (let [enrich-fn (fn [_ v] (str (name "enriched ") v))]
+    (is (= {:dep-1 {:k "enriched :v-1"}
+            :dep-2 {:k "enriched :v-2"}}
+           (d/flat-deps-list :k
+                             [[:dep-1 :v-1]
+                              [:dep-2 :v-2]]
+                             enrich-fn)))))
 
 (deftest ^:unit deps->project
-  (is (= [[:dep-1 {:deps-project-1 :v-1}]
-          [:dep-2 {:deps-project-1 :v-2}]
-          [:dep-3 {:deps-project-1 :v-3}]
-          [:dep-1 {:deps-project-2 :v-1}]
-          [:dep-1 {:deps-project-3 :v-1}]
-          [:dep-2 {:deps-project-3 :v-2}]
-          [:dep-4 {:deps-project-3 :v-5}]]
-         (d/deps->project
-          {:deps-project-1 {:dependencies [[:dep-1 :v-1]
-                                           [:dep-2 :v-2]
-                                           [:dep-3 :v-3]]}
-           :deps-project-2 {:dependencies [[:dep-1 :v-1]]}
-           :deps-project-3 {:dependencies [[:dep-1 :v-1]
-                                           [:dep-2 :v-2]
-                                           [:dep-4 :v-5]]}}))))
+  (let [enrich-fn (fn [_a v] v)
+        deps-map {:deps-project-1 {:dependencies [[:dep-1 :v-1]
+                                                  [:dep-2 :v-2]
+                                                  [:dep-3 :v-3]]}
+                  :deps-project-2 {:dependencies [[:dep-1 :v-1]]}
+                  :deps-project-3 {:dependencies [[:dep-1 :v-1]
+                                                  [:dep-2 :v-2]
+                                                  [:dep-4 :v-5]]}}]
+    (is (= [[:dep-1 {:deps-project-1 :v-1}]
+            [:dep-2 {:deps-project-1 :v-2}]
+            [:dep-3 {:deps-project-1 :v-3}]
+            [:dep-1 {:deps-project-2 :v-1}]
+            [:dep-1 {:deps-project-3 :v-1}]
+            [:dep-2 {:deps-project-3 :v-2}]
+            [:dep-4 {:deps-project-3 :v-5}]]
+           (d/deps->project deps-map enrich-fn)))))
 
 (deftest ^:unit merge-deps
   (is (= {:dep-1 {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}
@@ -53,3 +57,6 @@
                :dep-4 {:deps-project-3 :v-5}}
               (d/pretty-print-structure)
               (sort-by :name)))))
+
+(deftest ^:unit last-version-of
+  (is (= "" (d/last-version-of "not-valid"))))
