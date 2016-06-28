@@ -2,21 +2,37 @@
   (:require [leiningen.leinsync.table-pretty-print :as pp]))
 
 (defn flat-deps-list [p deps-list]
-  (->> deps-list
-       (map
-        (fn [[dep version]] {:name dep p version}))))
+  (into {}
+        (map
+         (fn [[dep version]] {(keyword dep) {p version}})
+         deps-list)))
 
-(defn extract-deps-list [projects-desc]
+(defn deps->project [projects-desc]
   (reduce-kv
    (fn [m k {deps :dependencies}]
      (into m (flat-deps-list k deps)))
    []
    projects-desc))
 
+(defn merge-deps [deps]
+  (reduce
+   (fn [x1 [dep data]]
+     (if (contains? x1 dep)
+       (assoc x1 dep (merge data (get x1 dep)))
+       (assoc x1 dep data)))
+   {}
+   deps))
+
+(defn pretty-print-structure [deps]
+  (->> deps
+       (seq)
+       (map (fn [[k v]] (assoc v :name k)))
+       (sort-by :name)))
+
 (defn check-deps [projects-desc]
-  ;(println (->> projects-desc (extract-deps-list)))
   (->> projects-desc
-       (extract-deps-list)
-       (sort-by :name)
+       (deps->project)
+       (merge-deps)
+       (pretty-print-structure)
        (pp/print-compact-table)))
 
