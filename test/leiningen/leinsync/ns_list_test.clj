@@ -1,7 +1,7 @@
-(ns leiningen.ns-list-test
+(ns leiningen.leinsync.ns-list-test
   (:require [clojure.test :refer :all]
-            [leiningen.list-ns :as l]
-            [leiningen.namespaces :as ns]))
+            [leiningen.leinsync.list-ns :as l]
+            [leiningen.leinsync.namespaces :as ns]))
 
 (defn- project-occurence-render [existing-path project]
   (if (empty? existing-path)

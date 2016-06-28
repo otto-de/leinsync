@@ -1,4 +1,4 @@
-(ns leiningen.project-reader
+(ns leiningen.leinsync.project-reader
   (:require [leiningen.core.project :as p]))
 
 (defn ->target-project-path [project-name]

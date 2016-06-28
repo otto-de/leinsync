@@ -1,12 +1,12 @@
-(ns leiningen.commands
+(ns leiningen.leinsync.commands
   (:refer-clojure :exclude [list])
   (:require [clojure.string :as str]
-            [leiningen.project-reader :as pr]
-            [leiningen.utils :as u]
-            [leiningen.namespaces :as ns]
-            [leiningen.git :as git]
-            [leiningen.list-ns :as l]
-            [leiningen.tests :as t]))
+            [leiningen.leinsync.project-reader :as pr]
+            [leiningen.leinsync.utils :as u]
+            [leiningen.leinsync.namespaces :as ns]
+            [leiningen.leinsync.git :as git]
+            [leiningen.leinsync.list-ns :as l]
+            [leiningen.leinsync.tests :as t]))
 
 (defn pull-rebase-all! [_ projects _]
   (-> #(u/run-command-on (pr/->target-project-path %) git/pull-rebase! %)

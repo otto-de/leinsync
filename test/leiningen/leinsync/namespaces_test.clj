@@ -1,8 +1,8 @@
-(ns leiningen.namespaces-test
+(ns leiningen.leinsync.namespaces-test
   (:require [clojure.test :refer :all]
-            [leiningen.namespaces :as ns]
+            [leiningen.leinsync.namespaces :as ns]
             [leiningen.core.project :as p]
-            [leiningen.utils :as u]))
+            [leiningen.leinsync.utils :as u]))
 
 (deftest ^:unit path->namespace
   (testing "happy path"

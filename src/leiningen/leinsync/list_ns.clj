@@ -1,11 +1,11 @@
-(ns leiningen.list-ns
+(ns leiningen.leinsync.list-ns
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
-            [leiningen.namespaces :as ns]
-            [leiningen.utils :as u]
+            [leiningen.leinsync.namespaces :as ns]
+            [leiningen.leinsync.utils :as u]
             [digest :as d]
             [leiningen.core.main :as m]
-            [leiningen.table-pretty-print :as pp]))
+            [leiningen.leinsync.table-pretty-print :as pp]))
 
 (def hash-length 8)
 (def all-resources-different-marker "==> ")

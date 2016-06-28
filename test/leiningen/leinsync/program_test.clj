@@ -1,6 +1,6 @@
-(ns leiningen.program-test
+(ns leiningen.leinsync.program-test
   (:require [clojure.test :refer :all]
-            [leiningen.utils :as u]
+            [leiningen.leinsync.utils :as u]
             [leiningen.sync :as s]))
 
 (deftest ^:unit test-split-string

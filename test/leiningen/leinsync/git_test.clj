@@ -1,6 +1,6 @@
-(ns leiningen.git-test
+(ns leiningen.leinsync.git-test
   (:require [clojure.test :refer :all]
-            [leiningen.git :as git]))
+            [leiningen.leinsync.git :as git]))
 
 (deftest ^:unit remove-git-change-status-from
   (is (= "a.changed.resource"
