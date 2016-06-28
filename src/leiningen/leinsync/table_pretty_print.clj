@@ -23,7 +23,8 @@
        (doseq [row rows]
          (m/info (fmt-row "| " " | " " |" row))
          (if with-extra-seperator-line
-           (m/info (fmt-row "|-" "---" "-|" (zipmap ks spacers)))))))))
+           (m/info (fmt-row "|-" "---" "-|" (zipmap ks spacers)))))
+       (m/info (fmt-row "|-" "---" "-|" (zipmap ks spacers)))))))
 
 (defn print-compact-table [rows]
   (print-table rows false))
