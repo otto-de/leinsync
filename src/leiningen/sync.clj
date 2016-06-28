@@ -23,7 +23,8 @@
     (command target-projects source-project-desc)))
 
 (def cli-options
-  [["-l" "--list" "List resources to be synchronized"]
+  [["-d" "--deps" "List all deps on projects"]
+   ["-l" "--list" "List resources to be synchronized"]
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
    ["-s" "--status" "Check status on target projects"]
