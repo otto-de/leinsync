@@ -47,8 +47,9 @@
           {:deps-project-1 :v-2, :deps-project-3 :v-2, :name :dep-2}
           {:deps-project-1 :v-3, :name :dep-3}
           {:deps-project-3 :v-5, :name :dep-4}]
-         (d/pretty-print-structure
-          {:dep-1 {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}
-           :dep-2 {:deps-project-1 :v-2, :deps-project-3 :v-2}
-           :dep-3 {:deps-project-1 :v-3}
-           :dep-4 {:deps-project-3 :v-5}}))))
+         (->> {:dep-1 {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}
+               :dep-2 {:deps-project-1 :v-2, :deps-project-3 :v-2}
+               :dep-3 {:deps-project-1 :v-3}
+               :dep-4 {:deps-project-3 :v-5}}
+              (d/pretty-print-structure)
+              (sort-by :name)))))

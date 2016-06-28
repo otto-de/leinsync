@@ -26,8 +26,7 @@
 (defn pretty-print-structure [deps]
   (->> deps
        (seq)
-       (map (fn [[k v]] (assoc v :name k)))
-       (sort-by :name)))
+       (map (fn [[k v]] (merge {:name k} v)))))
 
 (defn check-deps [projects-desc]
   (->> projects-desc
