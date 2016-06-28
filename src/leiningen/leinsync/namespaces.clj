@@ -1,8 +1,8 @@
-(ns leiningen.namespaces
+(ns leiningen.leinsync.namespaces
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
-            [leiningen.utils :as u]
-            [leiningen.project-reader :as pr]
+            [leiningen.leinsync.utils :as u]
+            [leiningen.leinsync.project-reader :as pr]
             [leiningen.core.main :as m]))
 
 (def namespace-def [:ns-sync :namespaces])

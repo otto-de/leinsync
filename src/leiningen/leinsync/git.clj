@@ -1,10 +1,10 @@
-(ns leiningen.git
-  (:require [leiningen.utils :as u]
+(ns leiningen.leinsync.git
+  (:require [leiningen.leinsync.utils :as u]
             [clojure.java.shell :as sh]
             [leiningen.core.main :as m]
-            [leiningen.table-pretty-print :as pp]
+            [leiningen.leinsync.table-pretty-print :as pp]
             [clojure.string :as str]
-            [leiningen.namespaces :as ns]))
+            [leiningen.leinsync.namespaces :as ns]))
 
 (def output-length 120)
 

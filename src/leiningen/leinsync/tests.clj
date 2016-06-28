@@ -1,8 +1,8 @@
-(ns leiningen.tests
-  (:require [leiningen.utils :as u]
+(ns leiningen.leinsync.tests
+  (:require [leiningen.leinsync.utils :as u]
             [clojure.string :as str]
             [leiningen.core.main :as m]
-            [leiningen.table-pretty-print :as pp]))
+            [leiningen.leinsync.table-pretty-print :as pp]))
 
 (def test-cmd-def [:ns-sync :test-cmd])
 (def standard-test-cmd [["./lein.sh" "clean"] ["./lein.sh" "test"]])

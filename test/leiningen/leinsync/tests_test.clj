@@ -1,6 +1,6 @@
-(ns leiningen.tests-test
+(ns leiningen.leinsync.tests-test
   (:require [clojure.test :refer :all]
-            [leiningen.tests :as t]))
+            [leiningen.leinsync.tests :as t]))
 
 (deftest ^:unit test-cmd
   (is (= t/standard-test-cmd (t/test-cmd {})))

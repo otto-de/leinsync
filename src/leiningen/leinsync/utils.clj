@@ -1,4 +1,4 @@
-(ns leiningen.utils
+(ns leiningen.leinsync.utils
   (:refer-clojure :exclude [run!])
   (:require [clojure.string :as str]
             [leiningen.core.main :as m]

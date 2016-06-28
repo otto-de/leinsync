@@ -1,4 +1,4 @@
-(ns leiningen.table-pretty-print
+(ns leiningen.leinsync.table-pretty-print
   (:require [leiningen.core.main :as m]))
 
 (defn- print-table

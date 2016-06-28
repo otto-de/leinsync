@@ -1,7 +1,7 @@
 (ns leiningen.sync
   (:refer-clojure :exclude [sync])
-  (:require [leiningen.utils :as u]
-            [leiningen.commands :as c]
+  (:require [leiningen.leinsync.utils :as u]
+            [leiningen.leinsync.commands :as c]
             [clojure.string :as str]
             [clojure.tools.cli :as cli]
             [leiningen.core.main :as m]))
