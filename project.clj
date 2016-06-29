@@ -14,7 +14,8 @@
                  [com.github.jnr/jnr-posix "3.0.29"]
                  [digest "1.4.4"]
                  [ancient-clj "0.3.14"]
-                 [org.clojure/tools.cli "0.3.5"]]
+                 [org.clojure/tools.cli "0.3.5"]
+                 [com.fasterxml.jackson.core/jackson-core "2.7.5"]]
 
   :profiles {:uberjar {:aot :all}
              :test    {:resource-paths ["test-resources"]}
