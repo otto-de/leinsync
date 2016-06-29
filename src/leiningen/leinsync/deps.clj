@@ -30,26 +30,30 @@
    {}
    deps))
 
+(defn has-newer-version? [m last-version]
+  (-> m
+      (vals)
+      (conj last-version)
+      (distinct)
+      (count)
+      (> 1)))
+
+(defn mark-for-possible-update [get-version]
+  (fn [[k v]]
+    (let [last-version (get-version k)
+          deps-info {:name k :last-version last-version}]
+      (if (has-newer-version? v last-version)
+        (merge deps-info (zipmap (keys v) (map #(str "==> " %) (vals v))))
+        (merge deps-info v)))))
+
 (defn pretty-print-structure [enrich-version deps]
   (->> deps
        (seq)
-       (map (fn [[k v]]
-              (let [last-version (enrich-version k)
-                    has-newer-version? (-> v
-                                           (vals)
-                                           (conj last-version)
-                                           (distinct)
-                                           (count)
-                                           (> 1))]
-                (if has-newer-version?
-                  (merge {:name k :last-version last-version}
-                         (zipmap (keys v)
-                                 (map #(str "==> " %) (vals v))))
-                  (merge {:name k :last-version last-version} v)))))))
+       (map (mark-for-possible-update enrich-version))))
 
 (defn log-resouces-table [m]
   (m/info "\n* List of dependencies")
-  (m/info "     - ==> version :  means that the dependency on this project is out-of-date")
+  (m/info "      ==> version :  means that the dependency on this project is out-of-date")
   (pp/print-compact-table m)
   (m/info "\n"))
 
