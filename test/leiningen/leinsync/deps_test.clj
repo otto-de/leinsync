@@ -70,7 +70,7 @@
                  :dep-3 {:deps-project-1 :v-3}
                  :dep-4 {:deps-project-3 :v-4}
                  :dep-5 {:deps-project-1 :v-6, :deps-project-3 :v-2}}
-                (d/pretty-print-structure (fn [x] (get m x)))
+                (d/pretty-print-structure (fn [x] m))
                 (sort-by :name))))))
 
 (deftest ^:unit has-newer-version?

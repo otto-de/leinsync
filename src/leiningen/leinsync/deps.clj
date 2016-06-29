@@ -1,7 +1,8 @@
 (ns leiningen.leinsync.deps
   (:require [leiningen.leinsync.table-pretty-print :as pp]
             [ancient-clj.core :as ancient]
-            [leiningen.core.main :as m]))
+            [leiningen.core.main :as m])
+  (:import (java.util.concurrent Executors)))
 
 (def different-marker "==> ")
 
@@ -41,18 +42,23 @@
        (count)
        (< 1)))
 
-(defn mark-for-possible-update [get-version marker]
+(defn mark-for-possible-update [last-version-map marker]
   (fn [[k v]]
-    (let [last-version (get-version k)
+    (let [last-version (get last-version-map k)
           deps-info {:name k :last-version last-version}]
       (if (has-newer-version? v last-version)
         (merge deps-info (zipmap (keys v) (map #(str marker %) (vals v))))
         (merge deps-info v)))))
 
+(defn parallel-get-version [deps]
+  (let [tasks (map #(future {% (last-version-of %)}) deps)]
+    (reduce merge (doall (pmap deref tasks)))))
+
 (defn pretty-print-structure [enrich-version deps]
-  (->> deps
-       (seq)
-       (map (mark-for-possible-update enrich-version different-marker))))
+  (let [last-version-map (enrich-version (keys deps))]
+    (->> deps
+         (seq)
+         (map (mark-for-possible-update last-version-map  different-marker)))))
 
 (defn log-resouces-table [m]
   (m/info "\n* List of dependencies")
@@ -64,5 +70,5 @@
   (->> projects-desc
        (deps->project)
        (merge-deps)
-       (pretty-print-structure last-version-of)
+       (pretty-print-structure parallel-get-version)
        (log-resouces-table)))
