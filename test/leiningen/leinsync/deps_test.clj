@@ -72,3 +72,20 @@
                  :dep-5 {:deps-project-1 :v-6, :deps-project-3 :v-2}}
                 (d/pretty-print-structure (fn [x] (get m x)))
                 (sort-by :name))))))
+
+(deftest ^:unit has-newer-version?
+  (let [last-version :v-3
+        m {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}]
+    (is (true? (d/has-newer-version? m last-version))))
+
+  (let [last-version :v-1
+        m {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}]
+    (is (false? (d/has-newer-version? m last-version))))
+
+  (let [last-version :unknown
+        m {:deps-project-1 :v-2, :deps-project-2 :v-1, :deps-project-3 :v-1}]
+    (is (true? (d/has-newer-version? m last-version))))
+
+  (let [last-version :unknown
+        m {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}]
+    (is (false? (d/has-newer-version? m last-version)))))
