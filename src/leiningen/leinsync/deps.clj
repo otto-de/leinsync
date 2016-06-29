@@ -1,8 +1,7 @@
 (ns leiningen.leinsync.deps
   (:require [leiningen.leinsync.table-pretty-print :as pp]
             [ancient-clj.core :as ancient]
-            [leiningen.core.main :as m])
-  (:import (java.util.concurrent Executors)))
+            [leiningen.core.main :as m]))
 
 (def different-marker "==> ")
 
