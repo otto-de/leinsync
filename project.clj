@@ -15,7 +15,8 @@
                  [digest "1.4.4"]
                  [ancient-clj "0.3.14"]
                  [org.clojure/tools.cli "0.3.5"]
-                 [com.fasterxml.jackson.core/jackson-core "2.7.5"]]
+                 [com.fasterxml.jackson.core/jackson-core "2.2.3"]
+                 [com.fasterxml.jackson.core/jackson-databind "2.2.3"]]
 
   :profiles {:uberjar {:aot :all}
              :test    {:resource-paths ["test-resources"]}
