@@ -5,8 +5,12 @@
 
 (def different-marker "==> ")
 
-(defn last-version-of [artifact]
-  (if-let [last-version (ancient/latest-version-string! artifact)]
+(defn last-version-of [repos artifact]
+  (if-let [last-version (ancient/latest-version-string!
+                         artifact
+                         {:repositories (if (empty? repos)
+                                          ancient/default-repositories
+                                          repos)})]
     last-version :unknown))
 
 (defn flat-deps-list [p deps-list]
@@ -49,15 +53,15 @@
         (merge deps-info (zipmap (keys v) (map #(str marker %) (vals v))))
         (merge deps-info v)))))
 
-(defn parallel-get-version [deps]
-  (let [tasks (map #(future {% (last-version-of %)}) deps)]
+(defn parallel-get-version [repos deps]
+  (let [tasks (map #(future {% (last-version-of repos %)}) deps)]
     (reduce merge (doall (pmap deref tasks)))))
 
-(defn pretty-print-structure [enrich-version deps]
-  (let [last-version-map (enrich-version (keys deps))]
+(defn pretty-print-structure [enrich-version-fn deps]
+  (let [last-version-map (enrich-version-fn (keys deps))]
     (->> deps
          (seq)
-         (map (mark-for-possible-update last-version-map  different-marker)))))
+         (map (mark-for-possible-update last-version-map different-marker)))))
 
 (defn log-resouces-table [m]
   (m/info "\n* List of dependencies")
@@ -65,9 +69,22 @@
   (pp/print-compact-table m)
   (m/info "\n"))
 
-(defn check-deps [projects-desc]
+(defn take-repo-url [r]
+  (if (map? r) (:url r) r))
+
+(defn repositories-of [projects-desc]
   (->> projects-desc
-       (deps->project)
-       (merge-deps)
-       (pretty-print-structure parallel-get-version)
-       (log-resouces-table)))
+       (vals)
+       (map :repositories)
+       (reduce concat)
+       (reduce concat)
+       (map take-repo-url)
+       (apply hash-map)))
+
+(defn check-deps [projects-desc]
+  (let [enrich-version-fn (partial parallel-get-version (repositories-of projects-desc))]
+    (->> projects-desc
+         (deps->project)
+         (merge-deps)
+         (pretty-print-structure enrich-version-fn)
+         (log-resouces-table))))
