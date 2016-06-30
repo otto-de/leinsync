@@ -5,13 +5,18 @@
 
 (def different-marker "==> ")
 
+(defn repositories-opt [repos]
+  (if (empty? repos)
+    {:repositories ancient/default-repositories}
+    {:repositories repos}))
+
 (defn last-version-of [repos artifact]
-  (if-let [last-version (ancient/latest-version-string!
-                         artifact
-                         {:repositories (if (empty? repos)
-                                          ancient/default-repositories
-                                          repos)})]
-    last-version :unknown))
+  (try
+    (if-let [last-version (ancient/latest-version-string!
+                           artifact
+                           (repositories-opt repos))]
+      last-version :unknown)
+    (catch Exception _ :unknown)))
 
 (defn flat-deps-list [p deps-list]
   (into {}
