@@ -54,17 +54,17 @@
     (l/list-resources all-projects-desc ns/resource-def)))
 
 (defn update-projects! [_ target-projects source-project-desc]
-  (let [all-target-project-desc (pr/read-all-target-project-clj target-projects)
+  (let [target-projects-desc (pr/read-all-target-project-clj target-projects)
         namespaces (u/cartesian-product (get-in source-project-desc ns/namespace-def) target-projects)
         resources (u/cartesian-product (get-in source-project-desc ns/resource-def) target-projects)]
-    (if (not (empty? namespaces)) (ns/update-namespaces! namespaces source-project-desc all-target-project-desc))
-    (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc all-target-project-desc))))
+    (if (not (empty? namespaces)) (ns/update-namespaces! namespaces source-project-desc target-projects-desc))
+    (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc target-projects-desc))))
 
 (defn deps [_ target-projects {source-project :name}]
-  (let [all-projects-desc (-> target-projects
-                              (conj source-project)
-                              (pr/read-all-target-project-clj))]
-    (deps/check-deps all-projects-desc)))
+  (-> target-projects
+      (conj source-project)
+      (pr/read-all-target-project-clj)
+      (deps/check-deps)))
 
 (def SYNC-COMMANDS {:default {:update "" :test ""}
                     :deps    deps
