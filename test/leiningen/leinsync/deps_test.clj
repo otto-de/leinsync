@@ -89,3 +89,17 @@
   (let [last-version :unknown
         m {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}]
     (is (false? (d/has-newer-version? m last-version)))))
+
+(deftest ^:unit take-repo-url
+  (is (= "url-2"
+         (d/take-repo-url {:url "url-2"})))
+  (is (= "url-2"
+         (d/take-repo-url "url-2"))))
+
+(deftest ^:unit repositories-of
+  (is (= {"repo-1" "url-1"
+          "repo-2" "url-2"
+          "repo-3" "url-3"}
+         (d/repositories-of {:project-1  {:repositories [["repo-1" "url-1"]]}
+                             :project-2 {:repositories [["repo-2" {:url "url-2"}]
+                                                        ["repo-3" {:url "url-3"}]]}}))))
