@@ -4,17 +4,17 @@
             [leiningen.core.main :as m]))
 
 (def different-marker "==> ")
+(def ancient-latest-version-fn ancient/latest-version-string!)
+(def default-repositories ancient/default-repositories)
 
 (defn repositories-opt [repos]
   (if (empty? repos)
     {:repositories ancient/default-repositories}
     {:repositories repos}))
 
-(defn last-version-of [repos artifact]
+(defn last-version-of [version-fn repos artifact]
   (try
-    (if-let [last-version (ancient/latest-version-string!
-                           artifact
-                           (repositories-opt repos))]
+    (if-let [last-version (version-fn artifact (repositories-opt repos))]
       last-version :unknown)
     (catch Exception _ :unknown)))
 
@@ -59,7 +59,7 @@
         (merge deps-info v)))))
 
 (defn parallel-get-version [repos deps]
-  (let [tasks (map #(future {% (last-version-of repos %)}) deps)]
+  (let [tasks (map #(future {% (last-version-of ancient-latest-version-fn repos %)}) deps)]
     (reduce merge (doall (pmap deref tasks)))))
 
 (defn pretty-print-structure [enrich-version-fn deps]

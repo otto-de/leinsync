@@ -75,19 +75,27 @@
 
 (deftest ^:unit has-newer-version?
   (let [last-version :v-3
-        m {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}]
+        m {:deps-project-1 :v-1
+           :deps-project-2 :v-1
+           :deps-project-3 :v-1}]
     (is (true? (d/has-newer-version? m last-version))))
 
   (let [last-version :v-1
-        m {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}]
+        m {:deps-project-1 :v-1
+           :deps-project-2 :v-1
+           :deps-project-3 :v-1}]
     (is (false? (d/has-newer-version? m last-version))))
 
   (let [last-version :unknown
-        m {:deps-project-1 :v-2, :deps-project-2 :v-1, :deps-project-3 :v-1}]
+        m {:deps-project-1 :v-2
+           :deps-project-2 :v-1
+           :deps-project-3 :v-1}]
     (is (true? (d/has-newer-version? m last-version))))
 
   (let [last-version :unknown
-        m {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}]
+        m {:deps-project-1 :v-1
+           :deps-project-2 :v-1
+           :deps-project-3 :v-1}]
     (is (false? (d/has-newer-version? m last-version)))))
 
 (deftest ^:unit take-repo-url
@@ -100,6 +108,53 @@
   (is (= {"repo-1" "url-1"
           "repo-2" "url-2"
           "repo-3" "url-3"}
-         (d/repositories-of {:project-1  {:repositories [["repo-1" "url-1"]]}
+         (d/repositories-of {:project-1 {:repositories [["repo-1" "url-1"]]}
                              :project-2 {:repositories [["repo-2" {:url "url-2"}]
                                                         ["repo-3" {:url "url-3"}]]}}))))
+
+(deftest ^:unit repositories-opt
+  (is (= {:repositories d/default-repositories} (d/repositories-opt {})))
+  (is (= {:repositories {:name :url}} (d/repositories-opt {:name :url}))))
+
+(deftest ^:unit mark-for-possible-update
+  (testing "mark difference"
+    (let [enrich-fn (d/mark-for-possible-update {:dep-1 :v-1} "->>")]
+      (is (= {:deps-project-1 "->>:v-1"
+              :deps-project-2 "->>:v-2"
+              :deps-project-3 "->>:v-1"
+              :last-version   :v-1
+              :name           :dep-1}
+             (enrich-fn [:dep-1
+                         {:deps-project-1 :v-1
+                          :deps-project-2 :v-2
+                          :deps-project-3 :v-1}])))))
+
+  (testing "no difference"
+    (let [enrich-fn (d/mark-for-possible-update {:dep-1 :v-1} "->>")]
+      (is (= {:deps-project-1 :v-1
+              :deps-project-2 :v-1
+              :deps-project-3 :v-1
+              :last-version   :v-1
+              :name           :dep-1}
+             (enrich-fn [:dep-1
+                         {:deps-project-1 :v-1
+                          :deps-project-2 :v-1
+                          :deps-project-3 :v-1}]))))))
+
+(deftest ^:unit last-version-of
+  (is (= :unknown
+         (d/last-version-of
+          (fn [_ _])
+          {:url "url-2"}
+          :artifact)))
+
+  (is (= :unknown
+         (d/last-version-of
+          (fn [_ _] (throw (RuntimeException.)))
+          {:url "url-2"}
+          :artifact)))
+
+  (is (= :a-version
+         (d/last-version-of (fn [_ _] :a-version)
+                            {:url "url-2"}
+                            :artifact))))
