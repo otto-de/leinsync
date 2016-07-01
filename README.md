@@ -47,7 +47,7 @@ container-folder/
 * lein sync [options] "project-1,project-2,project-3"
 
 Options:
-   + --deps    :  List all deps on projects.
+   + --deps    :  List all profile/global deps on projects.
    + --list    :  List resources to be synchronized.
    + --notest  :  Synchronize shared code base without executing tests on target projects.
    + --test    :  Executing tests on target projects.
