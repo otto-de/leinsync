@@ -19,8 +19,7 @@
   (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
   (m/info "                                     ==>    hash : means that the resource doesn't match on all projects")
   (m/info "                                     =[x]=> hash : means that the resource on this project is different from others")
-  (pp/print-compact-table (sort-by :name m))
-  (m/info "\n"))
+  (pp/print-compact-table (sort-by :name m)))
 
 (defn aggregate [result [namespace project]]
   (let [project-occurence (if (contains? result namespace)

@@ -23,13 +23,13 @@
                                                 (for [[col fmt] (map vector (map #(get row %) ks) fmts)]
                                                   (format fmt (str col)))))
                           trailer))]
-       (log-fn)
        (log-fn (fmt-row "| " " | " " |" (zipmap ks ks)))
        (log-fn (fmt-row "|-" "-+-" "-|" (zipmap ks spacers)))
        (doseq [row rows]
          (log-fn (fmt-row "| " " | " " |" row))
          (if with-extra-seperator-line
-           (log-fn (fmt-row "|-" "---" "-|" (zipmap ks spacers)))))))))
+           (log-fn (fmt-row "|-" "---" "-|" (zipmap ks spacers)))))
+       (log-fn "\n")))))
 
 (defn print-compact-table [rows]
   (print-table rows false m/info))

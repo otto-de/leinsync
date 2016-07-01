@@ -44,7 +44,7 @@
                             (map :project)
                             (str/join ","))]
     (when (not (empty? failed-project))
-      (m/info "\n* Please have a look  at the failed project(s):" failed-project))
+      (m/info "* Please have a look  at the failed project(s):" failed-project))
     (when (not (empty? passed-projects))
       (m/info "\n* Tests are passed on project(s):" passed-projects "\n\n")
       (m/info "To see changes : lein sync" passed-projects "--status")
