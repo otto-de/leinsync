@@ -1,9 +1,15 @@
 (ns leiningen.leinsync.table-pretty-print
   (:require [leiningen.core.main :as m]))
 
-(defn- print-table
-  ([rows with-extra-seperator-line] (print-table (keys (first rows)) rows with-extra-seperator-line))
-  ([ks rows with-extra-seperator-line]
+(defn print-table
+  ([rows with-extra-seperator-line log-fn]
+   (let [ks (->> rows
+                 (map keys)
+                 (distinct)
+                 (reduce concat)
+                 (distinct))]
+     (print-table ks rows with-extra-seperator-line log-fn)))
+  ([ks rows with-extra-seperator-line log-fn]
    (when (seq rows)
      (let [widths (map
                    (fn [k]
@@ -17,16 +23,16 @@
                                                 (for [[col fmt] (map vector (map #(get row %) ks) fmts)]
                                                   (format fmt (str col)))))
                           trailer))]
-       (m/info)
-       (m/info (fmt-row "| " " | " " |" (zipmap ks ks)))
-       (m/info (fmt-row "|-" "-+-" "-|" (zipmap ks spacers)))
+       (log-fn)
+       (log-fn (fmt-row "| " " | " " |" (zipmap ks ks)))
+       (log-fn (fmt-row "|-" "-+-" "-|" (zipmap ks spacers)))
        (doseq [row rows]
-         (m/info (fmt-row "| " " | " " |" row))
+         (log-fn (fmt-row "| " " | " " |" row))
          (if with-extra-seperator-line
-           (m/info (fmt-row "|-" "---" "-|" (zipmap ks spacers)))))))))
+           (log-fn (fmt-row "|-" "---" "-|" (zipmap ks spacers)))))))))
 
 (defn print-compact-table [rows]
-  (print-table rows false))
+  (print-table rows false m/info))
 
 (defn print-full-table [rows]
-  (print-table rows true))
+  (print-table rows true m/info))
