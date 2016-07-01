@@ -62,8 +62,8 @@
             {:deps-project-3 :v-4
              :last-version   :v-4
              :name           :dep-4}
-            {:deps-project-1 "==> :v-6"
-             :deps-project-3 "==> :v-2"
+            {:deps-project-1 "=> :v-6"
+             :deps-project-3 "=> :v-2"
              :last-version   :v-5
              :name           :dep-5}]
            (->> {:dep-1 {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}
@@ -114,8 +114,12 @@
                                                         ["repo-3" {:url "url-3"}]]}}))))
 
 (deftest ^:unit repositories-opt
-  (is (= {:repositories d/default-repositories} (d/repositories-opt {})))
-  (is (= {:repositories {:name :url}} (d/repositories-opt {:name :url}))))
+  (is (= {:repositories d/default-repositories
+          :qualified?   false}
+         (d/repositories-opt {})))
+  (is (= {:repositories {:name :url}
+          :qualified?   false}
+         (d/repositories-opt {:name :url}))))
 
 (deftest ^:unit mark-for-possible-update
   (testing "mark difference"

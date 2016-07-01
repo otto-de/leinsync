@@ -4,14 +4,16 @@
             [leiningen.core.main :as m]
             [clojure.string :as str]))
 
-(def different-marker "==> ")
+(def different-marker "=> ")
 (def ancient-latest-version-fn ancient/latest-version-string!)
 (def default-repositories ancient/default-repositories)
 
 (defn repositories-opt [repos]
   (if (empty? repos)
-    {:repositories ancient/default-repositories}
-    {:repositories repos}))
+    {:repositories ancient/default-repositories
+     :qualified? false}
+    {:repositories repos
+     :qualified? false}))
 
 (defn last-version-of [version-fn repos artifact]
   (try
@@ -72,8 +74,7 @@
 (defn log-resouces-table [selector m]
   (m/info "\n* List of dependencies of" selector)
   (m/info "      ==> version :  means that the dependency on this project is out-of-date")
-  (pp/print-compact-table m)
-  (m/info "\n"))
+  (pp/print-compact-table m))
 
 (defn take-repo-url [r]
   (if (map? r) (:url r) r))

@@ -21,8 +21,7 @@
 
 (defn log-git-status [status & args]
   (pp/print-full-table status)
-  (apply m/info args)
-  (m/info "\n"))
+  (apply m/info args))
 
 (defn status-failed []
   (str "==> " :failed))
