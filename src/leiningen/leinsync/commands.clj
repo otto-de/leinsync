@@ -60,11 +60,15 @@
     (if (not (empty? namespaces)) (ns/update-namespaces! namespaces source-project-desc target-projects-desc))
     (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc target-projects-desc))))
 
-(defn deps [_ target-projects {source-project :name}]
-  (-> target-projects
-      (conj source-project)
-      (pr/read-all-target-project-clj)
-      (deps/check-deps)))
+(defn deps [arg target-projects {source-project :name}]
+  (let [all-projects-desc (-> target-projects
+                              (conj source-project)
+                              (pr/read-all-target-project-clj))]
+    (cond (= :global arg)
+          (deps/check-dependencies-of all-projects-desc [:dependencies])
+
+          :else
+          (deps/check-dependencies-of all-projects-desc [:profiles arg :dependencies]))))
 
 (def SYNC-COMMANDS {:default {:update "" :test ""}
                     :deps    deps

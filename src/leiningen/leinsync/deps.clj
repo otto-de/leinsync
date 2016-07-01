@@ -1,7 +1,8 @@
 (ns leiningen.leinsync.deps
   (:require [leiningen.leinsync.table-pretty-print :as pp]
             [ancient-clj.core :as ancient]
-            [leiningen.core.main :as m]))
+            [leiningen.core.main :as m]
+            [clojure.string :as str]))
 
 (def different-marker "==> ")
 (def ancient-latest-version-fn ancient/latest-version-string!)
@@ -25,10 +26,10 @@
            {(keyword dep) {p version}})
          deps-list)))
 
-(defn deps->project [projects-desc]
+(defn deps->project [selector projects-desc]
   (reduce-kv
-   (fn [m k {deps :dependencies}]
-     (into m (flat-deps-list k deps)))
+   (fn [m k v]
+     (into m (flat-deps-list k (get-in v selector))))
    []
    projects-desc))
 
@@ -68,8 +69,8 @@
          (seq)
          (map (mark-for-possible-update last-version-map different-marker)))))
 
-(defn log-resouces-table [m]
-  (m/info "\n* List of dependencies")
+(defn log-resouces-table [selector m]
+  (m/info "\n* List of dependencies of" selector)
   (m/info "      ==> version :  means that the dependency on this project is out-of-date")
   (pp/print-compact-table m)
   (m/info "\n"))
@@ -86,10 +87,10 @@
        (map take-repo-url)
        (apply hash-map)))
 
-(defn check-deps [projects-desc]
+(defn check-dependencies-of [projects-desc selector]
   (let [enrich-version-fn (partial parallel-get-version (repositories-of projects-desc))]
     (->> projects-desc
-         (deps->project)
+         (deps->project selector)
          (merge-deps)
          (pretty-print-structure enrich-version-fn)
-         (log-resouces-table))))
+         (log-resouces-table selector))))

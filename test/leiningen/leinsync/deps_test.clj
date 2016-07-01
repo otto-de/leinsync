@@ -10,7 +10,8 @@
                             [:dep-2 :v-2]]))))
 
 (deftest ^:unit deps->project
-  (let [deps-map {:deps-project-1 {:dependencies [[:dep-1 :v-1]
+  (let [selector [:dependencies]
+        deps-map {:deps-project-1 {:dependencies [[:dep-1 :v-1]
                                                   [:dep-2 :v-2]
                                                   [:dep-3 :v-3]]}
                   :deps-project-2 {:dependencies [[:dep-1 :v-1]]}
@@ -24,7 +25,7 @@
             [:dep-1 {:deps-project-3 :v-1}]
             [:dep-2 {:deps-project-3 :v-2}]
             [:dep-4 {:deps-project-3 :v-5}]]
-           (d/deps->project deps-map)))))
+           (d/deps->project selector deps-map)))))
 
 (deftest ^:unit merge-deps
   (is (= {:dep-1 {:deps-project-1 :v-1, :deps-project-2 :v-1, :deps-project-3 :v-1}

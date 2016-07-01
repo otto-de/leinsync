@@ -23,7 +23,9 @@
     (command target-projects source-project-desc)))
 
 (def cli-options
-  [["-d" "--deps" "List all deps on projects"]
+  [["-d" "--deps global|profile-name" "List all profile/global deps on projects"
+    :parse-fn #(keyword %)
+    :validate [#(or (= :global %) (not (empty? (name %)))) "--deps must be global or profile"]]
    ["-l" "--list" "List resources to be synchronized"]
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
@@ -52,13 +54,18 @@
         ""]
        (str/join \newline)))
 
+(defn error-hint [errors summary project-desc]
+  (m/info (str/join " " errors))
+  (if (not (nil? (:profiles project-desc)))
+    (m/info "Possible profile names:" (map name (keys (:profiles project-desc)))))
+  (m/info (usage summary)))
+
 (defn sync [project-desc & args]
   (let [{:keys [options arguments summary errors]} (cli/parse-opts args cli-options)]
     (cond
-      (not-empty errors) (m/info errors \newline (usage summary))
-      (= 1 (count arguments)) (execute-program
-                               (u/split (first arguments))
-                               project-desc
-                               options)
+      (not-empty errors)
+      (error-hint errors summary project-desc)
+      (= 1 (count arguments))
+      (execute-program (u/split (first arguments)) project-desc options)
       :else (m/abort (usage summary)))
     (m/exit)))
