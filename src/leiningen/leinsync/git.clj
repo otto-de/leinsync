@@ -49,8 +49,7 @@
       {:status :failed})))
 
 (defn unpushed-commit-changes []
-  (let [unpushed-changes (-> (sh/sh "git" "diff" "origin/master..HEAD" "--name-only")
-                             (u/output-of " "))]
+  (let [unpushed-changes (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only"))]
     {:unpushed-changes (if (empty? unpushed-changes)
                          :no-change unpushed-changes)}))
 
@@ -87,17 +86,18 @@
     {:project project
      :status  :skipped
      :cause   "Nothing to push on"}
-    (if (= "y" (-> (str "\n* Are you sure to push on " project "? (y/n)")
-                   (u/ask-user u/yes-or-no)))
+    (if (= "y" (u/ask-user
+                (str "\n* Are you sure to push on " project "? (y/n)")
+                u/yes-or-no))
       (push! project))))
 
 (defn get-details-status [status-lines projects-desc]
-  (let [synchronized-resources (->> status-lines
-                                    (filter #(ns/sync-resources?
-                                              projects-desc
-                                              (remove-git-change-status-from %))))
-        other-resources (->> status-lines
-                             (filter #(not (u/lazy-contains? synchronized-resources %))))]
+  (let [synchronized-resources (filter #(ns/sync-resources? projects-desc
+                                                            (remove-git-change-status-from %))
+                                       status-lines)
+        other-resources (filter #(and (not (u/lazy-contains? synchronized-resources %))
+                                      (seq %))
+                                status-lines)]
     {:sync-relevant-changes (if (empty? synchronized-resources)
                               :no-change
                               (str/join " " synchronized-resources))
@@ -126,8 +126,8 @@
        :cause          (u/sub-str (u/error-of commit-result " ") output-length)})))
 
 (defn sync-resources-of [changed-files untracked-files projects-desc]
-  (->> (concat changed-files untracked-files)
-       (filter #(ns/sync-resources? projects-desc %))))
+  (filter #(ns/sync-resources? projects-desc %)
+          (concat changed-files untracked-files)))
 
 (defn commit-project! [project commit-msg projects-desc]
   (let [add-status (->> projects-desc

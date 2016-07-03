@@ -43,9 +43,9 @@
                             (filter #(= (:result %) :failed))
                             (map :project)
                             (str/join ","))]
-    (when (not (empty? failed-project))
+    (when (seq failed-project)
       (m/info "* Please have a look  at the failed project(s):" failed-project))
-    (when (not (empty? passed-projects))
+    (when (seq passed-projects)
       (m/info "\n* Tests are passed on project(s):" passed-projects "\n\n")
       (m/info "To see changes : lein sync" passed-projects "--status")
       (m/info "To commit      : lein sync" passed-projects "--commit")

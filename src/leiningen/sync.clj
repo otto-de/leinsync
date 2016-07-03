@@ -24,8 +24,8 @@
 
 (def cli-options
   [["-d" "--deps global|profile-name" "List all profile/global deps on projects"
-    :parse-fn #(keyword %)
-    :validate [#(or (= :global %) (not (empty? (name %)))) "--deps must be global or profile"]]
+    :parse-fn keyword
+    :validate [#(or (= :global %) (seq (name %))) "--deps must be global or profile"]]
    ["-l" "--list" "List resources to be synchronized"]
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
@@ -36,23 +36,24 @@
    ["-u" "--push" "Push on target projects"]])
 
 (defn usage [options-summary]
-  (->> [""
-        "sync is a Leiningen plugin to synchronize same codebase between different clojure projects"
-        (str "version: " (u/get-version "sync"))
-        ""
-        "Usage:"
-        ""
-        "  *  lein sync [options] \"project-1,project-2,project-3\""
-        ""
-        "Options:"
-        options-summary
-        ""
-        "To specify the namespaces and resources to be shared, you must define them in project.clj. i.e"
-        ":ns-sync {:test-cmd    [[\"lein\" \"test\"]]"
-        "          :namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
-        "          :resources   [\"resource.to.be.sync.1\"  \"resource.to.be.sync.2\" ]}"
-        ""]
-       (str/join \newline)))
+  (str/join
+   \newline
+   [""
+    "sync is a Leiningen plugin to synchronize same codebase between different clojure projects"
+    (str "version: " (u/get-version "sync"))
+    ""
+    "Usage:"
+    ""
+    "  *  lein sync [options] \"project-1,project-2,project-3\""
+    ""
+    "Options:"
+    options-summary
+    ""
+    "To specify the namespaces and resources to be shared, you must define them in project.clj. i.e"
+    ":ns-sync {:test-cmd    [[\"lein\" \"test\"]]"
+    "          :namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
+    "          :resources   [\"resource.to.be.sync.1\"  \"resource.to.be.sync.2\" ]}"
+    ""]))
 
 (defn error-hint [errors summary project-desc]
   (m/info (str/join " " errors))

@@ -1,5 +1,6 @@
 (ns leiningen.leinsync.table-pretty-print
-  (:require [leiningen.core.main :as m]))
+  (:require [leiningen.core.main :as m]
+            [clojure.string :as str]))
 
 (defn print-table
   ([rows with-extra-seperator-line log-fn]

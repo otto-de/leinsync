@@ -19,7 +19,7 @@
     (System/setProperty "user.dir" absolute-path)))
 
 (defn is-success? [result]
-  (= (:exit result) 0))
+  (zero? (:exit result)))
 
 (defn sub-str [input length]
   (let [input-length (count input)]

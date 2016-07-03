@@ -57,8 +57,8 @@
   (let [target-projects-desc (pr/read-all-target-project-clj target-projects)
         namespaces (u/cartesian-product (get-in source-project-desc ns/namespace-def) target-projects)
         resources (u/cartesian-product (get-in source-project-desc ns/resource-def) target-projects)]
-    (if (not (empty? namespaces)) (ns/update-namespaces! namespaces source-project-desc target-projects-desc))
-    (if (not (empty? resources)) (ns/update-resouces! resources source-project-desc target-projects-desc))))
+    (if (seq namespaces) (ns/update-namespaces! namespaces source-project-desc target-projects-desc))
+    (if (seq resources) (ns/update-resouces! resources source-project-desc target-projects-desc))))
 
 (defn deps [arg target-projects {source-project :name}]
   (let [all-projects-desc (-> target-projects
