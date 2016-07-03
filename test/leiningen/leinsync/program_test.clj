@@ -75,6 +75,6 @@
   (is (true? (u/is-number 6 "5")))
   (is (false? (u/is-number 6 "7"))))
 
-(deftest ^:unit is-number
+(deftest ^:unit lazy-contains?
   (is (true? (u/lazy-contains? (lazy-seq [1 2]) 1)))
   (is (false? (u/lazy-contains? (lazy-seq [1 2]) 3))))

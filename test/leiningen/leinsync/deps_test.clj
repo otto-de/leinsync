@@ -41,7 +41,7 @@
            [:dep-2 {:deps-project-3 :v-2}]
            [:dep-4 {:deps-project-3 :v-5}]]))))
 
-(deftest ^:unit merge-deps
+(deftest ^:unit pretty-print-structure
   (let [m {:dep-1 :v-1
            :dep-2 :v-2
            :dep-3 :v-3

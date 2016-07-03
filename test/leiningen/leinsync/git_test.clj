@@ -38,7 +38,7 @@
   (is (= "a.changed.resource"
          (git/remove-git-change-status-from "?? a.changed.resource"))))
 
-(deftest ^:unit remove-git-change-status-from
+(deftest ^:unit get-details-status
   (let [project-desc {:source-paths   ["folder1"]
                       :test-paths     []
                       :resource-paths ["folder2"]

@@ -140,7 +140,7 @@
   (is (= ["testfolder1" "testfolder2"]
          (ns/test-or-source-namespace "de.otto.one.cool.ns-test" project-clj))))
 
-(deftest ^:unit is-not-a-test-ns
+(deftest ^:unit is-not-a-ns
   (is (= ["folder1" "folder2"]
          (ns/test-or-source-namespace "de.otto.one.cool.ns" project-clj))))
 
@@ -170,7 +170,7 @@
   (is (= '([:a :1])
          (u/cartesian-product '(:a) '(:1)))))
 
-(deftest ^:unit flap-map-4
+(deftest ^:unit flap-map-5
   (is (true? (u/exists? "test-resources/project_test.clj")))
   (is (false? (u/exists? "test-resources/project_test_not-exists.clj"))))
 
