@@ -64,7 +64,10 @@
     {:name (name k)}))
 
 (defn mark-value-with
-  ([marker v] (if (empty? v) "" {:marker marker :value (str/upper-case v)}))
+  ([marker v]
+   (if (empty? v)
+     ""
+     {:marker marker :value (str/upper-case v)}))
   ([assertion-marker standard-marker assertion v]
    (if (assertion v)
      (mark-value-with assertion-marker v)
@@ -73,7 +76,8 @@
 (defn mark-as-diffrent
   ([m]
    (zipmap (keys m)
-           (map (partial mark-value-with all-resources-different-marker)
+           (map (partial mark-value-with
+                         all-resources-different-marker)
                 (vals m))))
   ([m assertion]
    (zipmap (keys m)
@@ -81,30 +85,29 @@
                          one-resource-different-marker
                          all-resources-different-marker
                          assertion)
-                (vals m))))
-  ([m first-val second-val]
-   (let [not-empty-values (remove empty? (vals m))
-         [first-val-occurence second-val-occurence] (vals (frequencies not-empty-values))]
-     (cond
-       (and (not= first-val-occurence 1) (not= second-val-occurence 1))
-       (mark-as-diffrent m)
-       (= first-val-occurence second-val-occurence)
-       (mark-as-diffrent m #(or (= % first-val) = % second-val))
-       (> first-val-occurence second-val-occurence)
-       (mark-as-diffrent m #(= % second-val))
-       (< first-val-occurence second-val-occurence)
-       (mark-as-diffrent m #(= % first-val))
-       :else m))))
+                (vals m)))))
+
+(defn mark-2-different-values [m [first second] marker-fn]
+  (let [[first-freq second-freq] (->> m
+                                      (vals)
+                                      (remove empty?)
+                                      (frequencies)
+                                      (vals))]
+    (cond
+      (and (not= first-freq 1) (not= second-freq 1)) (marker-fn m)
+      (= first-freq second-freq) (marker-fn m #(or (= % first) (= % second)))
+      (> first-freq second-freq) (marker-fn m #(= % second))
+      (< first-freq second-freq) (marker-fn m #(= % first))
+      :else m)))
 
 (defn unterline-different-values [m]
-  (let [unique-values (->> m
-                           (vals)
-                           (filter not-empty)
-                           (distinct))]
+  (let [unique-v (->> m
+                      (vals)
+                      (filter not-empty)
+                      (distinct))]
     (cond
-      (= 1 (count unique-values)) m
-      (= 2 (count unique-values))
-      (mark-as-diffrent m (first unique-values) (second unique-values))
+      (= 1 (count unique-v)) m
+      (= 2 (count unique-v)) (mark-2-different-values m unique-v mark-as-diffrent)
       :else (mark-as-diffrent m))))
 
 (defn sub-hash-str [hash-str desired-length]
