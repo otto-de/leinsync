@@ -87,17 +87,15 @@
                          assertion)
                 (vals m)))))
 
-(defn mark-2-different-values [m [first second] marker-fn]
-  (let [[first-freq second-freq] (->> m
-                                      (vals)
-                                      (remove empty?)
-                                      (frequencies)
-                                      (vals))]
+(defn mark-2-different-values [m [first-v second-v] marker-fn]
+  (let [not-empty-values (remove empty? (vals m))
+        first-freq (count (filter #(= first-v %) not-empty-values))
+        second-freq (count (filter #(= second-v %) not-empty-values))]
     (cond
       (and (not= first-freq 1) (not= second-freq 1)) (marker-fn m)
-      (= first-freq second-freq) (marker-fn m #(or (= % first) (= % second)))
-      (> first-freq second-freq) (marker-fn m #(= % second))
-      (< first-freq second-freq) (marker-fn m #(= % first))
+      (= first-freq second-freq) (marker-fn m #(or (= % first-v) (= % second-v)))
+      (> first-freq second-freq) (marker-fn m #(= % second-v))
+      (< first-freq second-freq) (marker-fn m #(= % first-v))
       :else m)))
 
 (defn unterline-different-values [m]
