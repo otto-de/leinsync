@@ -71,8 +71,8 @@
          (map (mark-for-possible-update last-version-map different-marker)))))
 
 (defn log-resouces-table [selector m]
-  (m/info "\n* List of dependencies of" selector)
-  (m/info "      ==> version :  means that the dependency on this project is out-of-date")
+  (m/info "* List of dependencies of" selector)
+  (m/info "  " different-marker "version :  means that the dependency on this project is out-of-date")
   (pp/print-compact-table m))
 
 (defn take-repo-url [r]

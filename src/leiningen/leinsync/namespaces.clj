@@ -12,8 +12,7 @@
 (def resource-path-def [:resource-paths])
 
 (defn sync-get-in [project-clj test-path-def default]
-  (-> (get-in project-clj test-path-def default)
-      (distinct)))
+  (distinct (get-in project-clj test-path-def default)))
 
 (defn test-or-source-namespace [namespace project-clj]
   (if (or (.endsWith namespace "-test")
@@ -144,15 +143,13 @@
     ;source and target exist and unique
     (and (= 1 (count existing-source-paths))
          (= 1 (count existing-target-paths)))
-    {:source (first existing-source-paths)
-     :target (first existing-target-paths)}
+    {:source (first existing-source-paths) :target (first existing-target-paths)}
 
     ;source  exists, target doen't exist but its location is unique
     (and (= 1 (count existing-source-paths))
-         (= 0 (count existing-target-paths))
+         (zero? (count existing-target-paths))
          (= 1 (count target-paths)))
-    {:source (first existing-source-paths)
-     :target (first target-paths)}
+    {:source (first existing-source-paths) :target (first target-paths)}
 
     ;multiple sources and targets exist so ask user for correct locations
     (<= 1 (count existing-source-paths))
