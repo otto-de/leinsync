@@ -23,6 +23,7 @@
                                                 (for [[col fmt] (map vector (map #(get row %) ks) fmts)]
                                                   (format fmt (str col)))))
                           trailer))]
+       (log-fn "\n")
        (log-fn (fmt-row "| " " | " " |" (zipmap ks ks)))
        (log-fn (fmt-row "|-" "-+-" "-|" (zipmap ks spacers)))
        (doseq [row rows]
