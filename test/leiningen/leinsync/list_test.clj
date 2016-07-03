@@ -66,6 +66,54 @@
            :k2 {:marker "=> " :value "123456789"}}
           7))))
 
+(deftest ^:unit mark-as-diffrent
+  (is (= {:k1 {:marker "==> " :value "12345678"}
+          :k2 {:marker "==> " :value "123456789"}}
+         (l/mark-as-diffrent {:k1 "12345678"
+                              :k2 "123456789"})))
+
+  (is (= {:k1 {:marker "=[x]=> ", :value "FOO"}
+          :k2 {:marker "==> ", :value "BAR"}}
+         (l/mark-as-diffrent {:k1 "foo"
+                              :k2 "bar"}
+                             #(= "foo" %)))))
+
+(deftest ^:unit mark-2-different-values
+  (let [marker-fn (fn ([_] {}) ([_ a] {:assertion a}))]
+    (testing "if frequency of both vals > 1, no need to mark"
+      (let [result (l/mark-2-different-values {:k1 "1"
+                                               :k2 "1"
+                                               :k3 "2"
+                                               :k4 "2"}
+                                              ["1" "2"]
+                                              marker-fn)]
+        (is (true? (empty? result)))))
+
+    (testing "if both vals exist just onetime, mark all of them"
+      (let [{assertion :assertion} (l/mark-2-different-values {:k1 "1"
+                                                               :k2 "2"}
+                                                              ["1" "2"]
+                                                              marker-fn)]
+        (is (true? (assertion "1")))
+        (is (true? (assertion "2")))))
+
+    (testing "mark val whose frequency = 1 "
+      (let [{assertion :assertion} (l/mark-2-different-values {:k1 "1"
+                                                               :k2 "1"
+                                                               :k3 "2"}
+                                                              ["1" "2"]
+                                                              marker-fn)]
+        (is (false? (assertion "1")))
+        (is (true? (assertion "2"))))
+
+      (let [{assertion :assertion} (l/mark-2-different-values {:k1 "1"
+                                                               :k2 "2"
+                                                               :k3 "2"}
+                                                              ["1" "2"]
+                                                              marker-fn)]
+        (is (true? (assertion "1")))
+        (is (false? (assertion "2")))))))
+
 (deftest ^:unit build-resource-table
   (testing "print table structure for the namespaces"
     (let [projects {:project-1 {:ns-sync        {:namespaces ["path.to.ns1" "path.to.ns2" "path.to.ns4"]}
