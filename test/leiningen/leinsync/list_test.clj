@@ -1,6 +1,6 @@
-(ns leiningen.leinsync.ns-list-test
+(ns leiningen.leinsync.list-test
   (:require [clojure.test :refer :all]
-            [leiningen.leinsync.list-ns :as l]
+            [leiningen.leinsync.list :as l]
             [leiningen.leinsync.namespaces :as ns]))
 
 (defn- project-occurence-render [existing-path project]
@@ -49,9 +49,22 @@
              (l/unterline-different-values m))))))
 
 (deftest ^:unit occurence-map-for
-  (is (= {:name "name", :package "path.to.ns"} (l/occurence-map-for "path.to.ns.name" ns/namespace-def)))
-  (is (= {:name "name", :package ""} (l/occurence-map-for "name" ns/namespace-def)))
-  (is (= {:name "data.csv"} (l/occurence-map-for "data.csv" ns/resource-def))))
+  (is (= {:name "name", :package "path.to.ns"} (l/resource->package-and-name "path.to.ns.name" ns/namespace-def)))
+  (is (= {:name "name", :package ""} (l/resource->package-and-name "name" ns/namespace-def)))
+  (is (= {:name "data.csv"} (l/resource->package-and-name "data.csv" ns/resource-def))))
+
+(deftest ^:unit sub-hash-str
+  (is (= "12345678" (l/sub-hash-str "123456789" 8)))
+  (is (= "1234567" (l/sub-hash-str "1234567" 8)))
+  (is (= "X O" (l/sub-hash-str "X O" 8))))
+
+(deftest ^:unit display-hash-value
+  (is (= {:k1 "1234567"
+          :k2 "=> 1234567"}
+         (l/display-hash-value
+          {:k1 "12345678"
+           :k2 {:marker "=> " :value "123456789"}}
+          7))))
 
 (deftest ^:unit build-resource-table
   (testing "print table structure for the namespaces"
@@ -64,10 +77,10 @@
                                 :test-paths     ["e"]
                                 :resource-paths ["f"]}}]
 
-      (is (= [{:package "path.to" :name "ns1", :project-1 "O X", :project-2 "O X"}
-              {:package "path.to" :name "ns2", :project-1 "O X", :project-2 ""}
-              {:package "path.to" :name "ns3", :project-1 "", :project-2 "O X"}
-              {:package "path.to" :name "ns4", :project-1 "O X", :project-2 "O X"}]
+      (is (= [{:name "ns1", :package "path.to", :project-1 "O X", :project-2 "O X"}
+              {:name "ns2", :package "path.to", :project-1 "O X"}
+              {:name "ns3", :package "path.to", :project-2 "O X"}
+              {:name "ns4", :package "path.to", :project-1 "O X", :project-2 "O X"}]
              (->> (l/build-resource-table projects ns/namespace-def project-occurence-render)
                   (sort-by :name))))))
 
@@ -81,8 +94,8 @@
                                 :test-paths     ["e"]
                                 :resource-paths ["f"]}}]
 
-      (is (= [{:name "csv", :package "r4", :project-1 "", :project-2 "O X"}
-              {:name "json", :package "r3", :project-1 "", :project-2 "O X"}
-              {:name "xml", :package "r1", :project-1 "", :project-2 "O X"}]
+      (is (= [{:name "csv", :package "r4", :project-2 "O X"}
+              {:name "json", :package "r3", :project-2 "O X"}
+              {:name "xml", :package "r1", :project-2 "O X"}]
              (->> (l/build-resource-table projects ns/namespace-def project-occurence-render)
                   (sort-by :name)))))))

@@ -1,4 +1,4 @@
-(ns leiningen.leinsync.list-ns
+(ns leiningen.leinsync.list
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [leiningen.leinsync.namespaces :as ns]
@@ -7,19 +7,10 @@
             [leiningen.core.main :as m]
             [leiningen.leinsync.table-pretty-print :as pp]))
 
-(def hash-length 8)
+(def hash-length 6)
 (def all-resources-different-marker "==> ")
 (def one-resource-different-marker "=[x]=> ")
 (def empty-occurence-str "X ")
-
-(defn log-resouces-table [m resource-name]
-  (m/info "\n* List of" resource-name)
-  (m/info "     -" empty-occurence-str
-          "                        :  the namespace/resource does not exist in the project although it has been specified")
-  (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
-  (m/info "                                     ==>    hash : means that the resource doesn't match on all projects")
-  (m/info "                                     =[x]=> hash : means that the resource on this project is different from others")
-  (pp/print-compact-table (sort-by :name m)))
 
 (defn aggregate [result [namespace project]]
   (let [project-occurence (if (contains? result namespace)
@@ -35,19 +26,12 @@
        aggregated-result
        (recur rest aggregated-result)))))
 
-(defn empty-project-occurence [projects initial-value]
-  (zipmap
-   (keys projects)
-   (take (count projects) (repeat initial-value))))
+(defn md5-hash [paths]
+  (str/join " | " (map
+                   #(d/digest "md5" (io/as-file %))
+                   paths)))
 
-(defn md5-hash
-  ([paths] (str/join " | " (map #(md5-hash % hash-length) paths)))
-  ([path length]
-   (let [hash-value (d/digest "md5" (io/as-file path))
-         hash-length (dec (count hash-value))]
-     (subs hash-value (max 0 (- hash-length length)) hash-length))))
-
-(defn project-occurence-render [paths project]
+(defn resource-render [paths project]
   (if (empty? paths)
     {project empty-occurence-str}
     {project (md5-hash paths)}))
@@ -58,24 +42,21 @@
         existing-paths (filter u/exists? paths)]
     (render existing-paths project)))
 
-(defn resource->project [project project-desc empty-project-occurence render]
+(defn resource->project [project project-desc render]
   (fn [resource]
-    [(keyword resource) (merge-with
-                         str
-                         (resource-occurence resource project project-desc render)
-                         empty-project-occurence)]))
+    [(keyword resource)
+     (resource-occurence resource project project-desc render)]))
 
 (defn resource-name->project [projects selector render]
-  (let [empty-occurence (empty-project-occurence projects "")]
-    (reduce-kv
-     (fn [m project desc]
-       (into m (map
-                (resource->project project desc empty-occurence render)
-                (get-in desc selector))))
-     []
-     projects)))
+  (reduce-kv
+   (fn [m project desc]
+     (into m (map
+              (resource->project project desc render)
+              (get-in desc selector))))
+   []
+   projects))
 
-(defn occurence-map-for [k selector]
+(defn resource->package-and-name [k selector]
   (if (= selector ns/namespace-def)
     (let [name-segments (str/split (name k) #"\.")]
       {:package (str/join "." (drop-last name-segments))
@@ -83,16 +64,17 @@
     {:name (name k)}))
 
 (defn mark-value-with
-  ([marker v] (if (empty? v) "" (str marker (str/upper-case v))))
+  ([marker v] (if (empty? v) "" {:marker marker :value (str/upper-case v)}))
   ([assertion-marker standard-marker assertion v]
    (if (assertion v)
      (mark-value-with assertion-marker v)
      (mark-value-with standard-marker v))))
 
 (defn mark-as-diffrent
-  ([m] (zipmap (keys m)
-               (map (partial mark-value-with all-resources-different-marker)
-                    (vals m))))
+  ([m]
+   (zipmap (keys m)
+           (map (partial mark-value-with all-resources-different-marker)
+                (vals m))))
   ([m assertion]
    (zipmap (keys m)
            (map (partial mark-value-with
@@ -106,16 +88,12 @@
      (cond
        (and (not= first-val-occurence 1) (not= second-val-occurence 1))
        (mark-as-diffrent m)
-
        (= first-val-occurence second-val-occurence)
        (mark-as-diffrent m #(or (= % first-val) = % second-val))
-
        (> first-val-occurence second-val-occurence)
-       (mark-as-diffrent m  #(= % second-val))
-
+       (mark-as-diffrent m #(= % second-val))
        (< first-val-occurence second-val-occurence)
-       (mark-as-diffrent m  #(= % first-val))
-
+       (mark-as-diffrent m #(= % first-val))
        :else m))))
 
 (defn unterline-different-values [m]
@@ -129,11 +107,24 @@
       (mark-as-diffrent m (first unique-values) (second unique-values))
       :else (mark-as-diffrent m))))
 
-(defn pretty-print-structure [data selector]
+(defn sub-hash-str [hash-str desired-length]
+  (subs hash-str 0 (min desired-length (count hash-str))))
+
+(defn display-hash-value [v desired-length]
+  (zipmap (keys v)
+          (map (fn [x]
+                 (if (map? x)
+                   (str (:marker x) (sub-hash-str (:value x) desired-length))
+                   (sub-hash-str x desired-length)))
+               (vals v))))
+
+(defn pretty-print-structure [data selector desired-length]
   (reduce-kv
    (fn [m k v] (conj m (merge
-                        (occurence-map-for k selector)
-                        (unterline-different-values v))))
+                        (resource->package-and-name k selector)
+                        (-> v
+                            (unterline-different-values)
+                            (display-hash-value desired-length)))))
    []
    data))
 
@@ -141,9 +132,18 @@
   (-> projects
       (resource-name->project selector render)
       (merge-project-occurence)
-      (pretty-print-structure selector)))
+      (pretty-print-structure selector hash-length)))
+
+(defn log-resouces-table [m resource-name]
+  (m/info "\n* List of" resource-name)
+  (m/info "     -" empty-occurence-str
+          "                        :  the namespace/resource does not exist in the project although it has been specified")
+  (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
+  (m/info "                                     ==>    hash : means that the resource doesn't match on all projects")
+  (m/info "                                     =[x]=> hash : means that the resource on this project is different from others")
+  (pp/print-compact-table (sort-by :name m)))
 
 (defn list-resources [projects-desc selector]
   (-> projects-desc
-      (build-resource-table selector project-occurence-render)
+      (build-resource-table selector resource-render)
       (log-resouces-table (name (last selector)))))

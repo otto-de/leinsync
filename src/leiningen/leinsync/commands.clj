@@ -5,7 +5,7 @@
             [leiningen.leinsync.utils :as u]
             [leiningen.leinsync.namespaces :as ns]
             [leiningen.leinsync.git :as git]
-            [leiningen.leinsync.list-ns :as l]
+            [leiningen.leinsync.list :as l]
             [leiningen.leinsync.deps :as deps]
             [leiningen.leinsync.tests :as t]))
 
