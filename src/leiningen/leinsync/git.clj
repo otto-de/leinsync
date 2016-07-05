@@ -7,8 +7,9 @@
             [leiningen.leinsync.namespaces :as ns]))
 
 (def output-length 120)
+(def change-list-limit 3)
 
-(defn remove-git-change-status-from [path]
+(defn remove-git-status [path]
   (-> path
       (str/replace #"M\s" "")
       (str/replace #"A\s" "")
@@ -78,39 +79,51 @@
        :status  (status-failed)
        :cause   (u/sub-str (u/error-of push-result " ") output-length)})))
 
-(defn changes-empty? [unpushed-commit-changes]
+(defn has-no-change? [unpushed-commit-changes]
   (= :no-change (:unpushed-changes unpushed-commit-changes)))
 
 (defn check-and-push! [project]
-  (if (changes-empty? (unpushed-commit-changes))
+  (if (has-no-change? (unpushed-commit-changes))
     {:project project
      :status  :skipped
      :cause   "Nothing to push on"}
-    (if (= "y" (u/ask-user
-                (str "\n* Are you sure to push on " project "? (y/n)")
-                u/yes-or-no))
+    (if (= "y" (u/ask-user (str "\n* Are you sure to push on " project "? (y/n)")
+                           u/yes-or-no))
       (push! project))))
 
+(defn other-change-status [other-resources compact?]
+  (let [list-length (count other-resources)]
+    (cond
+      (empty? other-resources)
+      {:other-changes :no-change}
+      (true? compact?)
+      {:other-changes (str "has " list-length " changes")}
+      (> list-length change-list-limit)
+      {:other-changes (str/join " " (concat (take change-list-limit other-resources) "..."))}
+      :else {:other-changes (str/join " " other-resources)})))
+
+(defn sync-change [sync-resources]
+  (let [changes (if (empty? sync-resources)
+                  :no-change (str/join " " sync-resources))]
+    {:sync-relevant-changes changes}))
+
 (defn get-details-status [status-lines projects-desc]
-  (let [synchronized-resources (filter #(ns/sync-resources? projects-desc
-                                                            (remove-git-change-status-from %))
-                                       status-lines)
-        other-resources (filter #(and (not (u/lazy-contains? synchronized-resources %))
-                                      (seq %))
-                                status-lines)]
-    {:sync-relevant-changes (if (empty? synchronized-resources)
-                              :no-change
-                              (str/join " " synchronized-resources))
-     :other-changes         (if (empty? other-resources)
-                              :no-change
-                              (str/join " " other-resources))}))
+  (let [sync-resources (filter
+                        #(ns/sync-resources? projects-desc (remove-git-status %))
+                        status-lines)
+        other-resources (filter
+                         #(and (not (u/lazy-contains? sync-resources %)) (seq %))
+                         status-lines)]
+    (if (> (count sync-resources) change-list-limit)
+      (merge (sync-change sync-resources) (other-change-status other-resources true))
+      (merge (sync-change sync-resources) (other-change-status other-resources false)))))
 
 (defn details-status [project projects-desc]
   (let [status-result (sh/sh "git" "status" "--short")]
     (if (u/is-success? status-result)
       (merge {:project project}
-             (unpushed-commit-changes)
-             (get-details-status (u/split-output-of status-result) projects-desc))
+             (get-details-status
+              (u/split-output-of status-result) projects-desc))
       {:project project
        :status  (status-failed)})))
 

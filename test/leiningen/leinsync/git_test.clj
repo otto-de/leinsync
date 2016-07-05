@@ -4,39 +4,56 @@
 
 (deftest ^:unit remove-git-change-status-from
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from " M a.changed.resource")))
+         (git/remove-git-status " M a.changed.resource")))
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from "M a.changed.resource")))
+         (git/remove-git-status "M a.changed.resource")))
 
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from " A a.changed.resource")))
+         (git/remove-git-status " A a.changed.resource")))
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from "A a.changed.resource")))
+         (git/remove-git-status "A a.changed.resource")))
 
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from " D a.changed.resource")))
+         (git/remove-git-status " D a.changed.resource")))
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from "D a.changed.resource")))
+         (git/remove-git-status "D a.changed.resource")))
 
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from " R a.changed.resource")))
+         (git/remove-git-status " R a.changed.resource")))
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from "R a.changed.resource")))
+         (git/remove-git-status "R a.changed.resource")))
 
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from " C a.changed.resource")))
+         (git/remove-git-status " C a.changed.resource")))
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from "C a.changed.resource")))
+         (git/remove-git-status "C a.changed.resource")))
 
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from " U a.changed.resource")))
+         (git/remove-git-status " U a.changed.resource")))
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from "U a.changed.resource")))
+         (git/remove-git-status "U a.changed.resource")))
 
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from " ?? a.changed.resource")))
+         (git/remove-git-status " ?? a.changed.resource")))
   (is (= "a.changed.resource"
-         (git/remove-git-change-status-from "?? a.changed.resource"))))
+         (git/remove-git-status "?? a.changed.resource"))))
+
+(deftest ^:unit other-change-status
+  (is (= {:other-changes "has 10 changes"}
+         (git/other-change-status (take 10 (repeat "x")) true)))
+  (is (= {:other-changes :no-change}
+         (git/other-change-status [] true)
+         (git/other-change-status [] false)))
+  (is (= {:other-changes "x x"}
+         (git/other-change-status (take 2 (repeat "x")) false)))
+  (is (= {:other-changes "x x x . . ."}
+         (git/other-change-status (take 5 (repeat "x")) false))))
+
+(deftest ^:unit sync-change
+  (is (= {:sync-relevant-changes "x x"}
+         (git/sync-change (take 2 (repeat "x")))))
+  (is (= {:sync-relevant-changes :no-change}
+         (git/sync-change []))))
 
 (deftest ^:unit get-details-status
   (let [project-desc {:source-paths   ["folder1"]
@@ -48,6 +65,21 @@
                           "M folder1/de/otto/one/not-relevante-ns.clj"
                           "D folder2/log.xml"]]
     (is (= {:other-changes         "M folder1/de/otto/one/not-relevante-ns.clj"
+            :sync-relevant-changes "M folder1/de/otto/one/cool/ns.clj D folder2/log.xml"}
+           (git/get-details-status git-status-lines project-desc))))
+
+  (let [project-desc {:source-paths   ["folder1" "folder2" "folder3" "folder4" "folder5"]
+                      :test-paths     []
+                      :resource-paths ["folder2"]
+                      :ns-sync        {:namespaces ["de.otto.one.cool.ns"]
+                                       :resources  ["log.xml"]}}
+        git-status-lines ["M folder1/de/otto/one/cool/ns.clj"
+                          "M folder1/de/otto/one/not-relevante-ns.clj"
+                          "D folder2/log.xml"
+                          "D folder3/log.xml"
+                          "D folder4/log.xml"
+                          "D folder5/log.xml"]]
+    (is (= {:other-changes         "M folder1/de/otto/one/not-relevante-ns.clj D folder3/log.xml D folder4/log.xml . . ."
             :sync-relevant-changes "M folder1/de/otto/one/cool/ns.clj D folder2/log.xml"}
            (git/get-details-status git-status-lines project-desc)))))
 
@@ -67,5 +99,5 @@
            (git/sync-resources-of changed-file untracked-file project-desc)))))
 
 (deftest ^:unit changes-empty?
-  (is (true? (git/changes-empty? {:unpushed-changes :no-change})))
-  (is (false? (git/changes-empty? ["something"]))))
+  (is (true? (git/has-no-change? {:unpushed-changes :no-change})))
+  (is (false? (git/has-no-change? ["something"]))))
