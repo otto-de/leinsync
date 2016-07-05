@@ -7,7 +7,8 @@
             [leiningen.leinsync.namespaces :as ns]))
 
 (def output-length 120)
-(def change-list-limit 3)
+(def other-change-list-limit 3)
+(def sync-list-limit 6)
 
 (defn remove-git-status [path]
   (-> path
@@ -98,14 +99,16 @@
       {:other-changes :no-change}
       (true? compact?)
       {:other-changes (str "has " list-length " changes")}
-      (> list-length change-list-limit)
-      {:other-changes (str/join " " (concat (take change-list-limit other-resources) "..."))}
+      (> list-length other-change-list-limit)
+      {:other-changes (str/join " " (concat (take other-change-list-limit other-resources) "..."))}
       :else {:other-changes (str/join " " other-resources)})))
 
 (defn sync-change [sync-resources]
-  (let [changes (if (empty? sync-resources)
-                  :no-change (str/join " " sync-resources))]
-    {:sync-relevant-changes changes}))
+  (cond
+    (empty? sync-resources) {:sync-relevant-changes :no-change}
+    (> (count sync-resources) sync-list-limit)
+    {:sync-relevant-changes (str/join " " (concat (take sync-list-limit sync-resources) "..."))}
+    :else {:sync-relevant-changes (str/join " " sync-resources)}))
 
 (defn get-details-status [status-lines projects-desc]
   (let [sync-resources (filter
@@ -114,7 +117,7 @@
         other-resources (filter
                          #(and (not (u/lazy-contains? sync-resources %)) (seq %))
                          status-lines)]
-    (if (> (count sync-resources) change-list-limit)
+    (if (> (count sync-resources) other-change-list-limit)
       (merge (sync-change sync-resources) (other-change-status other-resources true))
       (merge (sync-change sync-resources) (other-change-status other-resources false)))))
 
