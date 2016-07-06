@@ -1,8 +1,8 @@
 (defproject sync "0.9.33-SNAPSHOT"
   :description "sync is a Leiningen plugin to sync same code base between different clojure projects"
   :url "https://github.com/otto-de/leinsync"
-  :license {:name "Eclipse Public License"
-            :url  "http://www.eclipse.org/legal/epl-v10.html"}
+  :license {:name "Apache License 2.0"
+            :url  "http://www.apache.org/license/LICENSE-2.0.html"}
   :eval-in-leiningen true
   :test-selectors {:default (constantly true)
                    :unit    :unit
