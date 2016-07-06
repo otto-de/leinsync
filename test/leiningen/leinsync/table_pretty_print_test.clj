@@ -7,7 +7,7 @@
     (let [print-state (atom [])
           print-fn (fn info [& args] (swap! print-state conj args))
           rows [{:k1 :v1} {:k2 :v2} {:k3 :v3}]
-          _ (pp/print-table rows false print-fn)]
+          _ (pp/pretty-print-table rows false print-fn)]
       (is (= [["\n"]
               ["| :k1 | :k2 | :k3 |"]
               ["|-----+-----+-----|"]
@@ -21,7 +21,7 @@
     (let [print-state (atom [])
           print-fn (fn info [& args] (swap! print-state conj args))
           rows [{:k1 :v1} {:k1 :v1 :k2 :k2} {:k3 :v3}]
-          _ (pp/print-table rows false print-fn)]
+          _ (pp/pretty-print-table rows false print-fn)]
       (is (= [["\n"]
               ["| :k1 | :k2 | :k3 |"]
               ["|-----+-----+-----|"]
