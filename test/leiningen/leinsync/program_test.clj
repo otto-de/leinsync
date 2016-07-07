@@ -83,4 +83,6 @@
   (is (= #{"dev" "test" "uberjar"}
          (s/get-profiles {:profiles {:uberjar {}
                                      :test    {}
-                                     :dev     {}}}))))
+                                     :dev     {}}})))
+  (is (= #{}
+         (s/get-profiles {}))))

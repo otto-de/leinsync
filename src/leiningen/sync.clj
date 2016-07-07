@@ -55,7 +55,7 @@
 
 (defn get-profiles [{profiles :profiles}]
   (if (nil? profiles)
-    []
+    #{}
     (set (map name (keys profiles)))))
 
 (defn sync [project-desc & args]
