@@ -163,3 +163,13 @@
          (d/last-version-of (fn [_ _] :a-version)
                             {:url "url-2"}
                             :artifact))))
+
+(deftest ^:unit parallel-get-version
+  (is (=  {:dep-1 :unknown, :dep-2 :unknown}
+          (d/parallel-get-version
+           (fn [a] (cond
+                     (= a :dep-1) :v-1
+                     (= a :dep-2) :v-2
+                     :else :unknown))
+           {}
+           [:dep-1 :dep-2 :dep-2]))))
