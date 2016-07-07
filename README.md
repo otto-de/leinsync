@@ -6,13 +6,16 @@
 
 [![Clojars Project](http://clojars.org/sync/latest-version.svg)](https://clojars.org/sync)
 
-Our system consists of a set of small micro services written in clojure.
-Although we have codes shared between our clojure projects, we have consciously decided against shared libraries.
-By doing in this way, we gained a greater flexibility to adjust/change our micro services.
-At the beginning, we synchronized those shared code by hand, which was of course not very comfortable. So we wrote `sync`to make this task automatically.
+Our system consists of a set of micro services written in clojure.
+Although we have codes shared between these clojure projects, we have consciously decided against shared libraries.
+By doing in this way, we gained a greater flexibility to adjust/change them.
+At the beginning, we synchronized those shared code by hand, which was of course not very comfortable. 
+This is the reason why we wrote this plugin `sync`to make this task automatically.
 
 # Sync Plugin
-`sync` is a Leiningen plugin to synchronize shared codebase between clojure projects. `sync` makes a strong assumption about the file structure of  the shared projects, created by Leiningen, like this:
+`sync` is a Leiningen plugin to synchronize shared codebase between clojure projects. 
+
+`sync` makes a strong assumption about the file structure of the shared projects which are created by Leiningen, like this:
 
 ``` ruby
 container-folder/
@@ -59,9 +62,12 @@ Options:
 
 Define `:ns-sync` configuration in the project.clj of each target project. It has the following options:
 
-  + `:test-cmd` specifies which leiningen tasks will be executed to test target projects.
-  + `:namespaces` specifies the namespaces to be synchronized.
-  + `:resources`specifies the resources to be synchronized.
+  + `:test-cmd` specifies which leiningen tasks will be executed to test target projects after synchronizing.
+  + `:namespaces` specifies the namespaces to be synchronized between shared projects.
+  + `:resources`  specifies the resources to be synchronized between shared projects.
+  
+A namespace/resource will be synchronized between 2 projects if and only if they are defined in the both project.clj
+
 
 ## Example
 The `:ns-sync` configuration can be specified like that:
@@ -80,40 +86,40 @@ In order to synchronize namespaces and resources between projects, run in the cu
     *
     * Update name.space.1 to the project project-2
     * Update name.space.1 to the project project-3
-    *
 
     *********************** UPDATE RESOURCES ***********************
     *
     * Update "resources.1 to the project project-2
     * Update "resources.1 to the project project-3
-    *
 
-
-    |****************************| ../project-2   |****************************|
-    ... Executing tests of project-2
+     ****** Executing tests of project-2        ******
 
     ... Executing  ./lein.sh profile-1 test
     ... Executing  ./lein.sh profile-2 test
-    ===> All tests of project-2 are passed
 
 
-    ****************************| ../project-3   |****************************|
-    ... Executing tests of project-2
+     ****** Executing tests of project-3        ******
 
     ... Executing  ./lein.sh profile-1 test
     ... Executing  ./lein.sh profile-2 test
-    ===> All tests of project-3 are passed
+
+    | :project | :result | :./lein.sh clean | :./lein.sh test | 
+    |----------+---------+------------------+-----------------|
+    |project-2 | :passed |          :passed |         :passed |
+    |----------------------------------------------------------
+    |project-3 | :passed |          :passed |         :passed |
+    |---------------------------------------------------------|
 
 
-    * Tests are passed on projects: project-2,project-3
+    * Tests are passed on project(s): project-2,project-3
 
 
-    To see changes : lein sync project-2,project-3 --diff
+    To see changes : lein sync project-2,project-3 --status
     To commit      : lein sync project-2,project-3 --commit
     To push        : lein sync project-2,project-3 --push
 
 
-`sync` will update the namespaces from project-1 to project-2 and project-3.
+`sync` will update the predefined namespaces/resources from project-1 to project-2 and project-3.
 It updates only the namespace, which has been defined in both source project and target project.
 If a namespace is  only defined in the source or target project, it will be ignored.
-Afterwards `sync` will execute tests on project-2 project-3 and project-4, to make sure that the update did not break anything.
+Afterwards `sync` will execute tests, which are defined in `:test-cmd` on project-2 project-3 and project-4, to make sure that the update did not break anything.
