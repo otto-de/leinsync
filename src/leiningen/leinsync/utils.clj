@@ -108,7 +108,7 @@
       {:result :passed :cmd cmd-str}
       {:result :failed :cmd cmd-str})))
 
-(defn get-version [name]
+(defn get-artifact-version [name]
   (let [path (str "META-INF/maven/" name "/" name "/pom.properties")
         props (io/resource path)]
     (if props
