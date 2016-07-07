@@ -22,10 +22,11 @@
   (doseq [command (->commands options c/SYNC-COMMANDS)]
     (command target-projects source-project-desc)))
 
-(def cli-options
+(defn cli-options [profiles]
   [["-d" "--deps global|profile-name" "List all profile/global deps on projects"
     :parse-fn keyword
-    :validate [#(or (= :global %) (seq (name %))) "--deps must be global or profile"]]
+    :validate [#(or (= :global %) (u/lazy-contains? profiles (name %)))
+               (str "--deps must be one of: " (conj profiles "global"))]]
    ["-l" "--list" "List resources to be synchronized"]
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
@@ -36,36 +37,32 @@
    ["-u" "--push" "Push on target projects"]])
 
 (defn usage [options-summary]
-  (str/join
-   \newline
-   [""
-    "sync is a Leiningen plugin to synchronize same codebase between different clojure projects"
-    (str "version: " (u/get-version "sync"))
-    ""
-    "Usage:"
-    ""
-    "  *  lein sync [options] \"project-1,project-2,project-3\""
-    ""
-    "Options:"
-    options-summary
-    ""
-    "To specify the namespaces and resources to be shared, you must define them in project.clj. i.e"
-    ":ns-sync {:test-cmd    [[\"lein\" \"test\"]]"
-    "          :namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
-    "          :resources   [\"resource.to.be.sync.1\"  \"resource.to.be.sync.2\" ]}"
-    ""]))
+  (str/join \newline
+            ["sync is a Leiningen plugin to synchronize same codebase between different clojure projects"
+             (str "version: " (u/get-artifact-version "sync"))
+             ""
+             "Usage:"
+             "  *  lein sync [options] \"project-1,project-2,project-3\""
+             ""
+             "Options:"
+             options-summary
+             ""
+             "To specify the namespaces and resources to be shared, you must define them in project.clj. i.e"
+             ":ns-sync {:test-cmd    [[\"lein\" \"test\"]]"
+             "          :namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
+             "          :resources   [\"resource.to.be.sync.1\"  \"resource.to.be.sync.2\" ]}"
+             ""]))
 
-(defn error-hint [errors summary project-desc]
-  (m/info (str/join " " errors))
-  (if (not (nil? (:profiles project-desc)))
-    (m/info "Possible profile names:" (map name (keys (:profiles project-desc)))))
-  (m/info (usage summary)))
+(defn get-profiles [{profiles :profiles}]
+  (if (nil? profiles)
+    []
+    (set (map name (keys profiles)))))
 
 (defn sync [project-desc & args]
-  (let [{:keys [options arguments summary errors]} (cli/parse-opts args cli-options)]
+  (let [profiles (get-profiles project-desc)
+        {:keys [options arguments summary errors]} (cli/parse-opts args (cli-options profiles))]
     (cond
-      (not-empty errors)
-      (error-hint errors summary project-desc)
+      (not-empty errors) (m/info (str/join " " errors))
       (= 1 (count arguments))
       (execute-program (u/split (first arguments)) project-desc options)
       :else (m/abort (usage summary)))

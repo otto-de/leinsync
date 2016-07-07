@@ -35,6 +35,8 @@
         (log-fn (formatter "| " " | " " |" row))
         (if with-extra-seperator-line
           (log-fn (formatter "|-" "---" "-|" (zipmap keys spacers)))))
+      (if-not with-extra-seperator-line
+        (log-fn (formatter "|-" "---" "-|" (zipmap keys spacers))))
       (log-fn "\n"))))
 
 (defn print-compact-table [rows]

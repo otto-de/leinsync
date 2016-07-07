@@ -78,3 +78,9 @@
 (deftest ^:unit lazy-contains?
   (is (true? (u/lazy-contains? (lazy-seq [1 2]) 1)))
   (is (false? (u/lazy-contains? (lazy-seq [1 2]) 3))))
+
+(deftest ^:unit get-profiles
+  (is (= #{"dev" "test" "uberjar"}
+         (s/get-profiles {:profiles {:uberjar {}
+                                     :test    {}
+                                     :dev     {}}}))))
