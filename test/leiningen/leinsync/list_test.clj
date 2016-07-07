@@ -58,6 +58,11 @@
   (is (= "1234567" (l/sub-hash-str "1234567" 8)))
   (is (= "X O" (l/sub-hash-str "X O" 8))))
 
+(deftest ^:unit resource-render
+  (is (= {:a "X "} (l/resource-render [] :a)))
+  (is (= {:a "a1805c81c8ca105a0718db9fa914a3a9"}
+         (l/resource-render ["test-resources/dummy.clj"] :a))))
+
 (deftest ^:unit display-hash-value
   (is (= {:k1 "1234567"
           :k2 "=> 1234567"}

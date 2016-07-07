@@ -60,8 +60,8 @@
         (merge deps-info (zipmap (keys v) (map #(str marker %) (vals v))))
         (merge deps-info v)))))
 
-(defn parallel-get-version [repos deps]
-  (let [tasks (map #(future {% (last-version-of ancient-latest-version-fn repos %)}) deps)]
+(defn parallel-get-version [latest-version-fn repos deps]
+  (let [tasks (map #(future {% (last-version-of latest-version-fn repos %)}) deps)]
     (reduce merge (doall (pmap deref tasks)))))
 
 (defn pretty-print-structure [enrich-version-fn deps]
@@ -69,11 +69,6 @@
     (->> deps
          (seq)
          (map (mark-for-possible-update last-version-map different-marker)))))
-
-(defn log-resouces-table [selector m]
-  (m/info "* List of dependencies of" selector)
-  (m/info "  " different-marker "version :  means that the dependency on this project is out-of-date")
-  (pp/print-compact-table m))
 
 (defn take-repo-url [r]
   (if (map? r) (:url r) r))
@@ -87,8 +82,13 @@
        (map take-repo-url)
        (apply hash-map)))
 
+(defn log-resouces-table [selector m]
+  (m/info "* List of dependencies of" selector)
+  (m/info "  " different-marker "version :  means that the dependency on this project is out-of-date")
+  (pp/print-compact-table m))
+
 (defn check-dependencies-of [projects-desc selector]
-  (let [enrich-version-fn (partial parallel-get-version (repositories-of projects-desc))]
+  (let [enrich-version-fn (partial parallel-get-version ancient-latest-version-fn (repositories-of projects-desc))]
     (->> projects-desc
          (deps->project selector)
          (merge-deps)
