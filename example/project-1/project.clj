@@ -14,4 +14,4 @@
             :test-cmd    [["lein" "test"]]
             :resources   ["default.edn"] } 
   :profiles {:uberjar {:aot :all}
-             :dev     {:plugins [[sync "0.9.15"]]}})
+             :dev     {:plugins [[sync "0.9.32"]]}})
