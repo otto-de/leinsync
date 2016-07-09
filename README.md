@@ -72,7 +72,7 @@ A namespace/resource will be synchronized between 2 projects if and only if they
 ## Example
 The `:ns-sync` configuration can be specified like that:
 
-```json
+```clojure
 :ns-sync { :test-cmd [["./lein.sh" "profile-1" "test"] ["./lein.sh" "profile-2"  "test"]]
            :namespaces ["name.space.1" "name.space.2"]
            :resources ["resources.1" "resources.2"]}
