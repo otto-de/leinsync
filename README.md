@@ -66,16 +66,16 @@ Define `:ns-sync` configuration in the project.clj of each target project. It ha
   + `:namespaces` specifies the namespaces to be synchronized between shared projects.
   + `:resources`  specifies the resources to be synchronized between shared projects.
   
-A namespace/resource will be synchronized between 2 projects if and only if they are defined in the both project.clj
-
+A namespace/resource will be synchronized between 2 projects if and only if they are defined in the both project.clj.
 
 ## Example
 The `:ns-sync` configuration can be specified like that:
 
 ```clojure
-:ns-sync { :test-cmd [["./lein.sh" "profile-1" "test"] ["./lein.sh" "profile-2"  "test"]]
-           :namespaces ["name.space.1" "name.space.2"]
-           :resources ["resources.1" "resources.2"]}
+:ns-sync { :test-cmd    [["./lein.sh" "profile-1" "test"] 
+                         ["./lein.sh" "profile-2"  "test"]]
+           :namespaces  ["name.space.1" "name.space.2"]
+           :resources   ["resources.1" "resources.2"]}
 ```
 
 In order to synchronize namespaces and resources between projects, run in the current source project:
