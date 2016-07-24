@@ -46,6 +46,27 @@ container-folder/
     +-- project.clj
 ```
 
+For example, if some code change is made on the  `name.space.1` of the `project-1`, we want to apply this change later on all others projects containing `name.space.1`.
+
+``` ruby
+container-folder/
++-- project-1
+    +-- src
+    ¦   +-- name.space.1 ---------+
+    ¦   +-- name.space.2          |
+    +-- project.clj               |
++-- project-2                     |
+    +-- src                       |
+    ¦   +-- name.space.1 <--sync--+        
+    +-- project.clj               |
++-- project-3                     |
+    +-- src                       |
+    ¦   +-- name.space.1 <--sync--+
+    ¦   +-- name.space.3       
+    +-- project.clj
+```
+
+
 ## Usage
 
 * lein sync [options] "project-1,project-2,project-3"
