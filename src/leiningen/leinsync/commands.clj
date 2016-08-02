@@ -11,7 +11,7 @@
 
 (defn pull-rebase-all! [_ projects _]
   (-> #(u/run-command-on (pr/->target-project-path %) git/pull-rebase! %)
-      (map projects)
+      (pmap projects)
       (git/log-git-status)))
 
 (defn push-all! [_ projects _]
@@ -32,26 +32,25 @@
                         (u/ask-user))
         projects-desc (pr/read-all-target-project-clj projects)]
     (-> #(u/run-command-on (pr/->target-project-path %) git/commit-project! % commit-msg ((keyword %) projects-desc))
-        (map projects)
+        (pmap projects)
         (git/log-git-status "\n*To push        : lein sync" projects-str "--push"))))
 
 (defn status-all [_ projects _]
   (let [projects-desc (pr/read-all-target-project-clj projects)]
     (-> #(u/run-command-on (pr/->target-project-path %) git/details-status % ((keyword %) projects-desc))
-        (map projects)
+        (pmap projects)
         (git/log-git-status))))
 
 (defn reset-all! [_ projects _]
   (-> #(u/run-command-on (pr/->target-project-path %) git/reset-project! %)
-      (map projects)
+      (pmap projects)
       (git/log-git-status)))
 
 (defn list [_ target-projects {source-project :name}]
   (let [all-projects-desc (-> target-projects
                               (conj source-project)
                               (pr/read-all-target-project-clj))]
-    (l/list-resources all-projects-desc ns/namespace-def)
-    (l/list-resources all-projects-desc ns/resource-def)))
+    (pmap #(l/list-resources all-projects-desc %) [ns/namespace-def ns/resource-def])))
 
 (defn update-projects! [_ target-projects source-project-desc]
   (let [target-projects-desc (pr/read-all-target-project-clj target-projects)
@@ -64,11 +63,9 @@
   (let [all-projects-desc (-> target-projects
                               (conj source-project)
                               (pr/read-all-target-project-clj))]
-    (cond (= :global arg)
-          (deps/check-dependencies-of all-projects-desc [:dependencies])
-
-          :else
-          (deps/check-dependencies-of all-projects-desc [:profiles arg :dependencies]))))
+    (cond
+      (= :global arg) (deps/check-dependencies-of all-projects-desc [:dependencies])
+      :else (deps/check-dependencies-of all-projects-desc [:profiles arg :dependencies]))))
 
 (def SYNC-COMMANDS {:default {:update "" :test ""}
                     :deps    deps
