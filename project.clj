@@ -11,17 +11,15 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/math.combinatorics "0.1.3"]
                  [com.sun.jna/jna "3.0.9"]
-                 [com.github.jnr/jnr-posix "3.0.29"]
+                 [com.github.jnr/jnr-posix "3.0.31"]
                  [digest "1.4.5"]
                  [ancient-clj "0.3.14"]
-                 [org.clojure/tools.cli "0.3.5"]
-                 [com.fasterxml.jackson.core/jackson-core "2.2.3"]
-                 [com.fasterxml.jackson.core/jackson-databind "2.2.3"]]
+                 [org.clojure/tools.cli "0.3.5"]]
 
   :profiles {:uberjar {:aot :all}
              :test    {:resource-paths ["test-resources"]}
              :dev     {:dependencies [[pjstadig/humane-test-output "0.8.1"]]
-                       :plugins      [[lein-cljfmt "0.5.3"]
-                                      [lein-cloverage "1.0.6"]
+                       :plugins      [[lein-cljfmt "0.5.6"]
+                                      [lein-cloverage "1.0.8"]
                                       [jonase/eastwood "0.2.3"]
                                       [lein-kibit "0.1.2"]]}})
