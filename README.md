@@ -13,6 +13,8 @@ By doing in this way, we gained a greater flexibility to adjust/change them.
 At the beginning, we synchronized those shared code by hand, which was of course not very comfortable. 
 This is the reason why we wrote this plugin `sync`to make this task automatically.
 
+`sync` plugin has been successfully tested with the Leiningen version `2.7.1`. If you have any issue dealing with Leiningen, please upgrade your project with the Leiningen version greater or equal to `2.7.1`.
+
 # Sync Plugin
 `sync` is a Leiningen plugin to synchronize shared codebase between clojure projects. 
 
