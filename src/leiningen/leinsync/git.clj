@@ -4,7 +4,8 @@
             [leiningen.core.main :as m]
             [leiningen.leinsync.table-pretty-print :as pp]
             [clojure.string :as str]
-            [leiningen.leinsync.namespaces :as ns]))
+            [leiningen.leinsync.namespaces :as ns])
+  (:import (java.io File)))
 
 (def output-length 120)
 (def other-change-list-limit 3)
@@ -160,3 +161,11 @@
                                                 :commit-message commit-msg
                                                 :cause          add-status}
       :else (commit! project commit-msg))))
+
+(defn last-commit-date [file]
+  (let [absolute-path (.getCanonicalPath (new File file))
+        name-segments (str/split absolute-path #"/")
+        git-folder (str/join "/" (drop-last name-segments))]
+    (u/output-of
+     (sh/sh "/bin/bash" "-c"
+            (str " git -C " git-folder " --no-pager log -1 --date=short --pretty=format:%cd " absolute-path)))))

@@ -5,11 +5,12 @@
             [leiningen.leinsync.utils :as u]
             [digest :as d]
             [leiningen.core.main :as m]
-            [leiningen.leinsync.table-pretty-print :as pp]))
+            [leiningen.leinsync.table-pretty-print :as pp]
+            [leiningen.leinsync.git :as git]))
 
-(def hash-length 6)
-(def all-resources-different-marker "==> ")
-(def one-resource-different-marker "=[x]=> ")
+(def hash-length 5)
+(def all-resources-different-marker "=> ")
+(def one-resource-different-marker "[x]=> ")
 (def empty-occurence-str "X ")
 
 (defn aggregate [result [namespace project]]
@@ -34,7 +35,8 @@
 (defn resource-render [paths project]
   (if (empty? paths)
     {project empty-occurence-str}
-    {project (md5-hash paths)}))
+    {project {:md5       (md5-hash paths)
+              :timestamp (git/last-commit-date (first paths))}}))
 
 (defn resource-occurence [resource project project-desc render]
   (let [paths (concat (ns/resource->target-path resource (name project) project-desc)
@@ -67,7 +69,7 @@
   ([marker v]
    (if (empty? v)
      ""
-     {:marker marker :value (str/upper-case v)}))
+     {:marker marker :value v}))
   ([assertion-marker standard-marker assertion v]
    (if (assertion v)
      (mark-value-with assertion-marker v)
@@ -88,19 +90,20 @@
                 (vals m)))))
 
 (defn mark-2-different-values [m [first-v second-v] marker-fn]
-  (let [not-empty-values (remove empty? (vals m))
+  (let [not-empty-values (remove empty? (map :md5 (vals m)))
         first-freq (count (filter #(= first-v %) not-empty-values))
         second-freq (count (filter #(= second-v %) not-empty-values))]
     (cond
       (and (not= first-freq 1) (not= second-freq 1)) (marker-fn m)
-      (= first-freq second-freq) (marker-fn m #(or (= % first-v) (= % second-v)))
-      (> first-freq second-freq) (marker-fn m #(= % second-v))
-      (< first-freq second-freq) (marker-fn m #(= % first-v))
+      (= first-freq second-freq) (marker-fn m #(or (= (:md5 %) first-v) (= (:md5 %) second-v)))
+      (> first-freq second-freq) (marker-fn m #(= (:md5 %) second-v))
+      (< first-freq second-freq) (marker-fn m #(= (:md5 %) first-v))
       :else m)))
 
 (defn unterline-different-values [m]
   (let [unique-v (->> m
                       (vals)
+                      (map :md5)
                       (filter not-empty)
                       (distinct))]
     (cond
@@ -114,9 +117,12 @@
 (defn display-hash-value [v desired-length]
   (zipmap (keys v)
           (map (fn [x]
-                 (if (map? x)
-                   (str (:marker x) (sub-hash-str (:value x) desired-length))
-                   (sub-hash-str x desired-length)))
+                 (if (contains? x :marker)
+                   (str
+                    (:marker x)
+                    (get-in x [:value :timestamp]) " "
+                    (sub-hash-str (get-in x [:value :md5]) desired-length))
+                   (sub-hash-str (:md5 x) desired-length)))
                (vals v))))
 
 (defn pretty-print-structure [data selector desired-length]
@@ -140,8 +146,8 @@
   (m/info "     -" empty-occurence-str
           "                        :  the namespace/resource does not exist in the project although it has been specified")
   (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
-  (m/info "                                     ==>    hash : means that the resource doesn't match on all projects")
-  (m/info "                                     =[x]=> hash : means that the resource on this project is different from others")
+  (m/info "                                     =>    last-commit-date hash : means that the resource doesn't match on all projects")
+  (m/info "                                     [x]=> last-commit-date hash : means that the resource on this project is different from others")
   (pp/print-compact-table (sort-by :name m)))
 
 (defn list-resources [projects-desc selector]
