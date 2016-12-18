@@ -151,7 +151,7 @@
               {:name "ns2", :package "path.to", :project-1 "O X"}
               {:name "ns3", :package "path.to", :project-2 "O X"}
               {:name "ns4", :package "path.to", :project-1 "O X", :project-2 "O X"}]
-             (->> (l/build-resource-table projects ns/namespace-def project-occurence-render)
+             (->> (l/build-resource-table projects ns/namespace-def project-occurence-render :all)
                   (sort-by :name))))))
 
   (testing "print table structure for the resources"
@@ -167,5 +167,13 @@
       (is (= [{:name "csv", :package "r4", :project-2 "O X"}
               {:name "json", :package "r3", :project-2 "O X"}
               {:name "xml", :package "r1", :project-2 "O X"}]
-             (->> (l/build-resource-table projects ns/namespace-def project-occurence-render)
+
+             (->> (l/build-resource-table projects ns/namespace-def project-occurence-render :all)
                   (sort-by :name)))))))
+
+(deftest ^:unit reduce-list-with-option-test
+  (let [the-same {:package :p1 :name "ns1" :project-1 "f2a5c" :project-2 "f2a5c"}
+        ns-different {:package :p2 :name "ns2" :project-1 "[x] => 2016-12-12 7d441" :project-2 " [x] => 2016-12-08 487f3"}
+        data [the-same ns-different]]
+    (is (= data (l/reduce-list-with-option data :all)))
+    (is (= [ns-different] (l/reduce-list-with-option data :diff)))))

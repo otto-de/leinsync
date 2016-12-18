@@ -27,7 +27,10 @@
     :parse-fn keyword
     :validate [#(or (= :global %) (u/lazy-contains? profiles (name %)))
                (str "--deps must be one of: " (conj profiles "global"))]]
-   ["-l" "--list" "List resources to be synchronized"]
+   ["-l" "--list diff|all" "List resources to be synchronized"
+    :parse-fn keyword
+    :validate [#(or (= :all %) (= :diff %))
+               (str "--list must be diff or all ")]]
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
    ["-s" "--status" "Check status on target projects"]

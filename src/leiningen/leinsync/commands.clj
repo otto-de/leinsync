@@ -46,12 +46,12 @@
       (map projects)
       (git/log-git-status)))
 
-(defn list [_ target-projects {source-project :name}]
+(defn list [arg target-projects {source-project :name}]
   (let [all-projects-desc (-> target-projects
                               (conj source-project)
                               (pr/read-all-target-project-clj))]
-    (l/list-resources all-projects-desc ns/namespace-def)
-    (l/list-resources all-projects-desc ns/resource-def)))
+    (l/list-resources all-projects-desc ns/namespace-def arg)
+    (l/list-resources all-projects-desc ns/resource-def arg)))
 
 (defn update-projects! [_ target-projects source-project-desc]
   (let [target-projects-desc (pr/read-all-target-project-clj target-projects)

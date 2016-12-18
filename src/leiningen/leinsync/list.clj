@@ -135,22 +135,37 @@
    []
    data))
 
-(defn build-resource-table [projects selector render]
+(defn has-no-difference? [m]
+  (->>
+   (dissoc m :package :name)
+   (vals)
+   (map #(or (u/includes? % all-resources-different-marker)
+             (u/includes? % one-resource-different-marker)))
+   (reduce (fn [x y] (or x y)))))
+
+(defn reduce-list-with-option [coll option]
+  (if (= :diff option)
+    (filter has-no-difference? coll)
+    coll))
+
+(defn build-resource-table [projects selector render option]
   (-> projects
       (resource-name->project selector render)
       (merge-project-occurence)
-      (pretty-print-structure selector hash-length)))
+      (pretty-print-structure selector hash-length)
+      (reduce-list-with-option option)))
 
-(defn log-resouces-table [m resource-name]
-  (m/info "\n* List of" resource-name)
-  (m/info "     -" empty-occurence-str
-          "                        :  the namespace/resource does not exist in the project although it has been specified")
-  (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
-  (m/info "                                     =>    last-commit-date hash : means that the resource doesn't match on all projects")
-  (m/info "                                     [x]=> last-commit-date hash : means that the resource on this project is different from others")
-  (pp/print-compact-table (sort-by :name m)))
+(defn log-resouces-table [coll resource-name]
+  (when-not (empty? coll)
+    (m/info "\n* List of" resource-name)
+    (m/info "     -" empty-occurence-str
+            "                        :  the namespace/resource does not exist in the project although it has been specified")
+    (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
+    (m/info "                                     =>    last-commit-date hash : means that the resource doesn't match on all projects")
+    (m/info "                                     [x]=> last-commit-date hash : means that the resource on this project is different from others")
+    (pp/print-compact-table (sort-by :name coll))))
 
-(defn list-resources [projects-desc selector]
+(defn list-resources [projects-desc selector option]
   (-> projects-desc
-      (build-resource-table selector resource-render)
+      (build-resource-table selector resource-render option)
       (log-resouces-table (name (last selector)))))

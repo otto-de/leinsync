@@ -11,7 +11,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/math.combinatorics "0.1.3"]
                  [com.sun.jna/jna "3.0.9"]
-                 [com.github.jnr/jnr-posix "3.0.32"]
+                 [com.github.jnr/jnr-posix "3.0.33"]
                  [digest "1.4.5"]
                  [ancient-clj "0.3.14"]
                  [org.clojure/tools.cli "0.3.5"]]
