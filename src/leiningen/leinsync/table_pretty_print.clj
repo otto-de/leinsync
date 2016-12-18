@@ -1,16 +1,16 @@
 (ns leiningen.leinsync.table-pretty-print
-  (:require [leiningen.core.main :as m]))
+  (:require [leiningen.core.main :as m]
+            [clojure.string :as str]))
 
 (defn get-formatter [keys widths]
   (fn [left middle right row]
     (str left
-         (apply str
-                (interpose middle
-                           (for [[col fmt]
-                                 (map vector
-                                      (map #(get row %) keys)
-                                      (map #(str "%" % "s") widths))]
-                             (format fmt (str col)))))
+         (str/join (interpose middle
+                              (for [[col fmt]
+                                    (map vector
+                                         (map #(get row %) keys)
+                                         (map #(str "%" % "s") widths))]
+                                (format fmt (str col)))))
          right)))
 
 (defn max-width [rows key]
@@ -25,7 +25,7 @@
                   (reduce concat)
                   (distinct))
         widths (map (partial max-width rows) keys)
-        spacers (map #(apply str (repeat % "-")) widths)
+        spacers (map #(str/join (repeat % "-")) widths)
         formatter (get-formatter keys widths)]
     (when (seq rows)
       (log-fn "\n")

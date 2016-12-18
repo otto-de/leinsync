@@ -141,7 +141,7 @@
    (vals)
    (map #(or (u/includes? % all-resources-different-marker)
              (u/includes? % one-resource-different-marker)))
-   (reduce (fn [x y] (or x y)))))
+   (reduce #(or %1 %2))))
 
 (defn reduce-list-with-option [coll option]
   (if (= :diff option)
@@ -156,7 +156,7 @@
       (reduce-list-with-option option)))
 
 (defn log-resouces-table [coll resource-name]
-  (when-not (empty? coll)
+  (when (seq coll)
     (m/info "\n* List of" resource-name)
     (m/info "     -" empty-occurence-str
             "                        :  the namespace/resource does not exist in the project although it has been specified")
