@@ -64,11 +64,9 @@
   (let [all-projects-desc (-> target-projects
                               (conj source-project)
                               (pr/read-all-target-project-clj))]
-    (cond (= :global arg)
-          (deps/check-dependencies-of all-projects-desc [:dependencies])
-
-          :else
-          (deps/check-dependencies-of all-projects-desc [:profiles arg :dependencies]))))
+    (if (= :global arg)
+      (deps/check-dependencies-of all-projects-desc [:dependencies])
+      (deps/check-dependencies-of all-projects-desc [:profiles arg :dependencies]))))
 
 (def SYNC-COMMANDS {:default {:update "" :test ""}
                     :deps    deps

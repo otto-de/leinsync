@@ -1,9 +1,9 @@
 (ns leiningen.leinsync.list
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
+            [digest :as d]
             [leiningen.leinsync.namespaces :as ns]
             [leiningen.leinsync.utils :as u]
-            [digest :as d]
             [leiningen.core.main :as m]
             [leiningen.leinsync.table-pretty-print :as pp]
             [leiningen.leinsync.git :as git]))
@@ -14,10 +14,9 @@
 (def empty-occurence-str "X ")
 
 (defn aggregate [result [namespace project]]
-  (let [project-occurence (if (contains? result namespace)
+  (assoc result namespace (if (contains? result namespace)
                             (merge-with str project (get result namespace))
-                            project)]
-    (assoc result namespace project-occurence)))
+                            project)))
 
 (defn merge-project-occurence
   ([data] (merge-project-occurence data {}))
@@ -28,21 +27,20 @@
        (recur rest aggregated-result)))))
 
 (defn md5-hash [paths]
-  (str/join " | " (map
-                   #(d/digest "md5" (io/as-file %))
-                   paths)))
+  (->> paths
+       (map #(d/digest "md5" (io/as-file %)))
+       (str/join " | ")))
 
 (defn resource-render [paths project]
-  (if (empty? paths)
-    {project empty-occurence-str}
-    {project {:md5       (md5-hash paths)
-              :timestamp (git/last-commit-date (first paths))}}))
+  {project (if (empty? paths)
+             empty-occurence-str
+             {:md5       (md5-hash paths)
+              :timestamp (git/last-commit-date (first paths))})})
 
 (defn resource-occurence [resource project project-desc render]
-  (let [paths (concat (ns/resource->target-path resource (name project) project-desc)
-                      (ns/namespace->target-path resource (name project) project-desc))
-        existing-paths (filter u/exists? paths)]
-    (render existing-paths project)))
+  (let [all-paths (concat (ns/resource->target-path resource (name project) project-desc)
+                          (ns/namespace->target-path resource (name project) project-desc))]
+    (render (filter u/exists? all-paths) project)))
 
 (defn resource->project [project project-desc render]
   (fn [resource]
@@ -52,9 +50,9 @@
 (defn resource-name->project [projects selector render]
   (reduce-kv
    (fn [m project desc]
-     (into m (map
-              (resource->project project desc render)
-              (get-in desc selector))))
+     (->> (get-in desc selector)
+          (map (resource->project project desc render))
+          (into m)))
    []
    projects))
 

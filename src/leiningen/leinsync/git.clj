@@ -54,7 +54,8 @@
 (defn unpushed-commit-changes []
   (let [unpushed-changes (u/output-of (sh/sh "git" "diff" "origin/master..HEAD" "--name-only"))]
     {:unpushed-changes (if (empty? unpushed-changes)
-                         :no-change unpushed-changes)}))
+                         :no-change
+                         unpushed-changes)}))
 
 (defn reset-project! [project]
   (if (u/is-success? (sh/sh "git" "checkout" "."))
@@ -124,27 +125,28 @@
 
 (defn details-status [project projects-desc]
   (let [status-result (sh/sh "git" "status" "--short")]
-    (if (u/is-success? status-result)
-      (merge {:project project}
-             (get-details-status
-              (u/split-output-of status-result) projects-desc))
-      {:project project
-       :status  (status-failed)})))
+    (merge {:project project}
+           (if (u/is-success? status-result)
+             (-> status-result
+                 (u/split-output-of)
+                 (get-details-status projects-desc))
+             {:status (status-failed)}))))
 
 (defn commit! [project commit-msg]
   (let [commit-result (sh/sh "git" "commit" "-m" commit-msg)]
-    (if (u/is-success? commit-result)
-      {:project        project
-       :status         :commited
-       :commit-message commit-msg}
-      {:project        project
-       :status         (status-failed)
-       :commit-message commit-msg
-       :cause          (u/sub-str (u/error-of commit-result " ") output-length)})))
+    (merge {:project        project
+            :commit-message commit-msg}
+           (if (u/is-success? commit-result)
+             {:status :commited}
+             {:status (status-failed)
+              :cause  (-> commit-result
+                          (u/error-of " ")
+                          (u/sub-str output-length))}))))
 
 (defn sync-resources-of [changed-files untracked-files projects-desc]
-  (filter #(ns/sync-resources? projects-desc %)
-          (concat changed-files untracked-files)))
+  (->> untracked-files
+       (concat changed-files)
+       (filter #(ns/sync-resources? projects-desc %))))
 
 (defn commit-project! [project commit-msg projects-desc]
   (let [add-status (->> projects-desc
@@ -164,8 +166,10 @@
 
 (defn last-commit-date [file]
   (let [absolute-path (.getCanonicalPath (new File file))
-        name-segments (str/split absolute-path #"/")
-        git-folder (str/join "/" (drop-last name-segments))]
-    (u/output-of
-     (sh/sh "/bin/bash" "-c"
-            (str " git -C " git-folder " --no-pager log -1 --date=short --pretty=format:%cd " absolute-path)))))
+        git-folder (->> (str/split absolute-path #"/")
+                        (drop-last)
+                        (str/join "/"))]
+    (->> absolute-path
+         (str " git -C " git-folder " --no-pager log -1 --date=short --pretty=format:%cd ")
+         (sh/sh "/bin/bash" "-c")
+         (u/output-of))))

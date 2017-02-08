@@ -1,16 +1,16 @@
 (ns leiningen.sync
   (:refer-clojure :exclude [sync])
-  (:require [leiningen.leinsync.utils :as u]
-            [leiningen.leinsync.commands :as c]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.tools.cli :as cli]
-            [leiningen.core.main :as m]))
+            [leiningen.leinsync.utils :as u]
+            [leiningen.core.main :as m]
+            [leiningen.leinsync.commands :as c]))
 
 (defn find-command [options commands]
-  (let [option-keys (keys options)]
-    (->> option-keys
-         (select-keys commands)
-         (reduce-kv (fn [m k f] (conj m (partial u/run! f (k options)))) []))))
+  (->> options
+       (keys)
+       (select-keys commands)
+       (reduce-kv (fn [m k f] (conj m (partial u/run! f (k options)))) [])))
 
 (defn ->commands [options commands-map]
   (let [commands (find-command options commands-map)]
@@ -62,11 +62,15 @@
     (set (map name (keys profiles)))))
 
 (defn sync [project-desc & args]
-  (let [profiles (get-profiles project-desc)
-        {:keys [options arguments summary errors]} (cli/parse-opts args (cli-options profiles))]
+  (let [{:keys [options arguments summary errors]} (->> project-desc
+                                                        (get-profiles)
+                                                        (cli-options)
+                                                        (cli/parse-opts args))]
     (cond
       (not-empty errors) (m/info (str/join " " errors))
-      (= 1 (count arguments))
-      (execute-program (u/split (first arguments)) project-desc options)
+      (= 1 (count arguments)) (-> arguments
+                                  (first)
+                                  (u/split)
+                                  (execute-program project-desc options))
       :else (m/abort (usage summary)))
     (m/exit)))

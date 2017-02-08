@@ -11,6 +11,5 @@
       (p/read-raw)))
 
 (defn read-all-target-project-clj [target-projects]
-  (zipmap
-   (map keyword target-projects)
-   (map read-target-project-clj target-projects)))
+  (zipmap (map keyword target-projects)
+          (map read-target-project-clj target-projects)))

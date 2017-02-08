@@ -1,7 +1,7 @@
 (ns leiningen.leinsync.deps
-  (:require [leiningen.leinsync.table-pretty-print :as pp]
-            [ancient-clj.core :as ancient]
-            [leiningen.core.main :as m]))
+  (:require [ancient-clj.core :as ancient]
+            [leiningen.core.main :as m]
+            [leiningen.leinsync.table-pretty-print :as pp]))
 
 (def different-marker "=> ")
 (def ancient-latest-version-fn ancient/latest-version-string!)
@@ -10,9 +10,9 @@
 (defn repositories-opt [repos]
   (if (empty? repos)
     {:repositories ancient/default-repositories
-     :qualified? false}
+     :qualified?   false}
     {:repositories repos
-     :qualified? false}))
+     :qualified?   false}))
 
 (defn last-version-of [version-fn repos artifact]
   (try
@@ -21,25 +21,24 @@
     (catch Exception _ :unknown)))
 
 (defn flat-deps-list [p deps-list]
-  (into {}
-        (map
-         (fn [[dep version]]
-           {(keyword dep) {p version}})
-         deps-list)))
+  (into {} (map (fn [[dep version]] {(keyword dep) {p version}}) deps-list)))
 
 (defn deps->project [selector projects-desc]
   (reduce-kv
    (fn [m k v]
-     (into m (flat-deps-list k (get-in v selector))))
+     (->> selector
+          (get-in v)
+          (flat-deps-list k)
+          (into m)))
    []
    projects-desc))
 
 (defn merge-deps [deps]
   (reduce
-   (fn [x1 [dep data]]
-     (if (contains? x1 dep)
-       (assoc x1 dep (merge data (get x1 dep)))
-       (assoc x1 dep data)))
+   (fn [x [dep data]]
+     (assoc x dep (if (contains? x dep)
+                    (merge data (get x dep))
+                    data)))
    {}
    deps))
 
@@ -54,15 +53,22 @@
 
 (defn mark-for-possible-update [last-version-map marker]
   (fn [[k v]]
-    (let [last-version (get last-version-map k)
-          deps-info {:name k :last-version last-version}]
-      (if (has-newer-version? v last-version)
-        (merge deps-info (zipmap (keys v) (map #(str marker %) (vals v))))
-        (merge deps-info v)))))
+    (let [last-version (get last-version-map k)]
+      (merge {:name         k
+              :last-version last-version}
+             (if (has-newer-version? v last-version)
+               (->> v
+                    (vals)
+                    (map #(str marker %))
+                    (zipmap (keys v)))
+               v)))))
 
 (defn parallel-get-version [latest-version-fn repos deps]
-  (let [tasks (map #(future {% (last-version-of latest-version-fn repos %)}) deps)]
-    (reduce merge (doall (pmap deref tasks)))))
+  (->> deps
+       (map #(future {% (last-version-of latest-version-fn repos %)}))
+       (pmap deref)
+       (doall)
+       (reduce merge)))
 
 (defn pretty-print-structure [enrich-version-fn deps]
   (let [last-version-map (enrich-version-fn (keys deps))]
@@ -88,7 +94,9 @@
   (pp/print-compact-table m))
 
 (defn check-dependencies-of [projects-desc selector]
-  (let [enrich-version-fn (partial parallel-get-version ancient-latest-version-fn (repositories-of projects-desc))]
+  (let [enrich-version-fn (->> projects-desc
+                               (repositories-of)
+                               (partial parallel-get-version ancient-latest-version-fn))]
     (->> projects-desc
          (deps->project selector)
          (merge-deps)

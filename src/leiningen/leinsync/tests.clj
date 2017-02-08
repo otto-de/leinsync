@@ -1,7 +1,7 @@
 (ns leiningen.leinsync.tests
-  (:require [leiningen.leinsync.utils :as u]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [leiningen.core.main :as m]
+            [leiningen.leinsync.utils :as u]
             [leiningen.leinsync.table-pretty-print :as pp]))
 
 (def test-cmd-def [:ns-sync :test-cmd])

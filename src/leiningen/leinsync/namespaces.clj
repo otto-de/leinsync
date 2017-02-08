@@ -1,9 +1,9 @@
 (ns leiningen.leinsync.namespaces
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
+            [leiningen.core.main :as m]
             [leiningen.leinsync.utils :as u]
-            [leiningen.leinsync.project-reader :as pr]
-            [leiningen.core.main :as m]))
+            [leiningen.leinsync.project-reader :as pr]))
 
 (def namespace-def [:ns-sync :namespaces])
 (def resource-def [:ns-sync :resources])
@@ -28,11 +28,14 @@
                        (str ".clj"))})
 
 (defn parse-resource-name [resource-name]
-  (if (and (not (nil? resource-name)) (u/includes? resource-name ".clj"))
+  (if (and (not (nil? resource-name))
+           (u/includes? resource-name ".clj"))
     (-> resource-name
-        (str/replace  #"_" "-")
-        (str/replace  #".clj" ""))
+        (str/replace #"_" "-")
+        (str/replace #".clj" ""))
     resource-name))
+
+(def RESOURCE-NOT-FOUND {:resource-path :not-found :resource-name :not-found})
 
 (defn path->namespace [path project-desc]
   (let [source-folders (set (concat (get-in project-desc src-path-def)
@@ -46,39 +49,29 @@
         slash-path-segments (str/join "/" path-segments)]
     (cond
       (and (contains? source-folders folder)
-           (contains? namespaces-list dot-path-segments))
-      {:resource-path folder
-       :resource-name dot-path-segments}
+           (contains? namespaces-list dot-path-segments)) {:resource-path folder
+                                                           :resource-name dot-path-segments}
       (and (contains? resources-folders folder)
-           (contains? resources-list slash-path-segments))
-      {:resource-path folder
-       :resource-name slash-path-segments}
-
-      :else {:resource-path :not-found
-             :resource-name :not-found})))
+           (contains? resources-list slash-path-segments)) {:resource-path folder
+                                                            :resource-name slash-path-segments}
+      :else RESOURCE-NOT-FOUND)))
 
 (defn sync-resources? [projects-desc path]
-  (not= (path->namespace path projects-desc)
-        {:resource-path :not-found
-         :resource-name :not-found}))
+  (not= (path->namespace path projects-desc) RESOURCE-NOT-FOUND))
 
 (defn resource->target-path [resource target-project target-project-desc]
-  (let [resource-folders (get-in target-project-desc resource-path-def)]
-    (map
-     #(str (pr/->target-project-path target-project) "/" % "/" resource)
-     resource-folders)))
+  (->> resource-path-def
+       (get-in target-project-desc)
+       (map #(str (pr/->target-project-path target-project) "/" % "/" resource))))
 
 (defn resource->source-path [resource source-project-desc]
-  (map
-   #(str % "/" resource)
-   (get-in source-project-desc resource-path-def)))
+  (->> resource-path-def
+       (get-in source-project-desc)
+       (map #(str % "/" resource))))
 
 (defn namespace->target-path [namespace target-project target-project-desc]
-  (let [{folders :src-or-test
-         ns-path :namespace-path} (namespace->path namespace target-project-desc)]
-    (map
-     #(str (pr/->target-project-path target-project) "/" % "/" ns-path)
-     folders)))
+  (let [{folders :src-or-test ns-path :namespace-path} (namespace->path namespace target-project-desc)]
+    (map #(str (pr/->target-project-path target-project) "/" % "/" ns-path) folders)))
 
 (defn namespace->source-path [namespace source-project-desc]
   (let [{folders :src-or-test ns-path :namespace-path} (namespace->path namespace source-project-desc)]
@@ -86,9 +79,7 @@
 
 (defn update-files! [from-file to-file]
   (io/make-parents (io/file to-file))
-  (spit
-   (io/file to-file)
-   (slurp (io/file from-file))))
+  (spit (io/file to-file) (slurp (io/file from-file))))
 
 (defn should-update? [entry-definition entry target-project-desc]
   (-> target-project-desc
@@ -97,23 +88,21 @@
       (contains? entry)))
 
 (defn initial-question [namespace project]
-  (str "* ==> The location of " namespace " on " (str/upper-case project)
-       " could not be determined.\n"
+  (str "* ==> The location of " namespace " on " (str/upper-case project) " could not be determined.\n"
        "      Please choose one of options (a number):"
-       (str "\n         + -1 -> to skip updating " namespace)))
+       "\n         + -1 -> to skip updating "
+       namespace))
 
 (defn log-warning [name target-project]
   (m/info "* WARNING: Could not update" name "on project" target-project
           "\n    ==>" name "may not exist on the source project"))
 
 (defn localtion-question-with
-  ([ns project [first & rest]]
-   (localtion-question-with (initial-question ns project) 0 first rest))
+  ([ns project [first & rest]] (localtion-question-with (initial-question ns project) 0 first rest))
   ([question index first [ffirst rrest]]
    (if (nil? first)
      question
-     (recur (str question "\n         +  " index " -> " first)
-            (inc index) ffirst rrest))))
+     (recur (str question "\n         +  " index " -> " first) (inc index) ffirst rrest))))
 
 (defn ask-for-localtion
   ([namespace paths] (ask-for-localtion namespace "source project" paths))
@@ -160,33 +149,29 @@
 
 (defn safe-update! [resource-name target-project source-paths target-paths]
   (m/info "* Update" resource-name "to the project" (str/upper-case target-project))
-  (let [existing-source-paths (filter u/exists? source-paths)
-        existing-target-paths (filter u/exists? target-paths)
-        {source :source target :target} (determine-source-target resource-name
-                                                                 existing-source-paths
-                                                                 existing-target-paths
-                                                                 target-paths
-                                                                 target-project
-                                                                 ask-for-source-and-target)]
+  (let [{:keys [source target]} (determine-source-target resource-name
+                                                         (filter u/exists? source-paths)
+                                                         (filter u/exists? target-paths)
+                                                         target-paths
+                                                         target-project
+                                                         ask-for-source-and-target)]
     (if (and (not= source :unknown) (not= target :unknown))
       (update-files! source target)
       (log-warning resource-name target-project))))
 
 (defn update-name-space! [name-space target-project source-project-desc target-project-desc]
   (if (should-update? namespace-def name-space target-project-desc)
-    (safe-update!
-     name-space
-     target-project
-     (namespace->source-path name-space source-project-desc)
-     (namespace->target-path name-space target-project target-project-desc))))
+    (safe-update! name-space
+                  target-project
+                  (namespace->source-path name-space source-project-desc)
+                  (namespace->target-path name-space target-project target-project-desc))))
 
 (defn update-resource! [resource target-project source-project-desc target-project-desc]
   (if (should-update? resource-def resource target-project-desc)
-    (safe-update!
-     resource
-     target-project
-     (resource->source-path resource source-project-desc)
-     (resource->target-path resource target-project target-project-desc))))
+    (safe-update! resource
+                  target-project
+                  (resource->source-path resource source-project-desc)
+                  (resource->target-path resource target-project target-project-desc))))
 
 (defn update-namespaces! [namespaces source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE NAMESPACES ***********************\n*")

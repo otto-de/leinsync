@@ -18,8 +18,7 @@
     (.chdir (POSIXFactory/getPOSIX) absolute-path)
     (System/setProperty "user.dir" absolute-path)))
 
-(defn is-success? [result]
-  (zero? (:exit result)))
+(defn is-success? [result] (zero? (:exit result)))
 
 (defn sub-str [input length]
   (let [input-length (count input)]
@@ -30,17 +29,26 @@
 (declare output-of)
 
 (defn split-output-of [result]
-  (str/split-lines (str/trim (output-of result))))
+  (->> result
+       (output-of)
+       (str/trim)
+       (str/split-lines)))
 
 (defn output-of
   ([result] (:out result))
   ([result separator]
-   (str/join separator (split-output-of result))))
+   (->> result
+        (split-output-of)
+        (str/join separator))))
 
 (defn error-of
   ([result] (:err result))
   ([result separator]
-   (str/join separator (str/split-lines (str/trim (error-of result))))))
+   (->> result
+        (error-of)
+        (str/trim)
+        (str/split-lines)
+        (str/join separator))))
 
 (defn split [input] (str/split input #","))
 
