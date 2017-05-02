@@ -7,6 +7,8 @@
 
 [![Clojars Project](http://clojars.org/sync/latest-version.svg)](https://clojars.org/sync)
 
+[![](https://codescene.io/projects/1178/status.svg)](https://codescene.io/projects/1178/jobs/latest-successful/results)
+
 Our system consists of a set of micro services written in clojure.
 Although we have codes shared between these clojure projects, we have consciously decided against shared libraries.
 By doing in this way, we gained a greater flexibility to adjust/change them.
