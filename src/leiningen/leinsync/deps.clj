@@ -89,14 +89,15 @@
        (apply hash-map)))
 
 (defn log-resources-table [selector m]
-  (m/info "* List of dependencies of" selector)
-  (m/info "  " different-marker "version :  means that the dependency on this project is out-of-date")
-  (pp/print-compact-table m))
+  (if (seq m)
+    (do
+      (m/info "* List of dependencies of" selector)
+      (m/info "  " different-marker "version :  means that the dependency on this project is out-of-date")
+      (pp/print-compact-table m))
+    (m/info "* No dependency has been found for" selector)))
 
 (defn check-dependencies-of [projects-desc selector]
-  (let [enrich-version-fn (->> projects-desc
-                               (repositories-of)
-                               (partial parallel-get-version ancient-latest-version-fn))]
+  (let [enrich-version-fn (partial parallel-get-version ancient-latest-version-fn (repositories-of projects-desc))]
     (->> projects-desc
          (deps->project selector)
          (merge-deps)
