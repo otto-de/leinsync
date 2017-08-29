@@ -99,9 +99,7 @@
          (recur (capture-input question)))))))
 
 (defn exists? [path]
-  (-> path
-      (io/as-file)
-      (.exists)))
+  (.exists (io/as-file path)))
 
 (defn cartesian-product [c1 c2]
   (combo/cartesian-product c1 c2))
@@ -110,22 +108,16 @@
   (if verbose
     (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd") " "))
     (m/info "... Executing " (str/join " " cmd)))
-  (let [result (apply sh/sh cmd)
-        cmd-str (str/join " " cmd)]
-    (if (is-success? result)
+  (let [cmd-str (str/join " " cmd)]
+    (if (is-success? (apply sh/sh cmd))
       {:result :passed :cmd cmd-str}
       {:result :failed :cmd cmd-str})))
 
 (defn get-artifact-version [name]
-  (let [path (str "META-INF/maven/" name "/" name "/pom.properties")
-        props (io/resource path)]
-    (if props
-      (with-open [stream (io/input-stream props)]
-        (let [props (doto (Properties.) (.load stream))]
-          (.getProperty props "version"))))))
-
-(defn includes? [s substr]
-  (.contains s substr))
+  (if-let [props (io/resource (str "META-INF/maven/" name "/" name "/pom.properties"))]
+    (with-open [stream (io/input-stream props)]
+      (let [props (doto (Properties.) (.load stream))]
+        (.getProperty props "version")))))
 
 (defn lazy-contains? [coll key]
   (boolean (some #(= % key) coll)))

@@ -88,7 +88,7 @@
        (map take-repo-url)
        (apply hash-map)))
 
-(defn log-resouces-table [selector m]
+(defn log-resources-table [selector m]
   (m/info "* List of dependencies of" selector)
   (m/info "  " different-marker "version :  means that the dependency on this project is out-of-date")
   (pp/print-compact-table m))
@@ -101,4 +101,4 @@
          (deps->project selector)
          (merge-deps)
          (pretty-print-structure enrich-version-fn)
-         (log-resouces-table selector))))
+         (log-resources-table selector))))

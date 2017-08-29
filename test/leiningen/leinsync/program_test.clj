@@ -46,10 +46,6 @@
   (is (= "abcde" (u/sub-str "abcde" 7)))
   (is (= " ..." (u/sub-str "abcde" 0))))
 
-(deftest ^:unit includes?
-  (is (true? (u/includes? "abcde" "a")))
-  (is (false? (u/includes? "abcde" "f"))))
-
 (deftest ^:unit is-success?
   (is (true? (u/is-success? {:exit 0})))
   (is (false? (u/is-success? {:exit 1}))))

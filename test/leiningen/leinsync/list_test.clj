@@ -18,7 +18,7 @@
               :b (l/mark-value-with l/all-resources-different-marker (:b m))
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
               :d (l/mark-value-with l/all-resources-different-marker (:d m))}
-             (l/unterline-different-values m))))
+             (l/underline-different-values m))))
 
     (let [m {:a {:md5 "1"}
              :b {:md5 "1"}
@@ -30,7 +30,7 @@
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
               :d (l/mark-value-with l/all-resources-different-marker (:d m))
               :e (l/mark-value-with l/all-resources-different-marker (:e m))}
-             (l/unterline-different-values m)))))
+             (l/underline-different-values m)))))
 
   (testing "one resources is different"
     (let [m {:a {:md5 "1"}
@@ -41,7 +41,7 @@
               :b (l/mark-value-with l/all-resources-different-marker (:b m))
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
               :d (l/mark-value-with l/one-resource-different-marker (:d m))}
-             (l/unterline-different-values m)))))
+             (l/underline-different-values m)))))
 
   (testing "edge case where one project does not has this namespace"
     (let [m {:a {:md5 "1"}
@@ -54,13 +54,13 @@
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
               :d (l/mark-value-with l/one-resource-different-marker (:d m))
               :e (l/mark-value-with l/all-resources-different-marker (:e m))}
-             (l/unterline-different-values m)))))
+             (l/underline-different-values m)))))
 
   (testing "edge case 2 different entries"
     (let [m {:a {:md5 "1"} :b {:md5 "2"}}]
       (is (= {:a (l/mark-value-with l/one-resource-different-marker (:a m))
               :b (l/mark-value-with l/one-resource-different-marker (:b m))}
-             (l/unterline-different-values m))))))
+             (l/underline-different-values m))))))
 
 (deftest ^:unit occurence-map-for
   (is (= {:name "name", :package "path.to.ns"} (l/resource->package-and-name "path.to.ns.name" ns/namespace-def)))
@@ -90,15 +90,15 @@
 (deftest ^:unit mark-as-diffrent
   (is (= {:k1 {:marker "=> " :value {:md5 "12345678"}},
           :k2 {:marker "=> " :value {:md5 "123456789"}}}
-         (l/mark-as-diffrent {:k1 {:md5 "12345678"}
-                              :k2 {:md5 "123456789"}})))
+         (l/mark-as-different {:k1 {:md5 "12345678"}
+                               :k2  {:md5 "123456789"}})))
   (is (= {:k1 {:marker "[x]=> "
                :value  {:md5 "foo"}}
           :k2 {:marker "=> "
                :value  {:md5 "bar"}}}
-         (l/mark-as-diffrent {:k1 {:md5 "foo"}
-                              :k2 {:md5 "bar"}}
-                             #(= "foo" (:md5 %))))))
+         (l/mark-as-different {:k1 {:md5 "foo"}
+                               :k2  {:md5 "bar"}}
+                              #(= "foo" (:md5 %))))))
 
 (deftest ^:unit mark-2-different-values
   (let [marker-fn (fn ([_] {}) ([_ a] {:assertion a}))]

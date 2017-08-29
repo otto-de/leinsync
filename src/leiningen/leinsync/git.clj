@@ -137,7 +137,7 @@
     (merge {:project        project
             :commit-message commit-msg}
            (if (u/is-success? commit-result)
-             {:status :commited}
+             {:status :committed}
              {:status (status-failed)
               :cause  (-> commit-result
                           (u/error-of " ")

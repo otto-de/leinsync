@@ -19,7 +19,7 @@
          (map #(count (str (get % key))) rows)))
 
 (defn pretty-print-table
-  [rows with-extra-seperator-line log-fn]
+  [rows with-extra-separator-line log-fn]
   (let [keys (->> (map keys rows)
                   (distinct)
                   (reduce concat)
@@ -33,9 +33,9 @@
       (log-fn (formatter "|-" "-+-" "-|" (zipmap keys spacers)))
       (doseq [row rows]
         (log-fn (formatter "| " " | " " |" row))
-        (if with-extra-seperator-line
+        (if with-extra-separator-line
           (log-fn (formatter "|-" "---" "-|" (zipmap keys spacers)))))
-      (if-not with-extra-seperator-line
+      (if-not with-extra-separator-line
         (log-fn (formatter "|-" "---" "-|" (zipmap keys spacers))))
       (log-fn "\n"))))
 

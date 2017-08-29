@@ -29,7 +29,7 @@
 
 (defn parse-resource-name [resource-name]
   (if (and (not (nil? resource-name))
-           (u/includes? resource-name ".clj"))
+           (str/includes? resource-name ".clj"))
     (-> resource-name
         (str/replace #"_" "-")
         (str/replace #".clj" ""))
@@ -97,26 +97,26 @@
   (m/info "* WARNING: Could not update" name "on project" target-project
           "\n    ==>" name "may not exist on the source project"))
 
-(defn localtion-question-with
-  ([ns project [first & rest]] (localtion-question-with (initial-question ns project) 0 first rest))
+(defn location-question-with
+  ([ns project [first & rest]] (location-question-with (initial-question ns project) 0 first rest))
   ([question index first [ffirst rrest]]
    (if (nil? first)
      question
      (recur (str question "\n         +  " index " -> " first) (inc index) ffirst rrest))))
 
-(defn ask-for-localtion
-  ([namespace paths] (ask-for-localtion namespace "source project" paths))
+(defn ask-for-location
+  ([namespace paths] (ask-for-location namespace "source project" paths))
   ([namespace project paths]
    (-> namespace
-       (localtion-question-with project paths)
+       (location-question-with project paths)
        (u/ask-user (partial u/is-number (count paths)))
        (read-string))))
 
 (defn ask-for-source-and-target [name target-project existing-source-paths target-paths]
   (let [source-location (if (= 1 (count existing-source-paths))
-                          0 (ask-for-localtion name existing-source-paths))
+                          0 (ask-for-location name existing-source-paths))
         target-location (if (= 1 (count target-paths))
-                          0 (ask-for-localtion name target-project target-paths))]
+                          0 (ask-for-location name target-project target-paths))]
     (if (and (>= source-location 0) (>= target-location 0))
       {:source (nth existing-source-paths source-location)
        :target (nth target-paths target-location)}
@@ -134,7 +134,7 @@
          (= 1 (count existing-target-paths)))
     {:source (first existing-source-paths) :target (first existing-target-paths)}
 
-    ;source  exists, target doen't exist but its location is unique
+    ;source  exists, target doesn't exist but its location is unique
     (and (= 1 (count existing-source-paths))
          (zero? (count existing-target-paths))
          (= 1 (count target-paths)))
@@ -178,7 +178,7 @@
   (doseq [[namespace target-project] namespaces]
     (update-name-space! namespace target-project source-project-desc (get target-projects-desc (keyword target-project)))))
 
-(defn update-resouces! [resources source-project-desc target-projects-desc]
+(defn update-resources! [resources source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE RESOURCES ***********************\n*")
   (doseq [[resource target-project] resources]
     (update-resource! resource target-project source-project-desc (get target-projects-desc (keyword target-project)))))

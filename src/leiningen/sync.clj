@@ -34,7 +34,7 @@
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
    ["-s" "--status" "Check status on target projects"]
-   ["-r" "--reset" "Reset all the uncommited changes in all target projects"]
+   ["-r" "--reset" "Reset all the uncommitted changes in all target projects"]
    ["-c" "--commit" "Commit change on target projects"]
    ["-p" "--pull" "Pull rebase on target projects"]
    ["-u" "--push" "Push on target projects"]])

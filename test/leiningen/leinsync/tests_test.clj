@@ -17,9 +17,9 @@
 
 (deftest ^:unit unterline-failed-cmd
   (is (= {:run :passed}
-         (t/unterline-failed-cmd {:cmd :run :result :passed})))
+         (t/underline-failed-cmd {:cmd :run :result :passed})))
   (is (= {:run (str "==> " :failed)}
-         (t/unterline-failed-cmd {:cmd :run :result :failed}))))
+         (t/underline-failed-cmd {:cmd :run :result :failed}))))
 
 (deftest ^:unit merge-test-status
   (is (= :failed

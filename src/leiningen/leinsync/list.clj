@@ -11,20 +11,20 @@
 (def hash-length 5)
 (def all-resources-different-marker "=> ")
 (def one-resource-different-marker "[x]=> ")
-(def empty-occurence-str "X ")
+(def empty-occurrence-str "X ")
 
 (defn aggregate [result [namespace project]]
   (assoc result namespace (if (contains? result namespace)
                             (merge-with str project (get result namespace))
                             project)))
 
-(defn merge-project-occurence
-  ([data] (merge-project-occurence data {}))
-  ([[first & rest] result]
-   (let [aggregated-result (aggregate result first)]
-     (if (empty? rest)
+(defn merge-project-occurrence
+  ([data] (merge-project-occurrence data {}))
+  ([[first-result & rest-result] result]
+   (let [aggregated-result (aggregate result first-result)]
+     (if (empty? rest-result)
        aggregated-result
-       (recur rest aggregated-result)))))
+       (recur rest-result aggregated-result)))))
 
 (defn md5-hash [paths]
   (->> paths
@@ -33,11 +33,11 @@
 
 (defn resource-render [paths project]
   {project (if (empty? paths)
-             empty-occurence-str
+             empty-occurrence-str
              {:md5       (md5-hash paths)
               :timestamp (git/last-commit-date (first paths))})})
 
-(defn resource-occurence [resource project project-desc render]
+(defn resource-occurrence [resource project project-desc render]
   (let [all-paths (concat (ns/resource->target-path resource (name project) project-desc)
                           (ns/namespace->target-path resource (name project) project-desc))]
     (render (filter u/exists? all-paths) project)))
@@ -45,7 +45,7 @@
 (defn resource->project [project project-desc render]
   (fn [resource]
     [(keyword resource)
-     (resource-occurence resource project project-desc render)]))
+     (resource-occurrence resource project project-desc render)]))
 
 (defn resource-name->project [projects selector render]
   (reduce-kv
@@ -73,7 +73,7 @@
      (mark-value-with assertion-marker v)
      (mark-value-with standard-marker v))))
 
-(defn mark-as-diffrent
+(defn mark-as-different
   ([m]
    (zipmap (keys m)
            (map (partial mark-value-with
@@ -98,7 +98,7 @@
       (< first-freq second-freq) (marker-fn m #(= (:md5 %) first-v))
       :else m)))
 
-(defn unterline-different-values [m]
+(defn underline-different-values [m]
   (let [unique-v (->> m
                       (vals)
                       (map :md5)
@@ -106,29 +106,29 @@
                       (distinct))]
     (cond
       (= 1 (count unique-v)) m
-      (= 2 (count unique-v)) (mark-2-different-values m unique-v mark-as-diffrent)
-      :else (mark-as-diffrent m))))
+      (= 2 (count unique-v)) (mark-2-different-values m unique-v mark-as-different)
+      :else (mark-as-different m))))
 
 (defn sub-hash-str [hash-str desired-length]
   (subs hash-str 0 (min desired-length (count hash-str))))
 
+(defn compact-hash-str [desired-length m]
+  (if (contains? m :marker)
+    (str
+     (:marker m)
+     (get-in m [:value :timestamp]) " "
+     (sub-hash-str (get-in m [:value :md5] "?????") desired-length))
+    (sub-hash-str (:md5 m) desired-length)))
+
 (defn display-hash-value [v desired-length]
-  (zipmap (keys v)
-          (map (fn [x]
-                 (if (contains? x :marker)
-                   (str
-                    (:marker x)
-                    (get-in x [:value :timestamp]) " "
-                    (sub-hash-str (get-in x [:value :md5]) desired-length))
-                   (sub-hash-str (:md5 x) desired-length)))
-               (vals v))))
+  (zipmap (keys v) (map (partial compact-hash-str desired-length) (vals v))))
 
 (defn pretty-print-structure [data selector desired-length]
   (reduce-kv
    (fn [m k v] (conj m (merge
                         (resource->package-and-name k selector)
                         (-> v
-                            (unterline-different-values)
+                            (underline-different-values)
                             (display-hash-value desired-length)))))
    []
    data))
@@ -137,8 +137,8 @@
   (->>
    (dissoc m :package :name)
    (vals)
-   (map #(or (u/includes? % all-resources-different-marker)
-             (u/includes? % one-resource-different-marker)))
+   (map #(or (str/includes? % all-resources-different-marker)
+             (str/includes? % one-resource-different-marker)))
    (reduce #(or %1 %2))))
 
 (defn reduce-list-with-option [coll option]
@@ -149,14 +149,14 @@
 (defn build-resource-table [projects selector render option]
   (-> projects
       (resource-name->project selector render)
-      (merge-project-occurence)
+      (merge-project-occurrence)
       (pretty-print-structure selector hash-length)
       (reduce-list-with-option option)))
 
-(defn log-resouces-table [coll resource-name]
+(defn log-resources-table [coll resource-name]
   (when (seq coll)
     (m/info "\n* List of" resource-name)
-    (m/info "     -" empty-occurence-str
+    (m/info "     -" empty-occurrence-str
             "                        :  the namespace/resource does not exist in the project although it has been specified")
     (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
     (m/info "                                     =>    last-commit-date hash : means that the resource doesn't match on all projects")
@@ -166,4 +166,4 @@
 (defn list-resources [projects-desc selector option]
   (-> projects-desc
       (build-resource-table selector resource-render option)
-      (log-resouces-table (name (last selector)))))
+      (log-resources-table (name (last selector)))))

@@ -47,9 +47,7 @@
       (git/log-git-status)))
 
 (defn list [arg target-projects {source-project :name}]
-  (let [all-projects-desc (-> target-projects
-                              (conj source-project)
-                              (pr/read-all-target-project-clj))]
+  (let [all-projects-desc (pr/read-all-target-project-clj (conj target-projects source-project))]
     (l/list-resources all-projects-desc ns/namespace-def arg)
     (l/list-resources all-projects-desc ns/resource-def arg)))
 
@@ -58,15 +56,11 @@
         namespaces (u/cartesian-product (get-in source-project-desc ns/namespace-def) target-projects)
         resources (u/cartesian-product (get-in source-project-desc ns/resource-def) target-projects)]
     (if (seq namespaces) (ns/update-namespaces! namespaces source-project-desc target-projects-desc))
-    (if (seq resources) (ns/update-resouces! resources source-project-desc target-projects-desc))))
+    (if (seq resources) (ns/update-resources! resources source-project-desc target-projects-desc))))
 
 (defn deps [arg target-projects {source-project :name}]
-  (let [all-projects-desc (-> target-projects
-                              (conj source-project)
-                              (pr/read-all-target-project-clj))]
-    (if (= :global arg)
-      (deps/check-dependencies-of all-projects-desc [:dependencies])
-      (deps/check-dependencies-of all-projects-desc [:profiles arg :dependencies]))))
+  (deps/check-dependencies-of (pr/read-all-target-project-clj (conj target-projects source-project))
+                              (if (= :global arg) [:dependencies] [:profiles arg :dependencies])))
 
 (def SYNC-COMMANDS {:default {:update "" :test ""}
                     :deps    deps
