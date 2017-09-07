@@ -113,12 +113,14 @@
   (subs hash-str 0 (min desired-length (count hash-str))))
 
 (defn compact-hash-str [desired-length m]
-  (if (contains? m :marker)
-    (str
-     (:marker m)
-     (get-in m [:value :timestamp]) " "
-     (sub-hash-str (get-in m [:value :md5] "?????") desired-length))
-    (sub-hash-str (:md5 m) desired-length)))
+  (if (map? m)
+    (if (contains? m :marker)
+      (str
+       (:marker m)
+       (get-in m [:value :timestamp]) " "
+       (sub-hash-str (get-in m [:value :md5] "?????") desired-length))
+      (sub-hash-str (:md5 m) desired-length))
+    m))
 
 (defn display-hash-value [v desired-length]
   (zipmap (keys v) (map (partial compact-hash-str desired-length) (vals v))))
