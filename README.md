@@ -73,15 +73,17 @@ container-folder/
 * lein sync [options] "project-1,project-2,project-3"
 
 Options:
-   + --deps    :  List all profile/global deps on projects.
-   + --list    :  List resources to be synchronized.
-   + --notest  :  Synchronize shared code base without executing tests on target projects.
-   + --test    :  Executing tests on target projects.
-   + --reset   :  Reset all uncommitted changes in all target projects.
-   + --status  :  Check status on target projects.
-   + --commit  :  Commit change on target projects.
-   + --pull    :  Pull rebase on target projects.
-   + --push    :  Push on target projects.
+   + --deps              : List all profile/global deps on projects.
+   + --list              : List resources to be synchronized.
+   + --include-namespace : Synchronize only the passed namespaces.
+   + --include-resource  : Synchronize only the passed resources.
+   + --notest            : Synchronize shared code base without executing tests on target projects.
+   + --test              : Executing tests on target projects.
+   + --reset             : Reset all uncommitted changes in all target projects.
+   + --status            : Check status on target projects.
+   + --commit            : Commit change on target projects.
+   + --pull              : Pull rebase on target projects.
+   + --push              : Push on target projects.
 
 Define `:ns-sync` configuration in the project.clj of each target project. It has the following options:
 

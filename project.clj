@@ -1,4 +1,4 @@
-(defproject sync "0.9.39-SNAPSHOT"
+(defproject sync "0.9.39"
   :description "sync is a Leiningen plugin to sync same code base between different clojure projects"
   :url "https://github.com/otto-de/leinsync"
   :license {:name "Apache License 2.0"
@@ -13,12 +13,12 @@
                  [com.sun.jna/jna "3.0.9"]
                  [com.github.jnr/jnr-posix "3.0.41"]
                  [digest "1.4.6"]
-                 [ancient-clj "0.3.14"]
+                 [ancient-clj "0.6.12"]
                  [org.clojure/tools.cli "0.3.5"]]
 
   :profiles {:uberjar {:aot :all}
              :test    {:resource-paths ["test-resources"]}
-             :dev     {:dependencies [[pjstadig/humane-test-output "0.8.2"]]
+             :dev     {:dependencies [[pjstadig/humane-test-output "0.8.3"]]
                        :plugins      [[lein-cljfmt "0.5.7"]
                                       [lein-cloverage "1.0.9"]
                                       [jonase/eastwood "0.2.4"]
