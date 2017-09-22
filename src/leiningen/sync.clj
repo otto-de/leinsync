@@ -18,15 +18,16 @@
     commands
     (find-command (:default commands-map) commands-map)))
 
-(defn may-update-source-project-desc [source-project options]
-  (if-let [include-option (:include options)]
-    (assoc-in source-project ns/namespace-def include-option)
+(defn may-update-source-project-desc [options k selector source-project]
+  (if-let [include-option (k options)]
+    (assoc-in source-project selector include-option)
     source-project))
 
 (defn execute-program [target-projects source-project options sync-commands]
   (doseq [command (option->command options sync-commands)]
-    (->> options
-         (may-update-source-project-desc source-project)
+    (->> source-project
+         (may-update-source-project-desc options :include-namespace ns/namespace-def)
+         (may-update-source-project-desc options :include-resource ns/resource-def)
          (command target-projects))))
 
 (defn cli-options [profiles]
@@ -38,10 +39,14 @@
     :parse-fn keyword
     :validate [#(or (= :all %) (= :diff %))
                (str "--list must be diff or all ")]]
-   ["-i" "--include namespaces" "Synchronize only the passed namespaces"
+   ["-i" "--include-namespace ns1,ns2" "Synchronize only the passed namespaces"
     :parse-fn #(u/split %)
     :validate [#(not (empty? %))
-               (str "--include should not be empty and have the pattern ns1,ns2")]]
+               (str "--include-namespace should not be empty and have the pattern ns1,ns2")]]
+   ["-j" "--include-resource rs1,rs2" "Synchronize only the passed resources"
+    :parse-fn #(u/split %)
+    :validate [#(not (empty? %))
+               (str "--include-resource should not be empty and have the pattern rs1,rs2")]]
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
    ["-s" "--status" "Check status on target projects"]
@@ -68,9 +73,7 @@
              ""]))
 
 (defn get-profiles [{profiles :profiles}]
-  (if profiles
-    (set (map name (keys profiles)))
-    #{}))
+  (set (map name (keys profiles))))
 
 (defn sync [project-desc & args]
   (let [{:keys [options arguments summary errors]} (->> project-desc

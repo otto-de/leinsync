@@ -50,7 +50,7 @@
                                     :namespaces ["ns1" "ns2"]
                                     :resources  ["rc1" "rc2"]}}
           options {:a "command a opt"}
-          sync-commands {:a (fn [option target source] (reset! state source))}]
+          sync-commands {:a (fn [_ _ source] (reset! state source))}]
       (s/execute-program target-projects source-project options sync-commands)
       (is (= {:ns-sync {:namespaces ["ns1" "ns2"]
                         :resources  ["rc1" "rc2"]
@@ -65,12 +65,13 @@
                                                  ["./lein.sh" "test"]]
                                     :namespaces ["ns1" "ns2"]
                                     :resources  ["rc1" "rc2"]}}
-          options {:a       "command a opt"
-                   :include ["ns3" "ns4" "ns5"]}
-          sync-commands {:a (fn [option target source] (reset! state source))}]
+          options {:a                 "command a opt"
+                   :include-namespace ["ns3" "ns4" "ns5"]
+                   :include-resource  ["rs1" "rs2" "rs3"]}
+          sync-commands {:a (fn [_ _ source] (reset! state source))}]
       (s/execute-program target-projects source-project options sync-commands)
       (is (= {:ns-sync {:namespaces ["ns3" "ns4" "ns5"]
-                        :resources  ["rc1" "rc2"]
+                        :resources  ["rs1" "rs2" "rs3"]
                         :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
 
              @state)))))
