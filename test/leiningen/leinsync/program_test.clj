@@ -27,19 +27,53 @@
         commands (s/find-command {:a "" :b "" :c ""} m)]
     (is (= 3 (count commands)))))
 
-(deftest ^:unit ->commands
+(deftest ^:unit option->command
   (testing "find correct commands"
     (let [m {:a (fn [x y] (+ x y))
              :b (fn [x y] (* x y))}
-          commands (s/->commands {:a "" :b ""} m)]
+          commands (s/option->command {:a "" :b ""} m)]
       (is (= 2 (count commands)))))
 
   (testing "returns fallback if no command found"
     (let [m {:default {:a ""}
              :a       (fn [_ x y] (+ x y))
              :b       (fn [_ x y] (* x y))}
-          [fn-default & _] (s/->commands {} m)]
+          [fn-default & _] (s/option->command {} m)]
       (is (= 3 (fn-default 1 2))))))
+
+(deftest ^:unit include-option-change-src-desc-test
+  (testing "no change if have no include option"
+    (let [state (atom nil)
+          target-projects {}
+          source-project {:ns-sync {:test-cmd   [["./lein.sh" "clean"]
+                                                 ["./lein.sh" "test"]]
+                                    :namespaces ["ns1" "ns2"]
+                                    :resources  ["rc1" "rc2"]}}
+          options {:a "command a opt"}
+          sync-commands {:a (fn [option target source] (reset! state source))}]
+      (s/execute-program target-projects source-project options sync-commands)
+      (is (= {:ns-sync {:namespaces ["ns1" "ns2"]
+                        :resources  ["rc1" "rc2"]
+                        :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
+
+             @state))))
+
+  (testing "change src project desc if have include option"
+    (let [state (atom nil)
+          target-projects {}
+          source-project {:ns-sync {:test-cmd   [["./lein.sh" "clean"]
+                                                 ["./lein.sh" "test"]]
+                                    :namespaces ["ns1" "ns2"]
+                                    :resources  ["rc1" "rc2"]}}
+          options {:a       "command a opt"
+                   :include ["ns3" "ns4" "ns5"]}
+          sync-commands {:a (fn [option target source] (reset! state source))}]
+      (s/execute-program target-projects source-project options sync-commands)
+      (is (= {:ns-sync {:namespaces ["ns3" "ns4" "ns5"]
+                        :resources  ["rc1" "rc2"]
+                        :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
+
+             @state)))))
 
 (deftest ^:unit sub-str
   (is (= "abcd ..." (u/sub-str "abcde" 4)))

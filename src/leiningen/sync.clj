@@ -4,7 +4,8 @@
             [clojure.tools.cli :as cli]
             [leiningen.leinsync.utils :as u]
             [leiningen.core.main :as m]
-            [leiningen.leinsync.commands :as c]))
+            [leiningen.leinsync.commands :as c]
+            [leiningen.leinsync.namespaces :as ns]))
 
 (defn find-command [options commands]
   (->> options
@@ -12,15 +13,21 @@
        (select-keys commands)
        (reduce-kv (fn [m k f] (conj m (partial u/run! f (k options)))) [])))
 
-(defn ->commands [options commands-map]
-  (let [commands (find-command options commands-map)]
-    (if (empty? commands)
-      (find-command (:default commands-map) commands-map)
-      commands)))
+(defn option->command [options commands-map]
+  (if-let [commands (seq (find-command options commands-map))]
+    commands
+    (find-command (:default commands-map) commands-map)))
 
-(defn execute-program [target-projects source-project-desc options]
-  (doseq [command (->commands options c/SYNC-COMMANDS)]
-    (command target-projects source-project-desc)))
+(defn may-update-source-project-desc [source-project options]
+  (if-let [include-option (:include options)]
+    (assoc-in source-project ns/namespace-def include-option)
+    source-project))
+
+(defn execute-program [target-projects source-project options sync-commands]
+  (doseq [command (option->command options sync-commands)]
+    (->> options
+         (may-update-source-project-desc source-project)
+         (command target-projects))))
 
 (defn cli-options [profiles]
   [["-d" "--deps global|profile-name" "List all profile/global deps on projects"
@@ -31,6 +38,10 @@
     :parse-fn keyword
     :validate [#(or (= :all %) (= :diff %))
                (str "--list must be diff or all ")]]
+   ["-i" "--include namespaces" "Synchronize only the passed namespaces"
+    :parse-fn #(u/split %)
+    :validate [#(not (empty? %))
+               (str "--include should not be empty and have the pattern ns1,ns2")]]
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
    ["-s" "--status" "Check status on target projects"]
@@ -57,9 +68,9 @@
              ""]))
 
 (defn get-profiles [{profiles :profiles}]
-  (if (nil? profiles)
-    #{}
-    (set (map name (keys profiles)))))
+  (if profiles
+    (set (map name (keys profiles)))
+    #{}))
 
 (defn sync [project-desc & args]
   (let [{:keys [options arguments summary errors]} (->> project-desc
@@ -71,6 +82,6 @@
       (= 1 (count arguments)) (-> arguments
                                   (first)
                                   (u/split)
-                                  (execute-program project-desc options))
+                                  (execute-program project-desc options c/SYNC-COMMANDS))
       :else (m/abort (usage summary)))
     (m/exit)))
