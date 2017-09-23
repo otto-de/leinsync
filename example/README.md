@@ -49,3 +49,26 @@ In order to synchronize namespaces between projects, run in the current source p
     |                :name | :last-version | :project-1 | :project-2 |
     |----------------------+---------------+------------+------------|
     | :org.clojure/clojure |         1.8.0 |   => 1.7.0 |   => 1.7.0 |
+
+
+
+
+     $  lein sync project-2 --include-namespace ns.namespace-1
+
+     *********************** UPDATE NAMESPACES ***********************
+     *
+     * Update ns.namespace-1 to the project PROJECT-2
+
+     *********************** UPDATE RESOURCES ***********************
+     *
+     * Update default.edn to the project PROJECT-2
+
+     ****** Executing tests of project-2    ******
+     ... Executing  lein test
+
+      |  :project | :result |  :lein test |
+      |-----------+---------+-------------|
+      | project-2 | :failed | ==> :failed |
+      |-----------------------------------|
+
+      * Please have a look  at the failed project(s): project-2
