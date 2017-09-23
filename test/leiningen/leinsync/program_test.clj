@@ -43,24 +43,31 @@
 
 (deftest ^:unit include-option-change-src-desc-test
   (testing "no change if have no include option"
-    (let [state (atom nil)
-          target-projects {}
+    (let [source-project-desc (atom nil)
+          target-project-name (atom nil)
+          input "project1,project2"
           source-project {:ns-sync {:test-cmd   [["./lein.sh" "clean"]
                                                  ["./lein.sh" "test"]]
                                     :namespaces ["ns1" "ns2"]
                                     :resources  ["rc1" "rc2"]}}
           options {:a "command a opt"}
-          sync-commands {:a (fn [_ _ source] (reset! state source))}]
-      (s/execute-program target-projects source-project options sync-commands)
+          sync-commands {:a (fn [_ target-project source]
+                              (reset! source-project-desc source)
+                              (reset! target-project-name target-project))}]
+      (s/execute-program input source-project options sync-commands)
+
       (is (= {:ns-sync {:namespaces ["ns1" "ns2"]
                         :resources  ["rc1" "rc2"]
                         :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
 
-             @state))))
+             @source-project-desc))
+
+      (is (= ["project1" "project2"]
+             @target-project-name))))
 
   (testing "change src project desc if have include option"
     (let [state (atom nil)
-          target-projects {}
+          input "project1,project2"
           source-project {:ns-sync {:test-cmd   [["./lein.sh" "clean"]
                                                  ["./lein.sh" "test"]]
                                     :namespaces ["ns1" "ns2"]
@@ -69,7 +76,7 @@
                    :include-namespace ["ns3" "ns4" "ns5"]
                    :include-resource  ["rs1" "rs2" "rs3"]}
           sync-commands {:a (fn [_ _ source] (reset! state source))}]
-      (s/execute-program target-projects source-project options sync-commands)
+      (s/execute-program input source-project options sync-commands)
       (is (= {:ns-sync {:namespaces ["ns3" "ns4" "ns5"]
                         :resources  ["rs1" "rs2" "rs3"]
                         :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
@@ -116,4 +123,29 @@
                                      :test    {}
                                      :dev     {}}})))
   (is (= #{}
-         (s/get-profiles {}))))
+         (s/get-profiles {})))
+
+  (is (s/usage {})))
+
+(deftest ^:unit cli-option-test
+  (testing "empty input"
+    (let [input []
+          source-project-desc {:ns-sync {}}
+          {:keys [options arguments summary errors]} (s/parse-input {:ns-sync {}} input)]
+      (is summary)
+      (is (not errors))
+      (is (= {} options))
+      (is (= [] arguments))))
+
+  (testing "happy case input"
+    (let [input ["project1,project2" "--list" "diff" "-i" "ns1,ns2" "--pull" "--push"]
+          source-project-desc {:ns-sync {}}
+          {:keys [options arguments summary errors]} (s/parse-input {:ns-sync {}} input)]
+      (is summary)
+      (is (not errors))
+      (is (= {:push              true
+              :pull              true
+              :list              :diff
+              :include-namespace ["ns1" "ns2"]}
+             options))
+      (is (= ["project1,project2"] arguments)))))

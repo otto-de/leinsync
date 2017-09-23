@@ -23,12 +23,13 @@
     (assoc-in source-project selector include-option)
     source-project))
 
-(defn execute-program [target-projects source-project options sync-commands]
-  (doseq [command (option->command options sync-commands)]
-    (->> source-project
-         (may-update-source-project-desc options :include-namespace ns/namespace-def)
-         (may-update-source-project-desc options :include-resource ns/resource-def)
-         (command target-projects))))
+(defn execute-program [argument source-project-desc options sync-commands]
+  (let [target-project-names (u/split argument)]
+    (doseq [command (option->command options sync-commands)]
+      (->> source-project-desc
+           (may-update-source-project-desc options :include-namespace ns/namespace-def)
+           (may-update-source-project-desc options :include-resource ns/resource-def)
+           (command target-project-names)))))
 
 (defn cli-options [profiles]
   [["-d" "--deps global|profile-name" "List all profile/global deps on projects"
@@ -75,16 +76,16 @@
 (defn get-profiles [{profiles :profiles}]
   (set (map name (keys profiles))))
 
+(defn parse-input [project-desc args]
+  (->> project-desc
+       (get-profiles)
+       (cli-options)
+       (cli/parse-opts args)))
+
 (defn sync [project-desc & args]
-  (let [{:keys [options arguments summary errors]} (->> project-desc
-                                                        (get-profiles)
-                                                        (cli-options)
-                                                        (cli/parse-opts args))]
+  (let [{:keys [options arguments summary errors]} (parse-input project-desc args)]
     (cond
-      (not-empty errors) (m/info (str/join " " errors))
-      (= 1 (count arguments)) (-> arguments
-                                  (first)
-                                  (u/split)
-                                  (execute-program project-desc options c/SYNC-COMMANDS))
-      :else (m/abort (usage summary)))
+      (not-empty errors) (m/abort (str/join " " errors))
+      (not= 1 (count arguments)) (m/abort (usage summary))
+      :else (execute-program (first arguments) project-desc options c/SYNC-COMMANDS))
     (m/exit)))
