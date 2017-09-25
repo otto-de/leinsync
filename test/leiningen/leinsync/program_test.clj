@@ -59,7 +59,6 @@
       (is (= {:ns-sync {:namespaces ["ns1" "ns2"]
                         :resources  ["rc1" "rc2"]
                         :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
-
              @source-project-desc))
 
       (is (= ["project-1" "project-2"]
@@ -158,14 +157,17 @@
          (s/find-sync-projects "non-sense"))))
 
 (deftest ^:unit parse-project-search-input-test
-  (is (= []
-         (s/parse-search-input "*-awesome" #{"project-1-awesome" "project-2-awesome"})))
+  (is (= ["project-1-awesome" "project-2-awesome"]
+         (s/parse-search-input ".*-awesome" #{"project-1-awesome" "project-2-awesome"})))
 
   (is (= []
          (s/parse-search-input "bull,shit" #{"project-1" "project-2"})))
 
   (is (= ["project-1" "project-2"]
          (s/parse-search-input "project-1,project-2" #{"project-1" "project-2"})))
+
+  (is (= ["project-1" "project-2"]
+         (s/parse-search-input "project-1,project-2" #{"project-1" "project-1-1" "project-2"})))
 
   (is (= ["project-1"]
          (s/parse-search-input "project-1,project-3" #{"project-1" "project-2"})))

@@ -6,7 +6,8 @@
             [leiningen.leinsync.utils :as u]
             [leiningen.core.main :as m]
             [leiningen.leinsync.commands :as c]
-            [leiningen.leinsync.namespaces :as ns]))
+            [leiningen.leinsync.namespaces :as ns])
+  (:import (java.util.regex PatternSyntaxException)))
 
 (def PARENT-FOLDER "../")
 
@@ -35,33 +36,35 @@
        (map #(.getName %))
        (set)))
 
-(defn matches? [regex input]
-  (re-find (re-pattern (str "(?i)" regex)) input))
+(defn regex-matches? [regex]
+  #(re-find (re-pattern (str "(?i)" regex)) %))
+
+(defn exact-matches? [input]
+  #(= % input))
 
 (defn find-matching [projects acc part-input]
-  (if-let [matching (seq (filter (partial matches? part-input) projects))]
-    (concat acc matching)
-    acc))
+  (concat acc (or (seq (filter (exact-matches? part-input) projects))
+                  (seq (filter (regex-matches? part-input) projects))
+                  [])))
 
 (defn parse-search-input [input projects]
-  (try
-    (reduce (partial find-matching projects) [] (u/split input))
-    (catch Exception e
-      (m/info "Could not parse the input string: " input)
-      [])))
+  (reduce (partial find-matching projects) [] (u/split input)))
 
 (defn execute-program [search-project-string
                        source-project-desc
                        options
                        sync-commands
                        parent-project-folder]
-  (let [sync-projects  (find-sync-projects parent-project-folder)
-        target-projects (parse-search-input search-project-string sync-projects)]
-    (doseq [command (option->command options sync-commands)]
-      (->> source-project-desc
-           (may-update-source-project-desc options :include-namespace ns/namespace-def)
-           (may-update-source-project-desc options :include-resource ns/resource-def)
-           (command target-projects)))))
+  (try
+    (let [sync-projects (find-sync-projects parent-project-folder)
+          target-projects (parse-search-input search-project-string sync-projects)]
+      (doseq [command (option->command options sync-commands)]
+        (->> source-project-desc
+             (may-update-source-project-desc options :include-namespace ns/namespace-def)
+             (may-update-source-project-desc options :include-resource ns/resource-def)
+             (command target-projects))))
+    (catch PatternSyntaxException e
+      (m/info "An error occurs with the input string: " search-project-string (.getMessage e)))))
 
 (defn cli-options [profiles]
   [["-d" "--deps global|profile-name" "List all profile/global deps on projects"
