@@ -18,12 +18,18 @@
          (count (str key))
          (map #(count (str (get % key))) rows)))
 
-(defn pretty-print-table
-  [rows with-extra-separator-line log-fn]
+(defn prefer-package-name [xs]
+  (if-let [pkg-name  (seq (filter #(contains? #{:package :name} %) xs))]
+    (concat (sort #(if (or (= %1 :package) (= %2 :package)) -1 1) pkg-name)
+            (remove #(contains? #{:package :name} %) xs))
+    xs))
+
+(defn pretty-print-table [rows with-extra-separator-line log-fn]
   (let [keys (->> (map keys rows)
                   (distinct)
                   (reduce concat)
-                  (distinct))
+                  (distinct)
+                  (prefer-package-name))
         widths (map (partial max-width rows) keys)
         spacers (map #(str/join (repeat % "-")) widths)
         formatter (get-formatter keys widths)]
@@ -39,8 +45,6 @@
         (log-fn (formatter "|-" "---" "-|" (zipmap keys spacers))))
       (log-fn "\n"))))
 
-(defn print-compact-table [rows]
-  (pretty-print-table rows false m/info))
+(defn print-compact-table [rows] (pretty-print-table rows false m/info))
 
-(defn print-full-table [rows]
-  (pretty-print-table rows true m/info))
+(defn print-full-table [rows] (pretty-print-table rows true m/info))

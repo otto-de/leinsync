@@ -67,3 +67,13 @@
               ["|-----------------|"]
               ["\n"]]
              @print-state)))))
+
+(deftest ^:unit prefer-package-name-test
+  (is (= [:package :name :bbb :ccc]
+         (pp/prefer-package-name [:bbb :ccc :name :package])))
+
+  (is (= [:package :name :ccc :bbb]
+         (pp/prefer-package-name [:name :ccc :package :bbb])))
+
+  (is (= [:name :ccc :bbb]
+         (pp/prefer-package-name [:ccc :name :bbb]))))
