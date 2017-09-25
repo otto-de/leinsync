@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [leiningen.leinsync.namespaces :as ns]
             [leiningen.core.project :as p]
-            [leiningen.leinsync.utils :as u]))
+            [leiningen.leinsync.utils :as u])
+  (:import (java.io File)))
 
 (deftest ^:unit path->namespace
   (testing "happy path"
@@ -154,23 +155,16 @@
          (ns/namespace->source-path "de.otto.one.cool.ns" {:source-paths ["thesamefolder" "thesamefolder" "thesamefolder"
                                                                           "anotherfolder"]
                                                            :test-paths   ["testfolder1" "testfolder2"]}))))
-(deftest ^:unit flap-map-1
-  (is (= '([:a :1] [:a :2] [:a :3] [:b :1] [:b :2] [:b :3] [:c :1] [:c :2] [:c :3])
-         (u/cartesian-product '(:a :b :c) '(:1 :2 :3)))))
+(deftest ^:unit cartesian-product-test
+  (is (= [[:a :1] [:a :2] [:a :3] [:b :1] [:b :2] [:b :3] [:c :1] [:c :2] [:c :3]]
+         (u/cartesian-product [:a :b :c] [:1 :2 :3])))
+  (is (not (u/cartesian-product [:a :b :c] [])))
+  (is (not (u/cartesian-product [] [:1 :2 :3])))
+  (is (= [[:a :1]] (u/cartesian-product [:a] [:1]))))
 
-(deftest ^:unit flap-map-2
-  (is (= nil
-         (u/cartesian-product '(:a :b :c) '()))))
-
-(deftest ^:unit flap-map-3
-  (is (= nil
-         (u/cartesian-product '() '(:1 :2 :3)))))
-
-(deftest ^:unit flap-map-4
-  (is (= '([:a :1])
-         (u/cartesian-product '(:a) '(:1)))))
-
-(deftest ^:unit flap-map-5
+(deftest ^:unit exists-file-test
+  (is (true? (u/exists? (u/absolute-path-of "test-resources/project_test.clj"))))
+  (is (false? (u/exists? (u/absolute-path-of "test-resources/project_test_not-exists.clj"))))
   (is (true? (u/exists? "test-resources/project_test.clj")))
   (is (false? (u/exists? "test-resources/project_test_not-exists.clj"))))
 

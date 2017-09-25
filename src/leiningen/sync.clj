@@ -2,10 +2,13 @@
   (:refer-clojure :exclude [sync])
   (:require [clojure.string :as str]
             [clojure.tools.cli :as cli]
+            [clojure.java.io :as io]
             [leiningen.leinsync.utils :as u]
             [leiningen.core.main :as m]
             [leiningen.leinsync.commands :as c]
             [leiningen.leinsync.namespaces :as ns]))
+
+(def PARENT-FOLDER "../")
 
 (defn find-command [options commands]
   (->> options
@@ -14,22 +17,51 @@
        (reduce-kv (fn [m k f] (conj m (partial u/run! f (k options)))) [])))
 
 (defn option->command [options commands-map]
-  (if-let [commands (seq (find-command options commands-map))]
-    commands
-    (find-command (:default commands-map) commands-map)))
+  (or (seq (find-command options commands-map))
+      (find-command (:default commands-map) commands-map)))
 
 (defn may-update-source-project-desc [options k selector source-project]
   (if-let [include-option (k options)]
     (assoc-in source-project selector include-option)
     source-project))
 
-(defn execute-program [argument source-project-desc options sync-commands]
-  (let [target-project-names (u/split argument)]
+(defn find-sync-projects [path]
+  (->> path
+       (io/file)
+       (.listFiles)
+       (filter (fn [f]
+                 (and (.isDirectory f)
+                      (u/exists? (str (u/absolute-path-of f) "/project.clj")))))
+       (map #(.getName %))
+       (set)))
+
+(defn matches? [regex input]
+  (re-find (re-pattern (str "(?i)" regex)) input))
+
+(defn find-matching [projects acc part-input]
+  (if-let [matching (seq (filter (partial matches? part-input) projects))]
+    (concat acc matching)
+    acc))
+
+(defn parse-search-input [input projects]
+  (try
+    (reduce (partial find-matching projects) [] (u/split input))
+    (catch Exception e
+      (m/info "Could not parse the input string: " input)
+      [])))
+
+(defn execute-program [search-project-string
+                       source-project-desc
+                       options
+                       sync-commands
+                       parent-project-folder]
+  (let [sync-projects  (find-sync-projects parent-project-folder)
+        target-projects (parse-search-input search-project-string sync-projects)]
     (doseq [command (option->command options sync-commands)]
       (->> source-project-desc
            (may-update-source-project-desc options :include-namespace ns/namespace-def)
            (may-update-source-project-desc options :include-resource ns/resource-def)
-           (command target-project-names)))))
+           (command target-projects)))))
 
 (defn cli-options [profiles]
   [["-d" "--deps global|profile-name" "List all profile/global deps on projects"
@@ -76,16 +108,16 @@
 (defn get-profiles [{profiles :profiles}]
   (set (map name (keys profiles))))
 
-(defn parse-input [project-desc args]
+(defn parse-args [project-desc args]
   (->> project-desc
        (get-profiles)
        (cli-options)
        (cli/parse-opts args)))
 
 (defn sync [project-desc & args]
-  (let [{:keys [options arguments summary errors]} (parse-input project-desc args)]
+  (let [{:keys [options arguments summary errors]} (parse-args project-desc args)]
     (cond
-      (not-empty errors) (m/abort (str/join " " errors))
+      (seq errors) (m/abort (str/join " " errors))
       (not= 1 (count arguments)) (m/abort (usage summary))
-      :else (execute-program (first arguments) project-desc options c/SYNC-COMMANDS))
+      :else (execute-program (first arguments) project-desc options c/SYNC-COMMANDS PARENT-FOLDER))
     (m/exit)))

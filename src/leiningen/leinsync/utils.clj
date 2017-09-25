@@ -11,9 +11,16 @@
 
 (def verbose false)
 
+(defn exists? [path] (.exists (io/as-file path)))
+
+(defn absolute-path-of [x]
+  (if (instance? File x)
+    (.getCanonicalPath x)
+    (.getCanonicalPath (new File x))))
+
 (defn change-dir-to [relative-path]
-  (let [absolute-path (.getCanonicalPath (new File relative-path))]
-    (if (not (.exists (io/as-file absolute-path)))
+  (let [absolute-path (absolute-path-of relative-path)]
+    (if (not (exists? absolute-path))
       (throw (RuntimeException. (str "The folder " absolute-path " does not exist"))))
     (.chdir (POSIXFactory/getPOSIX) absolute-path)
     (System/setProperty "user.dir" absolute-path)))
@@ -97,9 +104,6 @@
        (do
          (m/info "The input was not correct")
          (recur (capture-input question)))))))
-
-(defn exists? [path]
-  (.exists (io/as-file path)))
 
 (defn cartesian-product [c1 c2]
   (combo/cartesian-product c1 c2))

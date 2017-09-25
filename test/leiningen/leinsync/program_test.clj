@@ -45,7 +45,7 @@
   (testing "no change if have no include option"
     (let [source-project-desc (atom nil)
           target-project-name (atom nil)
-          input "project1,project2"
+          input "project-1,project-2"
           source-project {:ns-sync {:test-cmd   [["./lein.sh" "clean"]
                                                  ["./lein.sh" "test"]]
                                     :namespaces ["ns1" "ns2"]
@@ -54,7 +54,7 @@
           sync-commands {:a (fn [_ target-project source]
                               (reset! source-project-desc source)
                               (reset! target-project-name target-project))}]
-      (s/execute-program input source-project options sync-commands)
+      (s/execute-program input source-project options sync-commands "example")
 
       (is (= {:ns-sync {:namespaces ["ns1" "ns2"]
                         :resources  ["rc1" "rc2"]
@@ -62,7 +62,7 @@
 
              @source-project-desc))
 
-      (is (= ["project1" "project2"]
+      (is (= ["project-1" "project-2"]
              @target-project-name))))
 
   (testing "change src project desc if have include option"
@@ -76,7 +76,7 @@
                    :include-namespace ["ns3" "ns4" "ns5"]
                    :include-resource  ["rs1" "rs2" "rs3"]}
           sync-commands {:a (fn [_ _ source] (reset! state source))}]
-      (s/execute-program input source-project options sync-commands)
+      (s/execute-program input source-project options sync-commands "")
       (is (= {:ns-sync {:namespaces ["ns3" "ns4" "ns5"]
                         :resources  ["rs1" "rs2" "rs3"]
                         :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
@@ -131,7 +131,7 @@
   (testing "empty input"
     (let [input []
           source-project-desc {:ns-sync {}}
-          {:keys [options arguments summary errors]} (s/parse-input {:ns-sync {}} input)]
+          {:keys [options arguments summary errors]} (s/parse-args {:ns-sync {}} input)]
       (is summary)
       (is (not errors))
       (is (= {} options))
@@ -140,7 +140,7 @@
   (testing "happy case input"
     (let [input ["project1,project2" "--list" "diff" "-i" "ns1,ns2" "--pull" "--push"]
           source-project-desc {:ns-sync {}}
-          {:keys [options arguments summary errors]} (s/parse-input {:ns-sync {}} input)]
+          {:keys [options arguments summary errors]} (s/parse-args {:ns-sync {}} input)]
       (is summary)
       (is (not errors))
       (is (= {:push              true
@@ -149,3 +149,33 @@
               :include-namespace ["ns1" "ns2"]}
              options))
       (is (= ["project1,project2"] arguments)))))
+
+(deftest ^:unit find-sync-projects-test
+  (is (= #{"project-1" "project-2"}
+         (s/find-sync-projects "example")))
+  (is (= #{}
+         (s/find-sync-projects "src")
+         (s/find-sync-projects "non-sense"))))
+
+(deftest ^:unit parse-project-search-input-test
+  (is (= []
+         (s/parse-search-input "*-awesome" #{"project-1-awesome" "project-2-awesome"})))
+
+  (is (= []
+         (s/parse-search-input "bull,shit" #{"project-1" "project-2"})))
+
+  (is (= ["project-1" "project-2"]
+         (s/parse-search-input "project-1,project-2" #{"project-1" "project-2"})))
+
+  (is (= ["project-1"]
+         (s/parse-search-input "project-1,project-3" #{"project-1" "project-2"})))
+
+  (is (= ["project-2" "project-1"]
+         (s/parse-search-input "project-*" #{"project-1" "project-2"})))
+
+  (is (= ["project-1-awesome" "project-2-awesome"]
+         (s/parse-search-input ".*-awesome" #{"project-1-awesome" "project-2-awesome"})
+         (s/parse-search-input ".*" #{"project-1-awesome" "project-2-awesome"})))
+
+  (is (= ["project-1-awesome" "project-2"]
+         (s/parse-search-input "project-1-awesome,project-2" #{"project-1-awesome" "project-1" "project-2"}))))
