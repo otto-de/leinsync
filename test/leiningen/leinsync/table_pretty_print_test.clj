@@ -72,8 +72,17 @@
   (is (= [:package :name :bbb :ccc]
          (pp/prefer-package-name [:bbb :ccc :name :package])))
 
+  (is (= [:package :name :bbb :ccc]
+         (pp/prefer-package-name [:bbb :ccc :package :name])))
+
+  (is (= [:package :name :bbb :ccc]
+         (pp/prefer-package-name [:bbb :ccc :package :name])))
+
   (is (= [:package :name :ccc :bbb]
          (pp/prefer-package-name [:name :ccc :package :bbb])))
 
   (is (= [:name :ccc :bbb]
-         (pp/prefer-package-name [:ccc :name :bbb]))))
+         (pp/prefer-package-name [:ccc :name :bbb])))
+
+  (is (= [:package :name :bbb :ccc]
+         (pp/prefer-package-name [:package :name :bbb :ccc]))))

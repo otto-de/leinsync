@@ -18,11 +18,13 @@
          (count (str key))
          (map #(count (str (get % key))) rows)))
 
+(defn prefer-k [k xs]
+  (concat (filter #(= k %) xs) (remove #(= k %) xs)))
+
 (defn prefer-package-name [xs]
-  (if-let [pkg-name  (seq (filter #(contains? #{:package :name} %) xs))]
-    (concat (sort #(if (or (= %1 :package) (= %2 :package)) -1 1) pkg-name)
-            (remove #(contains? #{:package :name} %) xs))
-    xs))
+  (->> xs
+       (prefer-k :name)
+       (prefer-k :package)))
 
 (defn pretty-print-table [rows with-extra-separator-line log-fn]
   (let [keys (->> (map keys rows)
