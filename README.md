@@ -71,6 +71,7 @@ container-folder/
 ## Usage
 
 * lein sync [options] "project-1,project-2,project-3"
+* lein sync [options] "project-.*
 
 Options:
    + --deps              : List all profile/global deps on projects.
