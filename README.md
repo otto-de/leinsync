@@ -69,9 +69,14 @@ container-folder/
 
 
 ## Usage
+To specify which projects should be synchronized, you must pass a search string as argument to `sync`. A search string can be a string concatnation of project or a regex.
+
 
 * lein sync [options] "project-1,project-2,project-3"
 * lein sync [options] "project-.*"
+* lein sync "(.*)[^(shouldNotMatch)]$"
+
+[^(controller|map|spec)]
 
 Options:
    + --deps              : List all profile/global deps on projects.
