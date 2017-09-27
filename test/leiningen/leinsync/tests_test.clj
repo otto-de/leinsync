@@ -1,6 +1,7 @@
 (ns leiningen.leinsync.tests-test
   (:require [clojure.test :refer :all]
-            [leiningen.leinsync.tests :as t]))
+            [leiningen.leinsync.tests :as t]
+            [leiningen.leinsync.utils :as u]))
 
 (deftest ^:unit test-cmd
   (is (= t/standard-test-cmd (t/test-cmd {})))
@@ -35,3 +36,13 @@
                    [:cmd ["test" "2"] {:result :passed}
                     {:cmd ["test" "3"] :result :passed}
                     {:cmd ["test" "4"] :result :passed}])))))
+
+(deftest ^:unit lein-test
+  (let [state (atom [])]
+    (with-redefs-fn {#'u/run-cmd (fn [cmd] (swap! state conj cmd) {:result :passed :cmd cmd})}
+      #(is (= {nil :passed, :project "project", :result :passed}
+              (t/lein-test "project" {:ns-sync {:test-cmd [["command"]]}}))))
+    (with-redefs-fn {#'u/run-cmd (fn [cmd] (swap! state conj cmd) {:result :passed :cmd cmd})}
+      #(is (= [["command"] ["command"]]
+              (do (t/lein-test "project" {:ns-sync {:test-cmd [["command"]]}})
+                  @state))))))

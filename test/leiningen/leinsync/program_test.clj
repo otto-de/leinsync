@@ -1,7 +1,9 @@
 (ns leiningen.leinsync.program-test
   (:require [clojure.test :refer :all]
             [leiningen.leinsync.utils :as u]
-            [leiningen.sync :as s]))
+            [leiningen.leinsync.project-reader :as pr]
+            [leiningen.sync :as s])
+  (:import (java.util.regex PatternSyntaxException)))
 
 (deftest ^:unit test-split-string
   (is (= ["project1" "project2" "project3"]
@@ -80,7 +82,15 @@
                         :resources  ["rs1" "rs2" "rs3"]
                         :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
 
-             @state)))))
+             @state))))
+
+  (testing "exception, no command has been executed"
+    (let [state (atom nil)
+          input "*-project"
+          source-project {}
+          options {:a "command a opt"}
+          sync-commands {:a (fn [_ _ source] (reset! state source))}]
+      (is (not @state)))))
 
 (deftest ^:unit sub-str
   (is (= "abcd ..." (u/sub-str "abcde" 4)))
@@ -137,7 +147,7 @@
       (is (= [] arguments))))
 
   (testing "happy case input"
-    (let [input ["project1,project2" "--list" "diff" "-i" "ns1,ns2" "--pull" "--push"]
+    (let [input ["project1,project2" "--list" "diff" "-i" "ns1,ns2" "-j" "rs1,rs2" "--pull" "--push" "-d" "global"]
           source-project-desc {:ns-sync {}}
           {:keys [options arguments summary errors]} (s/parse-args {:ns-sync {}} input)]
       (is summary)
@@ -145,7 +155,9 @@
       (is (= {:push              true
               :pull              true
               :list              :diff
-              :include-namespace ["ns1" "ns2"]}
+              :deps              :global
+              :include-namespace ["ns1" "ns2"]
+              :include-resource  ["rs1" "rs2"]}
              options))
       (is (= ["project1,project2"] arguments)))))
 
@@ -181,3 +193,11 @@
 
   (is (= ["project-1-awesome" "project-2"]
          (s/parse-search-input "project-1-awesome,project-2" #{"project-1-awesome" "project-1" "project-2"}))))
+
+(deftest ^:unit ask-user-test
+  (with-redefs-fn {#'u/capture-input (fn [prompt] "a answer")}
+    #(is (= "a answer" (u/ask-user "a question")))))
+
+(deftest ^:unit read-target-project-test
+  (with-redefs-fn {#'pr/->target-project-path (fn [_p] "example/project-1")}
+    #(is (= "project-1" (:name (pr/read-target-project-clj "project-1"))))))
