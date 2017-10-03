@@ -69,8 +69,7 @@ container-folder/
 
 
 ## Usage
-To specify which projects should be synchronized, you must pass a search string as argument to `sync`. A search string can be a string concatnation of project or a regex.
-
+To specify which projects should be synchronized, a search string must be passed as argument to `sync`. A search string can be a string concatnation of projects or a java's regex. For example:
 
 * lein sync [options] "project-1,project-2,project-3"
 * lein sync [options] "project-.*"
@@ -104,9 +103,9 @@ The `:ns-sync` configuration can be specified like that:
 
 ```clojure
 :ns-sync { :test-cmd    [["./lein.sh" "profile-1" "test"] 
-                         ["./lein.sh" "profile-2"  "test"]]
+                         ["./lein.sh" "profile-2" "test"]]
            :namespaces  ["name.space.1" "name.space.2"]
-           :resources   ["resources.1" "resources.2"]}
+           :resources   ["resource.1"   "resource.2"]}
 ```
 
 In order to synchronize namespaces and resources between projects, run in the current source project:
