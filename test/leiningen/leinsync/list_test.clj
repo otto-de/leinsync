@@ -74,9 +74,8 @@
 
 (deftest ^:unit resource-render
   (is (= {:a "X "} (l/resource-render [] :a)))
-  (is (= {:a {:md5       "a1805c81c8ca105a0718db9fa914a3a9"
-              :timestamp "2016-07-07"}}
-         (l/resource-render ["test-resources/dummy.clj"] :a))))
+  (is (= [:md5 :timestamp]
+         (keys (:a (l/resource-render ["test-resources/dummy.clj"] :a))))))
 
 (deftest ^:unit display-hash-value
   (is (= {:k1 "1234567"
