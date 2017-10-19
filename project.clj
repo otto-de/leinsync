@@ -11,9 +11,10 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/math.combinatorics "0.1.4"]
                  [com.sun.jna/jna "3.0.9"]
-                 [com.github.jnr/jnr-posix "3.0.41"]
+                 [com.github.jnr/jnr-posix "3.0.42"]
                  [digest "1.4.6"]
                  [ancient-clj "0.6.12"]
+                 [slingshot "0.12.2"]
                  [org.clojure/tools.cli "0.3.5"]]
 
   :profiles {:uberjar {:aot :all}
@@ -21,5 +22,5 @@
              :dev     {:dependencies [[pjstadig/humane-test-output "0.8.3"]]
                        :plugins      [[lein-cljfmt "0.5.7"]
                                       [lein-cloverage "1.0.9"]
-                                      [jonase/eastwood "0.2.4"]
+                                      [jonase/eastwood "0.2.5"]
                                       [lein-kibit "0.1.5"]]}})
