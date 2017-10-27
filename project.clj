@@ -13,7 +13,7 @@
                  [com.sun.jna/jna "3.0.9"]
                  [com.github.jnr/jnr-posix "3.0.42"]
                  [digest "1.4.6"]
-                 [ancient-clj "0.6.12"]
+                 [ancient-clj "0.6.14"]
                  [slingshot "0.12.2"]
                  [org.clojure/tools.cli "0.3.5"]]
 
