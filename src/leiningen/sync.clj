@@ -6,8 +6,7 @@
             [leiningen.leinsync.utils :as u]
             [leiningen.core.main :as m]
             [leiningen.leinsync.commands :as c]
-            [leiningen.leinsync.namespaces :as ns])
-  (:import (java.util.regex PatternSyntaxException)))
+            [leiningen.leinsync.namespaces :as ns]))
 
 (def PARENT-FOLDER "../")
 
@@ -21,18 +20,15 @@
   (or (seq (find-command options commands-map))
       (find-command (:default commands-map) commands-map)))
 
-(defn may-update-source-project-desc [options k selector source-project]
-  (if-let [include-option (k options)]
-    (assoc-in source-project selector include-option)
-    source-project))
+(defn is-leiningen-project? [file]
+  (and (.isDirectory file)
+       (u/exists? (str (u/absolute-path-of file) "/project.clj"))))
 
 (defn find-sync-projects [path]
   (->> path
        (io/file)
        (.listFiles)
-       (filter (fn [f]
-                 (and (.isDirectory f)
-                      (u/exists? (str (u/absolute-path-of f) "/project.clj")))))
+       (filter is-leiningen-project?)
        (map #(.getName %))
        (set)))
 
@@ -50,6 +46,13 @@
 (defn parse-search-input [input projects]
   (reduce (partial find-matching projects) [] (u/split input)))
 
+(defn may-update-source-project-desc [{:keys [include-namespace include-resource]} source-project-desc]
+  (if (or include-namespace include-resource)
+    (-> source-project-desc
+        (assoc-in ns/namespace-def (or include-namespace []))
+        (assoc-in ns/resource-def (or include-resource [])))
+    source-project-desc))
+
 (defn execute-program [search-project-string
                        source-project-desc
                        options
@@ -60,10 +63,9 @@
           target-projects (parse-search-input search-project-string sync-projects)]
       (doseq [command (option->command options sync-commands)]
         (->> source-project-desc
-             (may-update-source-project-desc options :include-namespace ns/namespace-def)
-             (may-update-source-project-desc options :include-resource ns/resource-def)
+             (may-update-source-project-desc options)
              (command target-projects))))
-    (catch PatternSyntaxException e
+    (catch Exception e
       (m/info "An error occurs with the input string: " search-project-string (.getMessage e)))))
 
 (defn cli-options [profiles]

@@ -43,6 +43,37 @@
           [fn-default & _] (s/option->command {} m)]
       (is (= 3 (fn-default 1 2))))))
 
+(deftest ^:unit may-update-source-project-desc-test
+  (let [src-desc {:ns-sync {:test-cmd   [["./lein.sh" "clean"]
+                                         ["./lein.sh" "test"]]
+                            :namespaces ["ns1" "ns2"]
+                            :resources  ["rc1" "rc2"]}}]
+    (is (= src-desc
+           (s/may-update-source-project-desc {:not-Relevant-option :value} src-desc)
+           (s/may-update-source-project-desc {} src-desc)))
+
+    (is (= {:ns-sync {:namespaces ["ns1"],
+                      :resources  ["rs1"],
+                      :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
+
+           (s/may-update-source-project-desc {:include-namespace  ["ns1"]
+                                              :include-resource ["rs1"]}
+                                             src-desc)))
+
+    (is (= {:ns-sync {:namespaces ["ns1"],
+                      :resources  [],
+                      :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
+
+           (s/may-update-source-project-desc {:include-namespace ["ns1"]}
+                                             src-desc)))
+
+    (is (= {:ns-sync {:namespaces [],
+                      :resources  ["rs1"],
+                      :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
+
+           (s/may-update-source-project-desc {:include-resource ["rs1"]}
+                                             src-desc)))))
+
 (deftest ^:unit include-option-change-src-desc-test
   (testing "no change if have no include option"
     (let [source-project-desc (atom nil)
