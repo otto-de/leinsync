@@ -75,8 +75,6 @@ To specify which projects should be synchronized, a search string must be passed
 * lein sync [options] "project-.*"
 * lein sync "(.*)[^(shouldNotMatch)]$"
 
-[^(controller|map|spec)]
-
 Options:
    + --deps              : List all profile/global deps on projects.
    + --list              : List resources to be synchronized.
