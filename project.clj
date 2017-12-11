@@ -8,8 +8,7 @@
                    :unit    :unit
                    :focused :focused}
 
-  :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/math.combinatorics "0.1.4"]
+  :dependencies [[org.clojure/math.combinatorics "0.1.4"]
                  [com.sun.jna/jna "3.0.9"]
                  [com.github.jnr/jnr-posix "3.0.42"]
                  [digest "1.4.6"]
@@ -21,6 +20,6 @@
              :test    {:resource-paths ["test-resources"]}
              :dev     {:dependencies [[pjstadig/humane-test-output "0.8.3"]]
                        :plugins      [[lein-cljfmt "0.5.7"]
-                                      [lein-cloverage "1.0.9"]
+                                      [lein-cloverage "1.0.10"]
                                       [jonase/eastwood "0.2.5"]
-                                      [lein-kibit "0.1.5"]]}})
+                                      [lein-kibit "0.1.6"]]}})
