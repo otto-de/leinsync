@@ -10,6 +10,7 @@
             [leiningen.leinsync.utils :as u]))
 
 (def PARENT-FOLDER "../")
+(def ALL-PROJECTS ".*")
 
 (defn find-command [options commands]
   (->> options
@@ -89,7 +90,7 @@
              (may-update-source-project-desc options)
              (command target-projects))))
     (catch Exception e
-      (m/info "An error occurs with the input string: " search-project-string e))))
+      (m/info "An error occurs with the input string: " search-project-string (.getMessage e)))))
 
 (defn cli-options [profiles]
   [["-a" "--interactive" "activate interactive mode"]
@@ -145,9 +146,11 @@
        (cli/parse-opts args)))
 
 (defn sync [project-desc & args]
-  (let [{:keys [options arguments summary errors]} (parse-args project-desc args)]
+  (let [{:keys [options arguments summary errors]} (parse-args project-desc args)
+        {interactive-mode :interactive} options]
     (cond
       (seq errors) (m/abort (str/join " " errors))
+      (and (zero? (count arguments)) interactive-mode) (execute-program ALL-PROJECTS project-desc options c/SYNC-COMMANDS PARENT-FOLDER)
       (not= 1 (count arguments)) (m/abort (usage summary))
       :else (execute-program (first arguments) project-desc options c/SYNC-COMMANDS PARENT-FOLDER))
     (m/exit)))
