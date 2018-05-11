@@ -6,7 +6,8 @@
             [leiningen.leinsync.utils :as u]
             [leiningen.core.main :as m]
             [leiningen.leinsync.commands :as c]
-            [leiningen.leinsync.namespaces :as ns]))
+            [leiningen.leinsync.namespaces :as ns]
+            [leiningen.leinsync.utils :as u]))
 
 (def PARENT-FOLDER "../")
 
@@ -46,6 +47,25 @@
 (defn parse-search-input [input projects]
   (reduce (partial find-matching projects) [] (u/split input)))
 
+(defn correct-project-string [limit input]
+  (zero? (count (filter #(not (u/is-number limit %)) (u/split input)))))
+
+(defn parse-project-input-string [project-map input]
+  (->> input
+       (u/split)
+       (map read-string)
+       (select-keys project-map)
+       (vals)))
+
+(defn parse-search-input-interactive [matching-project]
+  (let [project-map (into (sorted-map) (map-indexed vector matching-project))]
+    (m/info "* These Leiningen projects have been found:")
+    (doseq [[project-index project-name] project-map]
+      (m/info "  +" project-index (if (> project-index 9) "" " ") " => " project-name))
+    (->> (partial correct-project-string (count project-map))
+         (u/ask-user (str "\n* Please specify the project you want to sync i.e 1,2,3"))
+         (parse-project-input-string project-map))))
+
 (defn may-update-source-project-desc [{:keys [include-namespace include-resource]} source-project-desc]
   (if (or include-namespace include-resource)
     (-> source-project-desc
@@ -55,28 +75,28 @@
 
 (defn execute-program [search-project-string
                        source-project-desc
-                       options
+                       {interactive-mode :interactive :as options}
                        sync-commands
                        parent-project-folder]
   (try
     (let [sync-projects (find-sync-projects parent-project-folder)
-          target-projects (parse-search-input search-project-string sync-projects)]
-      (doseq [command (option->command options sync-commands)]
+          matching-project (parse-search-input search-project-string sync-projects)
+          target-projects (if interactive-mode
+                            (parse-search-input-interactive matching-project)
+                            matching-project)]
+      (doseq [command (option->command (dissoc options :interactive) sync-commands)]
         (->> source-project-desc
              (may-update-source-project-desc options)
              (command target-projects))))
     (catch Exception e
-      (m/info "An error occurs with the input string: " search-project-string (.getMessage e)))))
+      (m/info "An error occurs with the input string: " search-project-string e))))
 
 (defn cli-options [profiles]
-  [["-d" "--deps global|profile-name" "List all profile/global deps on projects"
+  [["-a" "--interactive" "activate interactive mode"]
+   ["-d" "--deps global|profile-name" "List all profile/global deps on projects"
     :parse-fn keyword
     :validate [#(or (= :global %) (u/lazy-contains? profiles (name %)))
                (str "--deps must be one of: " (conj profiles "global"))]]
-   ["-l" "--list diff|all" "List resources to be synchronized"
-    :parse-fn keyword
-    :validate [#(or (= :all %) (= :diff %))
-               (str "--list must be diff or all ")]]
    ["-i" "--include-namespace ns1,ns2" "Synchronize only the passed namespaces"
     :parse-fn #(u/split %)
     :validate [#(not (empty? %))
@@ -85,6 +105,10 @@
     :parse-fn #(u/split %)
     :validate [#(not (empty? %))
                (str "--include-resource should not be empty and have the pattern rs1,rs2")]]
+   ["-l" "--list diff|all" "List resources to be synchronized"
+    :parse-fn keyword
+    :validate [#(or (= :all %) (= :diff %))
+               (str "--list must be diff or all ")]]
    ["-n" "--notest" "Synchronize shared code base without executing tests on target projects"]
    ["-t" "--test" "Executing tests on target projects"]
    ["-s" "--status" "Check status on target projects"]

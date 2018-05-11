@@ -232,3 +232,7 @@
 (deftest ^:unit read-target-project-test
   (with-redefs-fn {#'pr/->target-project-path (fn [_p] "example/project-1")}
     #(is (= "project-1" (:name (pr/read-target-project-clj "project-1"))))))
+
+(deftest ^:unit parse-search-input-interactive-test
+  (with-redefs-fn {#'u/ask-user (fn [_ _] "0,1")}
+    #(is (= #{"project-3", "project-2"} (set (s/parse-search-input-interactive #{"project-1" , "project-2" , "project-3"}))))))
