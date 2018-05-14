@@ -98,12 +98,17 @@
 (defn ask-user
   ([question] (ask-user question (fn [_] true)))
   ([question validate-fn]
-   (loop [input (capture-input question)]
-     (if (validate-fn input)
-       input
+   (try
+     (loop [input (capture-input question)]
+       (if (validate-fn input)
+         input
+         (do
+           (m/info "The input was not correct")
+           (recur (capture-input question)))))
+     (catch Exception e
        (do
-         (m/info "The input was not correct")
-         (recur (capture-input question)))))))
+         (m/info "The input was not correct:" (.getMessage e))
+         (ask-user question validate-fn))))))
 
 (defn cartesian-product [c1 c2]
   (combo/cartesian-product c1 c2))
