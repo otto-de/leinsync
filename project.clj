@@ -10,7 +10,7 @@
 
   :dependencies [[org.clojure/math.combinatorics "0.1.4"]
                  [com.sun.jna/jna "3.0.9"]
-                 [com.github.jnr/jnr-posix "3.0.44"]
+                 [com.github.jnr/jnr-posix "3.0.45"]
                  [digest "1.4.8"]
                  [ancient-clj "0.6.15"]
                  [slingshot "0.12.2"]
