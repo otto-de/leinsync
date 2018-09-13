@@ -99,7 +99,7 @@
 
 (defn location-question-with
   ([ns project [first & rest]] (location-question-with (initial-question ns project) 0 first rest))
-  ([question index first [ffirst rrest]]
+  ([question index first [ffirst & rrest]]
    (if (nil? first)
      question
      (recur (str question "\n         +  " index " -> " first) (inc index) ffirst rrest))))
