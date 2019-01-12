@@ -34,7 +34,7 @@
                                        %
                                        commit-msg
                                        ((keyword %)
-                                         (pr/read-all-target-project-clj projects)))
+                                        (pr/read-all-target-project-clj projects)))
                     projects)
         committed-project (seq (map :project (filter #(= :committed (:status %)) status)))
         not-committed-project (seq (map :project (filter #(not= :committed (:status %)) status)))]
