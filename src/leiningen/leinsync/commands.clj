@@ -26,14 +26,25 @@
         (t/log-test-hints))))
 
 (defn commit-all! [_ projects _]
-  (let [projects-str (str/join "," projects)
-        commit-msg (->> projects-str
+  (let [commit-msg (->> (str/join "," projects)
                         (str "\nPlease enter the commit message for the projects: ")
                         (u/ask-user))
-        projects-desc (pr/read-all-target-project-clj projects)]
-    (-> #(u/run-command-on (pr/->target-project-path %) git/commit-project! % commit-msg ((keyword %) projects-desc))
-        (map projects)
-        (git/log-git-status "\n*To push        : lein sync" projects-str "--push"))))
+        status (map #(u/run-command-on (pr/->target-project-path %)
+                                       git/commit-project!
+                                       %
+                                       commit-msg
+                                       ((keyword %)
+                                         (pr/read-all-target-project-clj projects)))
+                    projects)
+        committed-project (seq (map :project (filter #(= :committed (:status %)) status)))
+        not-committed-project (seq (map :project (filter #(not= :committed (:status %)) status)))]
+    (git/log-git-status status
+                        (if committed-project
+                          (str "\n*To push        : lein sync " (str/join "," committed-project) " --push")
+                          "")
+                        (if not-committed-project
+                          (str "\n*Could not commit on the projects: " (str/join "," not-committed-project))
+                          ""))))
 
 (defn status-all [_ projects _]
   (let [projects-desc (pr/read-all-target-project-clj projects)]
