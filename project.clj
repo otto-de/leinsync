@@ -10,16 +10,16 @@
 
   :dependencies [[org.clojure/math.combinatorics "0.1.4"]
                  [com.sun.jna/jna "3.0.9"]
-                 [com.github.jnr/jnr-posix "3.0.46"]
+                 [com.github.jnr/jnr-posix "3.0.49"]
                  [digest "1.4.8"]
                  [ancient-clj "0.6.15"]
                  [slingshot "0.12.2"]
-                 [org.clojure/tools.cli "0.4.0"]]
+                 [org.clojure/tools.cli "0.4.1"]]
 
   :profiles {:uberjar {:aot :all}
              :test    {:resource-paths ["test-resources"]}
-             :dev     {:dependencies [[pjstadig/humane-test-output "0.8.3"]]
-                       :plugins      [[lein-cljfmt "0.6.0"]
+             :dev     {:dependencies [[pjstadig/humane-test-output "0.9.0"]]
+                       :plugins      [[lein-cljfmt "0.6.3"]
                                       [lein-cloverage "1.0.13"]
-                                      [jonase/eastwood "0.2.9"]
+                                      [jonase/eastwood "0.3.4"]
                                       [lein-kibit "0.1.6"]]}})
