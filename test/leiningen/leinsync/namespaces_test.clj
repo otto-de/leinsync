@@ -253,16 +253,31 @@
   (is (false? (ns/should-update? [] "" {}))))
 
 (deftest ^:unit location-with-question-test-test
-  (is (=  (str
-           "* ==> The location of a.b.c.name on PROJECT could not be determined.\n      "
-           "Please choose one of options (a number):\n         "
-           "+ -1 -> to skip updating a.b.c.name\n         "
-           "+  0 -> ../folder/1/a.clj\n         "
-           "+  1 -> ../folder/2/b.clj\n         "
-           "+  2 -> ../folder/3/c.clj")
+  (is (= (str
+          "* ==> The location of a.b.c.name on PROJECT could not be determined.\n      "
+          "Please choose one of options (a number):\n         "
+          "+ -1 -> to skip updating a.b.c.name\n         "
+          "+  0 -> ../folder/1/a.clj\n         "
+          "+  1 -> ../folder/2/b.clj\n         "
+          "+  2 -> ../folder/3/c.clj")
 
-          (ns/location-question-with "a.b.c.name"
-                                     "project"
-                                     ["../folder/1/a.clj"
-                                      "../folder/2/b.clj"
-                                      "../folder/3/c.clj"]))))
+         (ns/location-question-with "a.b.c.name"
+                                    "project"
+                                    ["../folder/1/a.clj"
+                                     "../folder/2/b.clj"
+                                     "../folder/3/c.clj"]))))
+
+(deftest ^:unit is-sync-namespace-test
+  (is (true? (ns/is-sync-namespace?
+              "folder1/de/otto/one/cool/ns.clj"
+              {:source-paths   ["folder1"]
+               :resource-paths ["folder2"]
+               :ns-sync        {:namespaces ["de.otto.one.cool.ns"]
+                                :resources  ["log.xml"]}})))
+
+  (is (false? (ns/is-sync-namespace?
+               "folder3/de/otto/one/cool/ns.clj"
+               {:source-paths   ["folder1"]
+                :resource-paths ["folder2"]
+                :ns-sync        {:namespaces ["de.otto.one.cool.ns"]
+                                 :resources  ["log.xml"]}}))))
