@@ -9,7 +9,7 @@
            (java.io File)
            (java.util Properties)))
 
-(def verbose false)
+(def DEBUG-MODE (atom false))
 
 (defn exists? [path] (.exists (io/as-file path)))
 
@@ -63,7 +63,7 @@
   (try
     (apply action args)
     (catch Exception e
-      (if verbose
+      (if @DEBUG-MODE
         (m/info "Error: " (.getMessage e) e)
         (m/info "Error: " (.getMessage e))))))
 
@@ -75,7 +75,7 @@
       :else input)))
 
 (defn run-command-on [project command & args]
-  (if verbose
+  (if @DEBUG-MODE
     (m/info "\n*************************" (format-str project 12) "*************************"))
   (let [original-dir (System/getProperty "user.dir")
         _ (change-dir-to (str original-dir "/" project))
@@ -114,7 +114,7 @@
   (combo/cartesian-product c1 c2))
 
 (defn run-cmd [cmd]
-  (if verbose
+  (if @DEBUG-MODE
     (m/info "... Executing " (str/join " " cmd) "on" (output-of (sh/sh "pwd") " "))
     (m/info "... Executing " (str/join " " cmd)))
   (let [cmd-str (str/join " " cmd)]

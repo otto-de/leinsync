@@ -74,12 +74,17 @@
         (assoc-in ns/resource-def (or include-resource [])))
     source-project-desc))
 
+(defn enable-debug-mode! [source-project-desc]
+  (when (true? (get-in source-project-desc [:ns-sync :debug]))
+    (reset! u/DEBUG-MODE true)))
+
 (defn execute-program [search-project-string
                        source-project-desc
                        {interactive-mode :interactive :as options}
                        sync-commands
                        parent-project-folder]
   (try
+    (enable-debug-mode! source-project-desc)
     (let [sync-projects (find-sync-projects parent-project-folder)
           matching-project (parse-search-input search-project-string sync-projects)
           target-projects (if interactive-mode
@@ -90,6 +95,7 @@
              (may-update-source-project-desc options)
              (command target-projects))))
     (catch Exception e
+      (if @u/DEBUG-MODE (m/info e))
       (m/info "An error occurs with the input string: " search-project-string (.getMessage e)))))
 
 (defn cli-options [profiles]

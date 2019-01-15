@@ -3,7 +3,8 @@
             [clojure.java.io :as io]
             [leiningen.core.main :as m]
             [leiningen.leinsync.namespaces :as ns]
-            [leiningen.leinsync.project-reader :as pr])
+            [leiningen.leinsync.project-reader :as pr]
+            [leiningen.leinsync.utils :as u])
   (:import (java.io File)))
 
 (def package-def [:ns-sync :packages])
@@ -53,14 +54,16 @@
                                .listFiles)]
       (io/delete-file file-to-delete true))
     (catch Exception e
-      (m/info "**** [Error] when deleting a file of the folder:" folder-name (.getMessage e)))))
+      (m/info "**** [Error] when deleting a file of the folder:" folder-name (.getMessage e))
+      (if @u/DEBUG-MODE (m/info e)))))
 
 (defn write-package-files-from-source-to-target-project [folder-name package-path src-package-files target-project]
   (try
     (doseq [^File src-package-file src-package-files]
       (update-file target-project folder-name package-path src-package-file))
     (catch Exception e
-      (m/info "**** [Error] when updating a file of the folder:" folder-name (.getMessage e)))))
+      (m/info "**** [Error] when updating a file of the folder:" folder-name (.getMessage e))
+      (if @u/DEBUG-MODE (m/info e)))))
 
 (defn should-update-package? [package target-projects-desc]
   (contains? (set (get-in target-projects-desc package-def)) package))
