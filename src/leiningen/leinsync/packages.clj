@@ -46,25 +46,18 @@
   (io/make-parents to-folder)
   (FileUtils/copyDirectory from-folder to-folder))
 
-(defn update-package-file! [target-project folder-name package-path ^File src-package-file]
+(defn update-file! [file-type write-f target-project folder-name package-path ^File src-package-file]
   (let [src-package-file-name (.getName src-package-file)]
-    (m/info "*** Update namespace" src-package-file-name)
+    (m/info "*** Update" (str file-type) src-package-file-name "on" folder-name)
     (-> (pr/->target-project-path target-project)
         (str "/" folder-name "/" package-path "/" src-package-file-name)
         (io/file)
-        (write-to-file! src-package-file))))
-
-(defn update-sub-package! [target-project folder-name package-path ^File src-package-folder]
-  (m/info "*** Update sub package" (.getName src-package-folder) "on the folder" folder-name)
-  (-> (pr/->target-project-path target-project)
-      (str "/" folder-name "/" package-path "/" (.getName src-package-folder))
-      (io/file)
-      (write-to-folder! src-package-folder)))
+        (write-f src-package-file))))
 
 (defn update-package-entry! [target-project folder-name package-path ^File src-package-file]
   (if (.isDirectory src-package-file)
-    (update-sub-package! target-project folder-name package-path ^File src-package-file)
-    (update-package-file! target-project folder-name package-path ^File src-package-file)))
+    (update-file! :sub-package write-to-folder! target-project folder-name package-path src-package-file)
+    (update-file! :namespace write-to-file! target-project folder-name package-path src-package-file)))
 
 (defn delete-package-files-of-target-project [target-project folder-name package-path]
   (try

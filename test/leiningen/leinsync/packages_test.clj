@@ -47,6 +47,18 @@
   (is (= "src/path/to/package/x"
          (packages/get-package-path "src.path.to.package.x"))))
 
+(deftest ^:unit update-file!-test
+  (let [state (atom [])
+        file-type :namespace
+        write-f (fn [x y] (reset! state {:to (.getPath x) :from (.getPath y)}))
+        target-project "target-project"
+        folder-name "folder"
+        package-path "src/to/package/x"
+        src-package-file (new File "src/to/package/x/ns.clj")]
+    (is (=  {:from "src/to/package/x/ns.clj",
+             :to "../target-project/folder/src/to/package/x/ns.clj"}
+            (packages/update-file! file-type write-f target-project folder-name package-path src-package-file)))))
+
 (deftest ^:unit make-sync-work-unit-test
   (let [children [(new File "child-1") (new File "child-2") (new File "child-3")]
         package-path "src/de/otto/package/x/y"
