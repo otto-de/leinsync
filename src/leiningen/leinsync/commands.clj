@@ -7,7 +7,8 @@
             [leiningen.leinsync.git :as git]
             [leiningen.leinsync.list :as l]
             [leiningen.leinsync.deps :as deps]
-            [leiningen.leinsync.tests :as t]))
+            [leiningen.leinsync.tests :as t]
+            [leiningen.leinsync.packages :as p]))
 
 (defn pull-rebase-all! [_ projects _]
   (-> #(u/run-command-on (pr/->target-project-path %) git/pull-rebase! %)
@@ -62,12 +63,17 @@
     (l/list-resources all-projects-desc ns/namespace-def arg)
     (l/list-resources all-projects-desc ns/resource-def arg)))
 
+(defn update-combination-of [path source-project-desc target-projects]
+  (seq (u/cartesian-product (get-in source-project-desc path) target-projects)))
+
 (defn update-projects! [_ target-projects source-project-desc]
-  (let [target-projects-desc (pr/read-all-target-project-clj target-projects)
-        namespaces (u/cartesian-product (get-in source-project-desc ns/namespace-def) target-projects)
-        resources (u/cartesian-product (get-in source-project-desc ns/resource-def) target-projects)]
-    (if (seq namespaces) (ns/update-namespaces! namespaces source-project-desc target-projects-desc))
-    (if (seq resources) (ns/update-resources! resources source-project-desc target-projects-desc))))
+  (let [target-projects-desc (pr/read-all-target-project-clj target-projects)]
+    (when-let [namespaces (update-combination-of ns/namespace-def source-project-desc target-projects)]
+      (ns/update-namespaces! namespaces source-project-desc target-projects-desc))
+    (when-let [resources (update-combination-of ns/resource-def source-project-desc target-projects)]
+      (ns/update-resources! resources source-project-desc target-projects-desc))
+    (when-let [packages (update-combination-of p/package-def source-project-desc target-projects)]
+      (p/update-packages! packages source-project-desc target-projects-desc))))
 
 (defn deps [arg target-projects {source-project :name}]
   (deps/check-dependencies-of (pr/read-all-target-project-clj (conj target-projects source-project))

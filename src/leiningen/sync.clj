@@ -3,8 +3,8 @@
   (:require [clojure.string :as str]
             [clojure.tools.cli :as cli]
             [clojure.java.io :as io]
-            [leiningen.leinsync.utils :as u]
             [leiningen.core.main :as m]
+            [leiningen.leinsync.utils :as u]
             [leiningen.leinsync.commands :as c]
             [leiningen.leinsync.namespaces :as ns]
             [leiningen.leinsync.utils :as u]))
@@ -133,6 +133,7 @@
              "To specify the namespaces and resources to be shared, you must define them in project.clj. i.e"
              ":ns-sync {:test-cmd    [[\"lein\" \"test\"]]"
              "          :namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
+             "          :packages    [\"package.to.be.sync.1\" \"package.to.be.sync.2\"]"
              "          :resources   [\"resource.to.be.sync.1\"  \"resource.to.be.sync.2\" ]}"
              ""]))
 
