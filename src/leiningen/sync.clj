@@ -10,7 +10,6 @@
             [leiningen.leinsync.packages :as pk]
             [leiningen.leinsync.utils :as u]))
 
-(def PARENT-FOLDER "../")
 (def ALL-PROJECTS ".*")
 
 (defn find-command [options commands]
@@ -163,7 +162,7 @@
         {interactive-mode :interactive} options]
     (cond
       (seq errors) (m/abort (str/join " " errors))
-      (and (zero? (count arguments)) interactive-mode) (execute-program ALL-PROJECTS project-desc options c/SYNC-COMMANDS PARENT-FOLDER)
+      (and (zero? (count arguments)) interactive-mode) (execute-program ALL-PROJECTS project-desc options c/SYNC-COMMANDS u/PARENT-FOLDER)
       (not= 1 (count arguments)) (m/abort (usage summary))
-      :else (execute-program (first arguments) project-desc options c/SYNC-COMMANDS PARENT-FOLDER))
+      :else (execute-program (first arguments) project-desc options c/SYNC-COMMANDS u/PARENT-FOLDER))
     (m/exit)))

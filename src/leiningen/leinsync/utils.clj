@@ -9,6 +9,8 @@
            (java.io File)
            (java.util Properties)))
 
+(def PARENT-FOLDER "../")
+
 (def DEBUG-MODE (atom false))
 
 (defn exists? [path] (.exists (io/as-file path)))

@@ -1,8 +1,9 @@
 (ns leiningen.leinsync.project-reader
-  (:require [leiningen.core.project :as p]))
+  (:require [leiningen.core.project :as p]
+            [leiningen.leinsync.utils :as u]))
 
 (defn ->target-project-path [project-name]
-  (str "../" project-name))
+  (str u/PARENT-FOLDER project-name))
 
 (defn read-target-project-clj [p]
   (-> (->target-project-path p)
