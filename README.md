@@ -84,6 +84,7 @@ Options:
    + --list              : List resources to be synchronized.
    + --include-namespace : Synchronize only the passed namespaces.
    + --include-resource  : Synchronize only the passed resources.
+   + --include-package   : Synchronize only the passed packages.
    + --notest            : Synchronize shared code base without executing tests on target projects.
    + --test              : Executing tests on target projects.
    + --reset             : Reset all uncommitted changes in all target projects.
