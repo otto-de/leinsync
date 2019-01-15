@@ -23,24 +23,27 @@ This is the reason why we wrote this plugin `sync`to make this task automaticall
 container-folder/
 +-- project-1
     +-- src
-    ¦   +-- name.space.1
-    ¦   +-- name.space.2
+    ¦   +-- package.1
+    ¦   +---- name.space.1
+    ¦   +---- name.space.2
     +-- test
     ¦   +-- name.space-test.1
     ¦   +-- name.space-test.2
     +-- project.clj
 +-- project-2
     +-- src
-    ¦   +-- name.space.1
-    ¦   +-- name.space.2
+    ¦   +-- package.1
+    ¦   +---- name.space.1
+    ¦   +---- name.space.2
     +-- test
     ¦   +-- name.space-test.1
     ¦   +-- name.space-test.2
     +-- project.clj
 +-- project-3
     +-- src
-    ¦   +-- name.space.1
-    ¦   +-- name.space.2
+    ¦   +-- package.1
+    ¦   +---- name.space.1
+    ¦   +---- name.space.2
     +-- test
     ¦   +-- name.space-test.1
     ¦   +-- name.space-test.2
@@ -93,9 +96,10 @@ Define `:ns-sync` configuration in the project.clj of each target project. It ha
 
   + `:test-cmd` specifies which leiningen tasks will be executed to test target projects after synchronizing.
   + `:namespaces` specifies the namespaces to be synchronized between shared projects.
+  + `:packages` specifies the packages to be synchronized between shared projects.
   + `:resources`  specifies the resources to be synchronized between shared projects.
   
-A namespace/resource will be synchronized between 2 projects if and only if they are defined in the both project.clj.
+A namespace/resource/package will be synchronized between 2 projects if and only if they are defined in the both project.clj.
 
 ## Example
 The `:ns-sync` configuration can be specified like that:
@@ -104,6 +108,7 @@ The `:ns-sync` configuration can be specified like that:
 :ns-sync { :test-cmd    [["./lein.sh" "profile-1" "test"] 
                          ["./lein.sh" "profile-2" "test"]]
            :namespaces  ["name.space.1" "name.space.2"]
+           :packages    ["package.path.1" "package.path.2"]
            :resources   ["resource.1"   "resource.2"]}
 ```
 
