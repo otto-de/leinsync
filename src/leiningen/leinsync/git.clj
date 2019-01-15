@@ -4,7 +4,8 @@
             [leiningen.core.main :as m]
             [leiningen.leinsync.table-pretty-print :as pp]
             [clojure.string :as str]
-            [leiningen.leinsync.namespaces :as ns])
+            [leiningen.leinsync.namespaces :as ns]
+            [leiningen.leinsync.packages :as package])
   (:import (java.io File)))
 
 (def output-length 120)
@@ -112,9 +113,13 @@
     {:sync-relevant-changes (str/join " " (concat (take sync-list-limit sync-resources) "..."))}
     :else {:sync-relevant-changes (str/join " " sync-resources)}))
 
+(defn is-sync-resource? [projects-desc path]
+  (or (ns/is-sync-namespace? path projects-desc)
+      (package/is-on-sync-package? path projects-desc)))
+
 (defn get-details-status [status-lines projects-desc]
   (let [sync-resources (filter
-                        #(ns/sync-resources? projects-desc (remove-git-status %))
+                        #(is-sync-resource? projects-desc (remove-git-status %))
                         status-lines)
         other-resources (filter
                          #(and (not (u/lazy-contains? sync-resources %)) (seq %))
@@ -146,7 +151,7 @@
 (defn sync-resources-of [changed-files untracked-files projects-desc]
   (->> untracked-files
        (concat changed-files)
-       (filter #(ns/sync-resources? projects-desc %))))
+       (filter #(is-sync-resource? projects-desc %))))
 
 (defn commit-project! [project commit-msg projects-desc]
   (let [add-status (->> projects-desc

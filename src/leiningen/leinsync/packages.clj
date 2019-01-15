@@ -18,8 +18,11 @@
 (defn is-package? [[_ ^File f]]
   (and (.exists f) (.isDirectory f)))
 
+(defn path-segment [path]
+  (str/split path #"/"))
+
 (defn folder-name-of [path]
-  (last (str/split path #"/")))
+  (last (path-segment path)))
 
 (defn files-of-package [^File folder]
   (.listFiles folder))
@@ -84,6 +87,16 @@
 
 (defn should-update-package? [package target-projects-desc]
   (contains? (set (get-in target-projects-desc package-def)) package))
+
+(defn is-on-sync-package? [file-path projects-desc]
+  (let [file-package-segment (drop-last (rest (path-segment file-path)))]
+    (->> (get-in projects-desc package-def)
+         (map #(str/split % #"\."))
+         (filter (fn [package-segment]
+                   (= package-segment
+                      (take (count package-segment) file-package-segment))))
+         (empty?)
+         (not))))
 
 (defn update-package! [package target-project source-project-desc target-projects-desc]
   (when (should-update-package? package target-projects-desc)

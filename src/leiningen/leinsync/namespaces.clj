@@ -56,7 +56,7 @@
                                                             :resource-name slash-path-segments}
       :else RESOURCE-NOT-FOUND)))
 
-(defn sync-resources? [projects-desc path]
+(defn is-sync-namespace? [path projects-desc]
   (not= (path->namespace path projects-desc) RESOURCE-NOT-FOUND))
 
 (defn resource->target-path [resource target-project target-project-desc]
