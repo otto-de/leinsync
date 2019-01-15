@@ -62,14 +62,18 @@
     (catch Exception e
       (m/info "**** [Error] when updating a file of the folder:" folder-name (.getMessage e)))))
 
+(defn should-update-package? [package target-projects-desc]
+  (contains? (set (get-in target-projects-desc package-def)) package))
+
 (defn update-package! [package target-project source-project-desc target-projects-desc]
-  (let [package-path (get-package-path package)]
-    (doseq [[folder-name src-package-files] (make-sync-work-unit package-path source-project-desc target-projects-desc)]
-      (delete-package-files-of-target-project target-project folder-name package-path)
-      (write-package-files-from-source-to-target-project folder-name package-path src-package-files target-project))))
+  (when (should-update-package? package target-projects-desc)
+    (m/info "\n* Update package" package "to the project" (str/upper-case target-project))
+    (let [package-path (get-package-path package)]
+      (doseq [[folder-name src-package-files] (make-sync-work-unit package-path source-project-desc target-projects-desc)]
+        (delete-package-files-of-target-project target-project folder-name package-path)
+        (write-package-files-from-source-to-target-project folder-name package-path src-package-files target-project)))))
 
 (defn update-packages! [packages source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE PACKAGES ***********************\n*")
   (doseq [[package target-project] packages]
-    (m/info "\n* Update package" package "to the project" (str/upper-case target-project))
     (update-package! package target-project source-project-desc ((keyword target-project) target-projects-desc))))
