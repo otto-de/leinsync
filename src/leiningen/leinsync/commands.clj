@@ -60,6 +60,7 @@
 
 (defn list [arg target-projects {source-project :name}]
   (let [all-projects-desc (pr/read-all-target-project-clj (conj target-projects source-project))]
+    (l/list-resources all-projects-desc p/package-def arg)
     (l/list-resources all-projects-desc ns/namespace-def arg)
     (l/list-resources all-projects-desc ns/resource-def arg)))
 

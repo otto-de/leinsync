@@ -6,7 +6,8 @@
             [leiningen.leinsync.utils :as u]
             [leiningen.core.main :as m]
             [leiningen.leinsync.table-pretty-print :as pp]
-            [leiningen.leinsync.git :as git]))
+            [leiningen.leinsync.git :as git]
+            [leiningen.leinsync.packages :as p]))
 
 (def hash-length 5)
 (def all-resources-different-marker "=> ")
@@ -19,7 +20,7 @@
                             project)))
 
 (defn merge-project-occurrence
-  ([data] (merge-project-occurrence data {}))
+  ([data] (if (seq data) (merge-project-occurrence data {})))
   ([[first-result & rest-result] result]
    (let [aggregated-result (aggregate result first-result)]
      (if (empty? rest-result)
@@ -47,12 +48,18 @@
     [(keyword resource)
      (resource-occurrence resource project project-desc render)]))
 
+(defn get-resource-list [desc selector]
+  (if (= selector p/package-def)
+    []
+    (get-in desc selector)))
+
 (defn resource-name->project [projects selector render]
   (reduce-kv
    (fn [m project desc]
-     (->> (get-in desc selector)
-          (map (resource->project project desc render))
-          (into m)))
+     (let [resource-tuple (map (resource->project project desc render) (get-resource-list desc selector))]
+       (if (not-empty resource-tuple)
+         (into m resource-tuple)
+         m)))
    []
    projects))
 
@@ -126,22 +133,23 @@
   (zipmap (keys v) (map (partial compact-hash-str desired-length) (vals v))))
 
 (defn pretty-print-structure [data selector desired-length]
-  (reduce-kv
-   (fn [m k v] (conj m (merge
-                        (resource->package-and-name k selector)
-                        (-> v
-                            (underline-different-values)
-                            (display-hash-value desired-length)))))
-   []
-   data))
+  (if (not-empty data)
+    (reduce-kv
+     (fn [m k v]
+       (conj m (merge
+                (resource->package-and-name k selector)
+                (-> v
+                    (underline-different-values)
+                    (display-hash-value desired-length)))))
+     []
+     data)))
 
 (defn has-no-difference? [m]
-  (->>
-   (dissoc m :package :name)
-   (vals)
-   (map #(or (str/includes? % all-resources-different-marker)
-             (str/includes? % one-resource-different-marker)))
-   (reduce #(or %1 %2))))
+  (->> (dissoc m :package :name)
+       (vals)
+       (map #(or (str/includes? % all-resources-different-marker)
+                 (str/includes? % one-resource-different-marker)))
+       (reduce #(or %1 %2))))
 
 (defn reduce-list-with-option [coll option]
   (if (= :diff option)
