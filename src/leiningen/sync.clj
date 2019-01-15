@@ -7,6 +7,7 @@
             [leiningen.leinsync.utils :as u]
             [leiningen.leinsync.commands :as c]
             [leiningen.leinsync.namespaces :as ns]
+            [leiningen.leinsync.packages :as pk]
             [leiningen.leinsync.utils :as u]))
 
 (def PARENT-FOLDER "../")
@@ -67,11 +68,12 @@
          (u/ask-user (str "\n* Please specify the project you want to sync i.e 1,2,3"))
          (parse-project-input-string project-map))))
 
-(defn may-update-source-project-desc [{:keys [include-namespace include-resource]} source-project-desc]
-  (if (or include-namespace include-resource)
+(defn may-update-source-project-desc [{:keys [include-namespace include-resource include-package] :as options} source-project-desc]
+  (if (or include-namespace include-resource include-package)
     (-> source-project-desc
         (assoc-in ns/namespace-def (or include-namespace []))
-        (assoc-in ns/resource-def (or include-resource [])))
+        (assoc-in ns/resource-def (or include-resource []))
+        (assoc-in pk/package-def (or include-package [])))
     source-project-desc))
 
 (defn enable-debug-mode! [source-project-desc]
@@ -112,6 +114,10 @@
     :parse-fn #(u/split %)
     :validate [#(not (empty? %))
                (str "--include-resource should not be empty and have the pattern rs1,rs2")]]
+   ["-k" "--include-package p1,p2" "Synchronize only the passed packages"
+    :parse-fn #(u/split %)
+    :validate [#(not (empty? %))
+               (str "--include-package should not be empty and have the pattern p1,p2")]]
    ["-l" "--list diff|all" "List resources to be synchronized"
     :parse-fn keyword
     :validate [#(or (= :all %) (= :diff %))

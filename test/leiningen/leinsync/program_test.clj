@@ -2,8 +2,7 @@
   (:require [clojure.test :refer :all]
             [leiningen.leinsync.utils :as u]
             [leiningen.leinsync.project-reader :as pr]
-            [leiningen.sync :as s])
-  (:import (java.util.regex PatternSyntaxException)))
+            [leiningen.sync :as s]))
 
 (deftest ^:unit test-split-string
   (is (= ["project1" "project2" "project3"]
@@ -52,26 +51,38 @@
            (s/may-update-source-project-desc {:not-Relevant-option :value} src-desc)
            (s/may-update-source-project-desc {} src-desc)))
 
-    (is (= {:ns-sync {:namespaces ["ns1"],
-                      :resources  ["rs1"],
+    (is (= {:ns-sync {:namespaces ["ns1"]
+                      :packages   ["pk1"]
+                      :resources  ["rs1"]
                       :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
 
-           (s/may-update-source-project-desc {:include-namespace  ["ns1"]
-                                              :include-resource ["rs1"]}
+           (s/may-update-source-project-desc {:include-namespace ["ns1"]
+                                              :include-package   ["pk1"]
+                                              :include-resource  ["rs1"]}
                                              src-desc)))
 
-    (is (= {:ns-sync {:namespaces ["ns1"],
-                      :resources  [],
+    (is (= {:ns-sync {:namespaces ["ns1"]
+                      :packages   []
+                      :resources  []
                       :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
 
            (s/may-update-source-project-desc {:include-namespace ["ns1"]}
                                              src-desc)))
 
-    (is (= {:ns-sync {:namespaces [],
-                      :resources  ["rs1"],
+    (is (= {:ns-sync {:namespaces []
+                      :resources  ["rs1"]
+                      :packages   []
                       :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
 
            (s/may-update-source-project-desc {:include-resource ["rs1"]}
+                                             src-desc)))
+
+    (is (= {:ns-sync {:namespaces []
+                      :resources  []
+                      :packages   ["pk1"]
+                      :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
+
+           (s/may-update-source-project-desc {:include-package ["pk1"]}
                                              src-desc)))))
 
 (deftest ^:unit include-option-change-src-desc-test
@@ -105,11 +116,13 @@
                                     :namespaces ["ns1" "ns2"]
                                     :resources  ["rc1" "rc2"]}}
           options {:a                 "command a opt"
+                   :include-package   ["pk1" "pk2"]
                    :include-namespace ["ns3" "ns4" "ns5"]
                    :include-resource  ["rs1" "rs2" "rs3"]}
           sync-commands {:a (fn [_ _ source] (reset! state source))}]
       (s/execute-program input source-project options sync-commands "")
       (is (= {:ns-sync {:namespaces ["ns3" "ns4" "ns5"]
+                        :packages   ["pk1" "pk2"]
                         :resources  ["rs1" "rs2" "rs3"]
                         :test-cmd   [["./lein.sh" "clean"] ["./lein.sh" "test"]]}}
 
@@ -121,7 +134,8 @@
           source-project {}
           options {:a "command a opt"}
           sync-commands {:a (fn [_ _ source] (reset! state source))}]
-      (is (not @state)))))
+      (s/execute-program input source-project options sync-commands "")
+      (is (= {} @state)))))
 
 (deftest ^:unit sub-str
   (is (= "abcd ..." (u/sub-str "abcde" 4)))
@@ -235,4 +249,4 @@
 
 (deftest ^:unit parse-search-input-interactive-test
   (with-redefs-fn {#'u/ask-user (fn [_ _] "0,1")}
-    #(is (= #{"project-3", "project-2"} (set (s/parse-search-input-interactive #{"project-1" , "project-2" , "project-3"}))))))
+    #(is (= #{"project-3", "project-2"} (set (s/parse-search-input-interactive #{"project-1", "project-2", "project-3"}))))))
