@@ -2,9 +2,9 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
             [digest :as d]
+            [leiningen.core.main :as m]
             [leiningen.leinsync.namespaces :as ns]
             [leiningen.leinsync.utils :as u]
-            [leiningen.core.main :as m]
             [leiningen.leinsync.table-pretty-print :as pp]
             [leiningen.leinsync.git :as git]
             [leiningen.leinsync.packages :as p]))
@@ -65,7 +65,7 @@
    projects))
 
 (defn resource->package-and-name [k selector]
-  (if (= selector ns/namespace-def)
+  (if (contains? #{ns/namespace-def p/package-def} selector)
     (let [name-segments (str/split (name k) #"\.")]
       {:package (str/join "." (drop-last name-segments))
        :name    (last name-segments)})
@@ -172,7 +172,7 @@
     (m/info "     - hash-value (.i.e ddfa3d66) :  the package/namespace/resource is defined in the project.clj")
     (m/info "                                     =>    last-commit-date hash : means that the resource doesn't match on all projects")
     (m/info "                                     [x]=> last-commit-date hash : means that the resource on this project is different from others")
-    (pp/print-compact-table (sort-by :name coll))))
+    (pp/print-compact-table (sort-by (juxt :package :name) coll))))
 
 (defn list-resources [projects-desc selector option]
   (-> projects-desc
