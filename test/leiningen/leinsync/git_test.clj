@@ -59,8 +59,8 @@
   (let [project-desc {:source-paths   ["folder1"]
                       :test-paths     []
                       :resource-paths ["folder2"]
-                      :sync        {:namespaces ["de.otto.one.cool.ns"]
-                                    :resources  ["log.xml"]}}
+                      :sync           {:namespaces ["de.otto.one.cool.ns"]
+                                       :resources  ["log.xml"]}}
         git-status-lines ["M folder1/de/otto/one/cool/ns.clj"
                           "M folder1/de/otto/one/not-relevante-ns.clj"
                           "D folder2/log.xml"]]
@@ -71,8 +71,8 @@
   (let [project-desc {:source-paths   ["folder1" "folder2" "folder3" "folder4" "folder5"]
                       :test-paths     []
                       :resource-paths ["folder2"]
-                      :sync        {:namespaces ["de.otto.one.cool.ns"]
-                                    :resources  ["log.xml"]}}
+                      :sync           {:namespaces ["de.otto.one.cool.ns"]
+                                       :resources  ["log.xml"]}}
         git-status-lines ["M folder1/de/otto/one/cool/ns.clj"
                           "M folder1/de/otto/one/not-relevante-ns.clj"
                           "D folder2/log.xml"
@@ -87,8 +87,8 @@
   (let [project-desc {:source-paths   ["folder1"]
                       :test-paths     []
                       :resource-paths ["folder2"]
-                      :sync        {:namespaces ["de.otto.one.cool.ns"]
-                                    :resources  ["log.xml"]}}
+                      :sync           {:namespaces ["de.otto.one.cool.ns"]
+                                       :resources  ["log.xml"]}}
         changed-file ["folder1/de/otto/one/cool/ns.clj"
                       "folder1/de/otto/one/not-relevante-ns.clj"]
 
