@@ -27,6 +27,9 @@
 (defn files-of-package [^File folder]
   (.listFiles folder))
 
+(defn file-names-of-package [^File folder]
+  (map (fn [^File f] (.getName f)) (files-of-package folder)))
+
 (defn get-package-path [package]
   (str/replace package #"\." "/"))
 
@@ -37,6 +40,18 @@
          (filter is-package?)
          (filter (fn [[folder]] #(contains? target-package-folders folder)))
          (map (fn [[folder ^File package]] [folder (files-of-package package)])))))
+
+(defn get-namespace-of-package [project-desc package]
+  (->> (get-src-test-folders project-desc)
+       (map (fn [p] [package (io/file (str p "/" (get-package-path package)))]))
+       (filter is-package?)
+       (map (fn [[p ^File package]] (map #(str p "." (first (str/split % #"\." 2))) (file-names-of-package package))))
+       (apply concat)))
+
+(defn get-package-resource-list [project-desc]
+  (->> (get-in project-desc package-def)
+       (map (partial get-namespace-of-package project-desc))
+       (apply concat)))
 
 (defn write-to-file! [to-file from-file]
   (io/make-parents to-file)
