@@ -69,16 +69,14 @@
         (FileUtils/deleteDirectory file-to-delete)
         (io/delete-file file-to-delete true)))
     (catch Exception e
-      (m/info "**** [Error] when deleting a file of the folder:" folder-name (.getMessage e))
-      (if @u/DEBUG-MODE (m/info e)))))
+      (u/print-debug (str "**** [Error] when deleting a file of the folder: " folder-name " " (.getMessage e)) e))))
 
 (defn write-package-files-from-source-to-target-project [folder-name package-path src-package-files target-project]
   (try
     (doseq [^File src-package-file src-package-files]
       (update-package-entry! target-project folder-name package-path src-package-file))
     (catch Exception e
-      (m/info "**** [Error] when updating a file of the folder:" folder-name (.getMessage e))
-      (if @u/DEBUG-MODE (m/info e)))))
+      (u/print-debug (str "**** [Error] when updating a file of the folder: " folder-name " " (.getMessage e)) e))))
 
 (defn should-update-package? [package target-projects-desc]
   (contains? (set (get-in target-projects-desc package-def)) package))
