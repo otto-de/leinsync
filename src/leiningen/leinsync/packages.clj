@@ -61,11 +61,13 @@
 
 (defn delete-package-files-of-target-project [target-project folder-name package-path]
   (try
-    (doseq [file-to-delete (-> (pr/->target-project-path target-project)
-                               (str "/" folder-name "/" package-path)
-                               ^File (io/file)
-                               .listFiles)]
-      (io/delete-file file-to-delete true))
+    (doseq [^File file-to-delete (-> (pr/->target-project-path target-project)
+                                     (str "/" folder-name "/" package-path)
+                                     ^File (io/file)
+                                     .listFiles)]
+      (if (.isDirectory file-to-delete)
+        (FileUtils/deleteDirectory file-to-delete)
+        (io/delete-file file-to-delete true)))
     (catch Exception e
       (m/info "**** [Error] when deleting a file of the folder:" folder-name (.getMessage e))
       (if @u/DEBUG-MODE (m/info e)))))
