@@ -8,6 +8,8 @@
                    :unit    :unit
                    :focused :focused}
 
+  :plugins [[org.clojure/core.rrb-vector "0.0.13"]]
+
   :dependencies [[org.clojure/math.combinatorics "0.1.4"]
                  [com.sun.jna/jna "3.0.9"]
                  [com.github.jnr/jnr-posix "3.0.49"]

@@ -93,7 +93,7 @@ Options:
    + --pull              : Pull rebase on target projects.
    + --push              : Push on target projects.
 
-Define `:ns-sync` configuration in the project.clj of each target project. It has the following options:
+Define `:sync` configuration in the project.clj of each target project. It has the following options:
 
   + `:test-cmd` specifies which leiningen tasks will be executed to test target projects after synchronizing.
   + `:namespaces` specifies the namespaces to be synchronized between shared projects.
@@ -103,10 +103,10 @@ Define `:ns-sync` configuration in the project.clj of each target project. It ha
 A namespace/resource/package will be synchronized between 2 projects if and only if they are defined in the both project.clj.
 
 ## Example
-The `:ns-sync` configuration can be specified like that:
+The `:sync` configuration can be specified like that:
 
 ```clojure
-:ns-sync { :test-cmd    [["./lein.sh" "profile-1" "test"] 
+:sync { :test-cmd    [["./lein.sh" "profile-1" "test"] 
                          ["./lein.sh" "profile-2" "test"]]
            :namespaces  ["name.space.1" "name.space.2"]
            :packages    ["package.path.1" "package.path.2"]

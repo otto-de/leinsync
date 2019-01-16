@@ -6,7 +6,7 @@
 (deftest ^:unit test-cmd
   (is (= t/standard-test-cmd (t/test-cmd {})))
   (is (= [["test" "command"]]
-         (t/test-cmd {:ns-sync {:test-cmd [["test" "command"]]}}))))
+         (t/test-cmd {:sync {:test-cmd [["test" "command"]]}}))))
 
 (deftest ^:unit test-status
   (is (= {:project "project", :result :passed, :test-1 :passed, :test-2 :passed}
@@ -41,8 +41,8 @@
   (let [state (atom [])]
     (with-redefs-fn {#'u/run-cmd (fn [cmd] (swap! state conj cmd) {:result :passed :cmd cmd})}
       #(is (= {nil :passed, :project "project", :result :passed}
-              (t/lein-test "project" {:ns-sync {:test-cmd [["command"]]}}))))
+              (t/lein-test "project" {:sync {:test-cmd [["command"]]}}))))
     (with-redefs-fn {#'u/run-cmd (fn [cmd] (swap! state conj cmd) {:result :passed :cmd cmd})}
       #(is (= [["command"] ["command"]]
-              (do (t/lein-test "project" {:ns-sync {:test-cmd [["command"]]}})
+              (do (t/lein-test "project" {:sync {:test-cmd [["command"]]}})
                   @state))))))

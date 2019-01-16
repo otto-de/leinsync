@@ -4,7 +4,7 @@
             [leiningen.leinsync.utils :as u]
             [leiningen.leinsync.table-pretty-print :as pp]))
 
-(def test-cmd-def [:ns-sync :test-cmd])
+(def test-cmd-def [:sync :test-cmd])
 (def standard-test-cmd [["./lein.sh" "clean"] ["./lein.sh" "test"]])
 
 (defn test-cmd [project-desc]

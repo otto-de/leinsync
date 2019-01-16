@@ -8,28 +8,28 @@
   (is (true? (packages/is-on-sync-package?
               "folder1/de/otto/one/cool/ns.clj"
               {:source-paths ["folder1"]
-               :ns-sync      {:packages ["de.otto.one"]}})))
+               :sync      {:packages ["de.otto.one"]}})))
 
   (is (true? (packages/is-on-sync-package?
               "folder1/de/otto/one/ns.clj"
               {:source-paths ["folder1"]
-               :ns-sync      {:packages ["de.otto.one"]}})))
+               :sync      {:packages ["de.otto.one"]}})))
 
   (is (false? (packages/is-on-sync-package?
                "folder1/de/otto/two/one/ns.clj"
                {:source-paths ["folder1"]
-                :ns-sync      {:packages ["de.otto.one"]}}))))
+                :sync      {:packages ["de.otto.one"]}}))))
 
 (deftest ^:unit should-update-package-test
   (is (true? (packages/should-update-package?
               "de.otto.one"
               {:source-paths ["folder1"]
-               :ns-sync      {:packages ["de.otto.one"]}})))
+               :sync      {:packages ["de.otto.one"]}})))
 
   (is (false? (packages/should-update-package?
                "de.otto.two"
                {:source-paths ["folder1"]
-                :ns-sync      {:packages ["de.otto.one"]}}))))
+                :sync      {:packages ["de.otto.one"]}}))))
 
 (deftest ^:unit is-package-test
   (is (true? (packages/is-package? [:folder-name (io/file "test/leiningen/leinsync")])))
@@ -39,7 +39,7 @@
   (is (= #{"folder1" "folder2"}
          (packages/get-src-test-folders {:source-paths ["folder1"]
                                          :test-paths   ["folder2"]
-                                         :ns-sync      {:packages ["de.otto.one"]}}))))
+                                         :sync      {:packages ["de.otto.one"]}}))))
 
 (deftest ^:unit folder-name-of-test
   (is (= "x"
@@ -63,9 +63,9 @@
   (let [children [(new File "child-1") (new File "child-2") (new File "child-3")]
         package-path "src/de/otto/package/x/y"
         source-project-desc {:source-paths ["folder-1"]
-                             :ns-sync      {:packages ["de.otto.package.x"]}}
+                             :sync      {:packages ["de.otto.package.x"]}}
         target-projects-desc {:source-paths ["folder-1"]
-                              :ns-sync      {:packages ["de.otto.package.x"]}}]
+                              :sync      {:packages ["de.otto.package.x"]}}]
     (with-redefs-fn {#'io/file                   (fn [x] (new File x))
                      #'packages/is-package?      (fn [[folder]] (= folder "folder-1"))
                      #'packages/files-of-package (fn [x] children)}
