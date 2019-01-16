@@ -96,8 +96,7 @@
              (may-update-source-project-desc options)
              (command target-projects))))
     (catch Exception e
-      (if @u/DEBUG-MODE (m/info e))
-      (m/info "An error occurs with the input string: " search-project-string (.getMessage e)))))
+      (u/print-debug (str "An error occurs with the input string: " search-project-string " " (.getMessage e)) e))))
 
 (defn cli-options [profiles]
   [["-a" "--interactive" "activate interactive mode"]
