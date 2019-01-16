@@ -2,8 +2,7 @@
   (:require [clojure.test :refer :all]
             [leiningen.leinsync.namespaces :as ns]
             [leiningen.core.project :as p]
-            [leiningen.leinsync.utils :as u])
-  (:import (java.io File)))
+            [leiningen.leinsync.utils :as u]))
 
 (deftest ^:unit path->namespace
   (testing "happy path"
