@@ -49,9 +49,10 @@
      (resource-occurrence resource project project-desc render)]))
 
 (defn get-resource-list [desc selector]
-  (if (= selector p/package-def)
-    []
-    (get-in desc selector)))
+  (let [resource-def (get-in desc selector)]
+    (if (= selector p/package-def)
+      (p/get-package-resource-list desc)
+      resource-def)))
 
 (defn resource-name->project [projects selector render]
   (reduce-kv
@@ -167,8 +168,8 @@
   (when (seq coll)
     (m/info "\n* List of" resource-name)
     (m/info "     -" empty-occurrence-str
-            "                        :  the namespace/resource does not exist in the project although it has been specified")
-    (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
+            "                        :  the package/namespace/resource does not exist in the project although it has been specified")
+    (m/info "     - hash-value (.i.e ddfa3d66) :  the package/namespace/resource is defined in the project.clj")
     (m/info "                                     =>    last-commit-date hash : means that the resource doesn't match on all projects")
     (m/info "                                     [x]=> last-commit-date hash : means that the resource on this project is different from others")
     (pp/print-compact-table (sort-by :name coll))))
