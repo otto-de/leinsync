@@ -103,14 +103,15 @@ Define `:sync` configuration in the project.clj of each target project. It has t
 A namespace/resource/package will be synchronized between 2 projects if and only if they are defined in the both project.clj.
 
 ## Example
+Breaking Change: Since the version `0.9.47`the selector names `:sync` instead of `:ns-sync`
 The `:sync` configuration can be specified like that:
 
 ```clojure
 :sync { :test-cmd    [["./lein.sh" "profile-1" "test"] 
-                         ["./lein.sh" "profile-2" "test"]]
-           :namespaces  ["name.space.1" "name.space.2"]
-           :packages    ["package.path.1" "package.path.2"]
-           :resources   ["resource.1"   "resource.2"]}
+                      ["./lein.sh" "profile-2" "test"]]
+        :namespaces  ["name.space.1" "name.space.2"]
+        :packages    ["package.path.1" "package.path.2"]
+        :resources   ["resource.1"   "resource.2"]}
 ```
 
 In order to synchronize namespaces and resources between projects, run in the current source project:
