@@ -14,8 +14,8 @@
 (def DEBUG-MODE (atom false))
 
 (defn print-debug [msg e]
-  (if @DEBUG-MODE (m/info e))
-  (m/info msg))
+  (m/info msg (.getMessage e))
+  (when @DEBUG-MODE (m/info e)))
 
 (defn exists? [path] (.exists (io/as-file path)))
 
