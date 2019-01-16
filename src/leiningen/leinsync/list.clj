@@ -16,7 +16,7 @@
 
 (defn aggregate [result [namespace project]]
   (assoc result namespace (if (contains? result namespace)
-                            (merge-with str project (get result namespace))
+                            (merge project (get result namespace))
                             project)))
 
 (defn merge-project-occurrence
