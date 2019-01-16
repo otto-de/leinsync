@@ -8,6 +8,8 @@
   (:import (java.io File)
            (org.apache.commons.io FileUtils)))
 
+(declare get-namespace-of-package)
+
 (def package-def [:sync :packages])
 
 (defn get-src-test-folders [project-desc]
@@ -34,18 +36,28 @@
   (str/replace package #"\." "/"))
 
 (defn make-sync-work-unit [package-path source-project-desc target-projects-desc]
-  (let [target-package-folders (get-src-test-folders target-projects-desc)]
-    (->> (get-src-test-folders source-project-desc)
-         (map (fn [p] [(folder-name-of p) (io/file (str p "/" package-path))]))
-         (filter is-package?)
-         (filter (fn [[folder]] #(contains? target-package-folders folder)))
-         (map (fn [[folder ^File package]] [folder (files-of-package package)])))))
+  (->> (get-src-test-folders source-project-desc)
+       (map (fn [p] [(folder-name-of p) (io/file (str p "/" package-path))]))
+       (filter is-package?)
+       (filter (fn [[folder]] #(contains? (get-src-test-folders target-projects-desc) folder)))
+       (map (fn [[folder package]] [folder (files-of-package package)]))))
+
+(defn get-files-of-package [project-desc package-name ^File package-file]
+  (->> (file-names-of-package package-file)
+       (map (fn [n] (let [namespace-file-name (first (str/split n #"\." 2))
+                          namespace-name (str package-name "." (str/replace namespace-file-name #"_" "-"))
+                          ^File namespace-path (io/file (str (.getAbsolutePath package-file) "/" namespace-file-name))]
+                      (if (is-package? [:folder namespace-path])
+                        (get-namespace-of-package project-desc namespace-name)
+                        [namespace-name]))))
+       (remove nil?)
+       (apply concat)))
 
 (defn get-namespace-of-package [project-desc package]
   (->> (get-src-test-folders project-desc)
        (map (fn [p] [package (io/file (str p "/" (get-package-path package)))]))
        (filter is-package?)
-       (map (fn [[p ^File package]] (map #(str p "." (first (str/split % #"\." 2))) (file-names-of-package package))))
+       (map (fn [[p package]] (get-files-of-package project-desc p package)))
        (apply concat)))
 
 (defn get-package-resource-list [project-desc]
