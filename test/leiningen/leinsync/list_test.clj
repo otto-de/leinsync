@@ -137,11 +137,11 @@
 
 (deftest ^:unit build-resource-table
   (testing "print table structure for the namespaces"
-    (let [projects {:project-1 {:ns-sync        {:namespaces ["path.to.ns1" "path.to.ns2" "path.to.ns4"]}
+    (let [projects {:project-1 {:sync        {:namespaces ["path.to.ns1" "path.to.ns2" "path.to.ns4"]}
                                 :source-paths   ["a"]
                                 :test-paths     ["b"]
                                 :resource-paths ["c"]}
-                    :project-2 {:ns-sync        {:namespaces ["path.to.ns1" "path.to.ns3" "path.to.ns4"]}
+                    :project-2 {:sync        {:namespaces ["path.to.ns1" "path.to.ns3" "path.to.ns4"]}
                                 :source-paths   ["d"]
                                 :test-paths     ["e"]
                                 :resource-paths ["f"]}}]
@@ -154,11 +154,11 @@
                   (sort-by :name))))))
 
   (testing "print table structure for the resources"
-    (let [projects {:project-1 {:ns-sync        {:resources ["r1.xml" "r2.edn" "r3.json"]}
+    (let [projects {:project-1 {:sync        {:resources ["r1.xml" "r2.edn" "r3.json"]}
                                 :source-paths   ["a"]
                                 :test-paths     ["b"]
                                 :resource-paths ["c"]}
-                    :project-2 {:ns-sync        {:namespaces ["r1.xml" "r3.json" "r4.csv"]}
+                    :project-2 {:sync        {:namespaces ["r1.xml" "r3.json" "r4.csv"]}
                                 :source-paths   ["d"]
                                 :test-paths     ["e"]
                                 :resource-paths ["f"]}}]

@@ -8,7 +8,7 @@
   (:import (java.io File)
            (org.apache.commons.io FileUtils)))
 
-(def package-def [:ns-sync :packages])
+(def package-def [:sync :packages])
 
 (defn get-src-test-folders [project-desc]
   (->> (get-in project-desc ns/src-path-def ["src"])

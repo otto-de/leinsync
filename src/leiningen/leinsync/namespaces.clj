@@ -5,8 +5,8 @@
             [leiningen.leinsync.utils :as u]
             [leiningen.leinsync.project-reader :as pr]))
 
-(def namespace-def [:ns-sync :namespaces])
-(def resource-def [:ns-sync :resources])
+(def namespace-def [:sync :namespaces])
+(def resource-def [:sync :resources])
 (def src-path-def [:source-paths])
 (def test-path-def [:test-paths])
 (def resource-path-def [:resource-paths])
