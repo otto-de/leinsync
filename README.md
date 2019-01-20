@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/otto-de/leinsync.svg?branch=master)](https://travis-ci.org/otto-de/leinsync)
 [![Coverage Status](https://coveralls.io/repos/github/otto-de/leinsync/badge.svg?branch=master)](https://coveralls.io/github/otto-de/leinsync?branch=master)
 [![Dependencies Status](https://versions.deps.co/otto-de/leinsync/status.svg)](https://versions.deps.co/otto-de/leinsync)
+[![Downloads](https://versions.deps.co/otto-de/sync/downloads.svg)](https://versions.deps.co/otto-de/sync)
 
 [![Clojars Project](http://clojars.org/sync/latest-version.svg)](https://clojars.org/sync)
 
