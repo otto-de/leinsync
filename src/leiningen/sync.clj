@@ -142,9 +142,9 @@
              ""
              "To specify the namespaces and resources to be shared, you must define them in project.clj. i.e"
              ":sync {:test-cmd    [[\"lein\" \"test\"]]"
-             "          :namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
-             "          :packages    [\"package.to.be.sync.1\" \"package.to.be.sync.2\"]"
-             "          :resources   [\"resource.to.be.sync.1\"  \"resource.to.be.sync.2\" ]}"
+             "       :namespaces  [\"namespace.to.be.sync.1\" \"namespace.to.be.sync.2\"]"
+             "       :packages    [\"package.to.be.sync.1\" \"package.to.be.sync.2\"]"
+             "       :resources   [\"resource.to.be.sync.1\"  \"resource.to.be.sync.2\" ]}"
              ""]))
 
 (defn get-profiles [{profiles :profiles}]
