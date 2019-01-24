@@ -12,6 +12,11 @@
 
 (def package-def [:sync :packages])
 
+(defn get-src-test-folders-with-type [project-desc]
+  (->> (map (fn [x] [ns/src-path-def x]) (get-in project-desc ns/src-path-def ["src"]))
+       (into (map (fn [x] [ns/test-path-def x]) (get-in project-desc ns/test-path-def ["test"])))
+       (set)))
+
 (defn get-src-test-folders [project-desc]
   (->> (get-in project-desc ns/src-path-def ["src"])
        (into (get-in project-desc ns/test-path-def ["test"]))
@@ -35,12 +40,17 @@
 (defn get-package-path [package]
   (str/replace package #"\." "/"))
 
+(defn get-package-name [package]
+  (str/replace package #"/" "."))
+
 (defn make-sync-work-unit [package-path source-project-desc target-projects-desc]
-  (->> (get-src-test-folders source-project-desc)
-       (map (fn [p] [(folder-name-of p) (io/file (str p "/" package-path))]))
+  (->> (get-src-test-folders-with-type source-project-desc)
+       (map (fn [[folder-type folder-path]] [(folder-name-of folder-path)
+                                             (io/file (str folder-path "/" package-path))
+                                             folder-type]))
        (filter is-package?)
        (filter (fn [[folder]] #(contains? (get-src-test-folders target-projects-desc) folder)))
-       (map (fn [[folder package]] [folder (files-of-package package)]))))
+       (map (fn [[folder package folder-type]] [folder (files-of-package package) folder-type]))))
 
 (defn get-files-of-package [project-desc package-name ^File package-file]
   (->> (file-names-of-package package-file)
@@ -73,20 +83,39 @@
   (io/make-parents to-folder)
   (FileUtils/copyDirectory from-folder to-folder))
 
-(defn update-file! [file-type write-f target-project folder-name package-path ^File src-package-file]
+(defn update-file! [file-type write-f target-folder folder-name package-path ^File src-package-file]
   (let [src-package-file-name (.getName src-package-file)]
     (m/info "*** Update" (str file-type) src-package-file-name "on" folder-name)
-    (-> (pr/->target-project-path target-project)
-        (str "/" folder-name "/" package-path "/" src-package-file-name)
+    (-> target-folder
+        (str "/" package-path "/" src-package-file-name)
         (io/file)
         (write-f src-package-file))))
 
-(defn update-package-entry! [target-project folder-name package-path ^File src-package-file]
-  (if (.isDirectory src-package-file)
-    (update-file! :sub-package write-to-folder! target-project folder-name package-path src-package-file)
-    (update-file! :namespace write-to-file! target-project folder-name package-path src-package-file)))
+(defn ask-for-location
+  ([namespace paths] (ask-for-location namespace "source project" paths))
+  ([namespace project paths]
+   (-> namespace
+       (ns/location-question-with project paths)
+       (u/ask-user (partial u/is-number (count paths)))
+       (read-string))))
 
-(defn delete-package-files-of-target-project [target-project folder-name package-path]
+(defn package-path-on-target-project [target-project package-path folder]
+  (str (pr/->target-project-path target-project) "/" folder "/" package-path))
+
+(defn update-package-entry! [target-project target-projects-desc folder-type folder-name package-path ^File src-package-file]
+  (let [target-folders (->> (get-in target-projects-desc folder-type)
+                            (map #(package-path-on-target-project target-project package-path %))
+                            (vec))
+        folder-index (cond
+                       (empty? target-folders) -1
+                       (= (count target-folders) 1) 0
+                       :else (ask-for-location (get-package-name package-path) target-project target-folders))]
+    (when (>= folder-index 0)
+      (if (.isDirectory src-package-file)
+        (update-file! :sub-package write-to-folder! (nth target-folders folder-index) folder-name package-path src-package-file)
+        (update-file! :namespace write-to-file! (nth target-folders folder-index) folder-name package-path src-package-file)))))
+
+(defn delete-package-files-of-target-project [target-project target-projects-desc package-path [folder-name folder-type]]
   (try
     (doseq [^File file-to-delete (-> (pr/->target-project-path target-project)
                                      (str "/" folder-name "/" package-path)
@@ -98,10 +127,10 @@
     (catch Exception e
       (u/print-debug (str "**** [Error] when deleting a file of the folder: " folder-name) e))))
 
-(defn write-package-files-from-source-to-target-project [folder-name package-path src-package-files target-project]
+(defn write-package-files-from-source-to-target-project [target-project target-projects-desc package-path [folder-name src-package-files folder-type]]
   (try
     (doseq [^File src-package-file src-package-files]
-      (update-package-entry! target-project folder-name package-path src-package-file))
+      (update-package-entry! target-project target-projects-desc folder-type folder-name package-path src-package-file))
     (catch Exception e
       (u/print-debug (str "**** [Error] when updating a file of the folder: " folder-name) e))))
 
@@ -122,9 +151,9 @@
   (when (should-update-package? package target-projects-desc)
     (m/info "\n* Update package" package "to the project" (str/upper-case target-project))
     (let [package-path (get-package-path package)]
-      (doseq [[folder-name src-package-files] (make-sync-work-unit package-path source-project-desc target-projects-desc)]
-        (delete-package-files-of-target-project target-project folder-name package-path)
-        (write-package-files-from-source-to-target-project folder-name package-path src-package-files target-project)))))
+      (doseq [work-unit (make-sync-work-unit package-path source-project-desc target-projects-desc)]
+        (delete-package-files-of-target-project target-project target-projects-desc package-path work-unit)
+        (write-package-files-from-source-to-target-project target-project target-projects-desc package-path work-unit)))))
 
 (defn update-packages! [packages source-project-desc target-projects-desc]
   (m/info "\n*********************** UPDATE PACKAGES ***********************\n*")

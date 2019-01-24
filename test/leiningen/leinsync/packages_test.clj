@@ -1,35 +1,36 @@
 (ns leiningen.leinsync.packages-test
   (:require [clojure.test :refer :all]
             [leiningen.leinsync.packages :as packages]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [leiningen.leinsync.namespaces :as ns])
   (:import (java.io File)))
 
 (deftest ^:unit is-sync-namespace-test
   (is (true? (packages/is-on-sync-package?
-              "folder1/de/otto/one/cool/ns.clj"
-              {:source-paths ["folder1"]
-               :sync         {:packages ["de.otto.one"]}})))
+               "folder1/de/otto/one/cool/ns.clj"
+               {:source-paths ["folder1"]
+                :sync         {:packages ["de.otto.one"]}})))
 
   (is (true? (packages/is-on-sync-package?
-              "folder1/de/otto/one/ns.clj"
-              {:source-paths ["folder1"]
-               :sync         {:packages ["de.otto.one"]}})))
+               "folder1/de/otto/one/ns.clj"
+               {:source-paths ["folder1"]
+                :sync         {:packages ["de.otto.one"]}})))
 
   (is (false? (packages/is-on-sync-package?
-               "folder1/de/otto/two/one/ns.clj"
-               {:source-paths ["folder1"]
-                :sync         {:packages ["de.otto.one"]}}))))
+                "folder1/de/otto/two/one/ns.clj"
+                {:source-paths ["folder1"]
+                 :sync         {:packages ["de.otto.one"]}}))))
 
 (deftest ^:unit should-update-package-test
   (is (true? (packages/should-update-package?
-              "de.otto.one"
-              {:source-paths ["folder1"]
-               :sync         {:packages ["de.otto.one"]}})))
+               "de.otto.one"
+               {:source-paths ["folder1"]
+                :sync         {:packages ["de.otto.one"]}})))
 
   (is (false? (packages/should-update-package?
-               "de.otto.two"
-               {:source-paths ["folder1"]
-                :sync         {:packages ["de.otto.one"]}}))))
+                "de.otto.two"
+                {:source-paths ["folder1"]
+                 :sync         {:packages ["de.otto.one"]}}))))
 
 (deftest ^:unit is-package-test
   (is (true? (packages/is-package? [:folder-name (io/file "test/leiningen/leinsync")])))
@@ -69,7 +70,7 @@
     (with-redefs-fn {#'io/file                   (fn [x] (new File x))
                      #'packages/is-package?      (fn [[folder]] (= folder "folder-1"))
                      #'packages/files-of-package (fn [x] children)}
-      #(is (= [["folder-1" children]]
+      #(is (= [["folder-1" children ns/src-path-def]]
               (packages/make-sync-work-unit package-path
                                             source-project-desc
                                             target-projects-desc))))))
