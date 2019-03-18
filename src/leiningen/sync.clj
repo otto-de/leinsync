@@ -40,13 +40,15 @@
 (defn exact-matches? [input]
   #(= % input))
 
-(defn find-matching [projects acc part-input]
-  (concat acc (or (seq (filter (exact-matches? part-input) projects))
-                  (seq (filter (regex-matches? part-input) projects))
-                  [])))
+(defn find-matching [source-project-name projects acc part-input]
+  (->> (or (seq (filter (exact-matches? part-input) projects))
+           (seq (filter (regex-matches? part-input) projects))
+           [])
+       (concat acc)
+       (remove #(= source-project-name %))))
 
-(defn parse-search-input [input projects]
-  (reduce (partial find-matching projects) [] (u/split input)))
+(defn parse-search-input [source-project-name input projects]
+  (reduce (partial find-matching source-project-name projects) [] (u/split input)))
 
 (defn correct-project-string [limit input]
   (zero? (count (filter #(not (u/is-number limit %)) (u/split input)))))
@@ -67,7 +69,7 @@
          (u/ask-user (str "\n* Please specify the project you want to sync i.e 1,2,3"))
          (parse-project-input-string project-map))))
 
-(defn may-update-source-project-desc [{:keys [include-namespace include-resource include-package] :as options} source-project-desc]
+(defn may-update-source-project-desc [{:keys [include-namespace include-resource include-package]} source-project-desc]
   (if (or include-namespace include-resource include-package)
     (-> source-project-desc
         (assoc-in ns/namespace-def (or include-namespace []))
@@ -80,14 +82,14 @@
     (reset! u/DEBUG-MODE true)))
 
 (defn execute-program [search-project-string
-                       source-project-desc
+                       {source-project-name :name :as source-project-desc}
                        {interactive-mode :interactive :as options}
                        sync-commands
                        parent-project-folder]
   (try
     (enable-debug-mode! source-project-desc)
     (let [sync-projects (find-sync-projects parent-project-folder)
-          matching-project (parse-search-input search-project-string sync-projects)
+          matching-project (parse-search-input source-project-name search-project-string sync-projects)
           target-projects (if interactive-mode
                             (parse-search-input-interactive matching-project)
                             matching-project)]
@@ -161,7 +163,7 @@
         {interactive-mode :interactive} options]
     (cond
       (seq errors) (m/abort (str/join " " errors))
-      (and (zero? (count arguments)) interactive-mode) (execute-program ALL-PROJECTS project-desc options c/SYNC-COMMANDS u/PARENT-FOLDER)
+      (and (empty? arguments) interactive-mode) (execute-program ALL-PROJECTS project-desc options c/SYNC-COMMANDS u/PARENT-FOLDER)
       (not= 1 (count arguments)) (m/abort (usage summary))
       :else (execute-program (first arguments) project-desc options c/SYNC-COMMANDS u/PARENT-FOLDER))
     (m/exit)))

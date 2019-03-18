@@ -215,29 +215,29 @@
 
 (deftest ^:unit parse-project-search-input-test
   (is (= ["project-1-awesome" "project-2-awesome"]
-         (s/parse-search-input ".*-awesome" #{"project-1-awesome" "project-2-awesome"})))
+         (s/parse-search-input "source-project" ".*-awesome" #{"project-1-awesome" "project-2-awesome"})))
 
   (is (= []
-         (s/parse-search-input "bull,shit" #{"project-1" "project-2"})))
+         (s/parse-search-input "source-project" "bull,shit" #{"project-1" "project-2"})))
 
   (is (= ["project-1" "project-2"]
-         (s/parse-search-input "project-1,project-2" #{"project-1" "project-2"})))
+         (s/parse-search-input "source-project" "project-1,project-2" #{"project-1" "project-2"})))
 
   (is (= ["project-1" "project-2"]
-         (s/parse-search-input "project-1,project-2" #{"project-1" "project-1-1" "project-2"})))
+         (s/parse-search-input "source-project" "project-1,project-2" #{"project-1" "project-1-1" "project-2"})))
 
   (is (= ["project-1"]
-         (s/parse-search-input "project-1,project-3" #{"project-1" "project-2"})))
+         (s/parse-search-input "source-project" "project-1,project-3" #{"project-1" "project-2"})))
 
   (is (= ["project-2" "project-1"]
-         (s/parse-search-input "project-*" #{"project-1" "project-2"})))
+         (s/parse-search-input "source-project" "project-*" #{"project-1" "project-2"})))
 
   (is (= ["project-1-awesome" "project-2-awesome"]
-         (s/parse-search-input ".*-awesome" #{"project-1-awesome" "project-2-awesome"})
-         (s/parse-search-input ".*" #{"project-1-awesome" "project-2-awesome"})))
+         (s/parse-search-input "source-project" ".*-awesome" #{"project-1-awesome" "project-2-awesome"})
+         (s/parse-search-input "source-project" ".*" #{"project-1-awesome" "project-2-awesome"})))
 
-  (is (= ["project-1-awesome" "project-2"]
-         (s/parse-search-input "project-1-awesome,project-2" #{"project-1-awesome" "project-1" "project-2"}))))
+  (is (= ["project-1-awesome"]
+         (s/parse-search-input "project-2" "project-1-awesome,project-2" #{"project-1-awesome" "project-1" "project-2"}))))
 
 (deftest ^:unit ask-user-test
   (with-redefs-fn {#'u/capture-input (fn [prompt] "a answer")}
